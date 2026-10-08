@@ -1,0 +1,24 @@
+{
+  "name": "datalink",
+  "version": "1.0.0",
+  "description": "Entity Link Analysis & Geospatial Intelligence with Cloudflare D1 and Tailwind CSS",
+  "main": "index.html",
+  "scripts": {
+    "dev": "wrangler pages dev . --d1 DB=datalink-db",
+    "d1:create": "wrangler d1 create datalink-db",
+    "d1:migrate:local": "wrangler d1 execute datalink-db --local --file=./schema.sql",
+    "d1:migrate:remote": "wrangler d1 execute datalink-db --remote --file=./schema.sql"
+  },
+  "devDependencies": {
+    "wrangler": "^3.80.0"
+  },
+  "keywords": [
+    "link-analysis",
+    "geospatial",
+    "cloudflare-pages",
+    "cloudflare-d1",
+    "tailwind-css"
+  ],
+  "author": "",
+  "license": "MIT"
+}

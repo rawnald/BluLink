@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-black text-white">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DataLink — Link Analysis & Geospatial Intelligence</title>
+
+<!-- Fonts: DM Sans -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet">
+
+<!-- Leaflet CSS & JS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<!-- Vis.js Network -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.9/standalone/umd/vis-network.min.js"></script>
+
+<!-- Supabase JS (Fallback / Alternative Backend) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['"DM Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+        },
+        colors: {
+          brand: {
+            blue: '#2563eb',
+            'blue-hover': '#1d4ed8',
+            'blue-light': '#3b82f6',
+            'blue-dark': '#1e40af',
+            'blue-subtle': '#172554',
+          }
+        }
+      }
+    }
+  }
+</script>
+
+<!--
+=============================================================================
+CLOUDFLARE D1 & SUPABASE SETUP GUIDE
+=============================================================================
+Option A (Recommended): Cloudflare D1 & Pages
+1. Deploy this repository to Cloudflare Pages (connected via GitHub).
+2. Create D1 database: npx wrangler d1 create datalink-db
+3. Run migrations: npx wrangler d1 execute datalink-db --remote --file=./schema.sql
+4. Bind D1 database as 'DB' in Cloudflare Pages Settings -> Functions.
+
+Option B: Supabase
+Run this SQL once in Supabase SQL editor:
+   create table datalink_workspaces (
+     user_id uuid primary key references auth.users(id) on delete cascade,
+     data jsonb not null default '{}',
+     updated_at timestamptz default now()
+   );
+   alter table datalink_workspaces enable row level security;
+   create policy "own workspace" on datalink_workspaces
+     for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+=============================================================================
+-->
+
+<style>
+  * {
+    box-sizing: border-box;
+    font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+  }
+  
+  /* Scrollbars */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #000000;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #1e3a8a;
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #2563eb;
+  }
+
+  /* Leaflet Custom UI: 3 Colors Only (Blue, White, Black) */
+  .leaflet-container {
+    background-color: #000000 !important;
+    font-family: 'DM Sans', sans-serif !important;
+  }
+  .leaflet-control-zoom a {
+    background-color: #000000 !important;
+    color: #ffffff !important;
+    border: 1px solid #1e3a8a !important;
+    transition: all 0.15s ease;
+  }
+  .leaflet-control-zoom a:hover {
+    background-color: #2563eb !important;
+    color: #ffffff !important;
+    border-color: #3b82f6 !important;
+  }
+  .leaflet-control-layers {
+    background: #000000 !important;
+    border: 1px solid #1e3a8a !important;
+    border-radius: 8px !important;
+    color: #ffffff !important;
+    padding: 8px 12px !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8) !important;
+  }
+  .leaflet-control-layers-toggle {
+    filter: invert(1) brightness(1.8);
+  }
+  .leaflet-control-layers-expanded {
+    background-color: #000000 !important;
+    color: #ffffff !important;
+  }
+  .leaflet-control-layers label {
+    color: #ffffff !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    cursor: pointer !important;
+    margin-bottom: 4px !important;
+  }
+  .leaflet-popup-content-wrapper {
+    background: #000000 !important;
+    color: #ffffff !important;
+    border: 1px solid #2563eb !important;
+    border-radius: 8px !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.9), 0 0 15px rgba(37,99,235,0.3) !important;
+  }
+  .leaflet-popup-tip {
+    background: #000000 !important;
+    border: 1px solid #2563eb !important;
+  }
+  .leaflet-popup-close-button {
+    color: #ffffff !important;
+    padding: 6px 8px !important;
+  }
+  .leaflet-popup-close-button:hover {
+    color: #3b82f6 !important;
+  }
+  .leaflet-tooltip {
+    background-color: #000000 !important;
+    border: 1px solid #2563eb !important;
+    color: #ffffff !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    border-radius: 4px !important;
+    padding: 3px 8px !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.6) !important;
+  }
+  .leaflet-tooltip:before {
+    border-top-color: #2563eb !important;
+  }
+
+  /* Custom Map Pin Icon */
+  .custom-map-pin {
+    width: 32px;
+    height: 32px;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #ffffff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.8);
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+    cursor: pointer;
+  }
+  .custom-map-pin i {
+    transform: rotate(45deg);
+    font-style: normal;
+    font-size: 14px;
+    line-height: 1;
+    color: #ffffff;
+    user-select: none;
+  }
+  .custom-map-pin.is-selected {
+    transform: rotate(-45deg) scale(1.22);
+    box-shadow: 0 0 0 4px #ffffff, 0 0 18px #2563eb;
+    border-color: #ffffff;
+    z-index: 1000 !important;
+  }
+
+  .pick-crosshair {
+    cursor: crosshair !important;
+  }
+</style>
+</head>
+
+<body class="h-full flex flex-col bg-black text-white antialiased overflow-hidden select-none">
+
+<!-- ==================== HEADER ==================== -->
+<header class="h-14 shrink-0 bg-black border-b border-blue-900/60 px-4 flex items-center justify-between z-30">
+  <div class="flex items-center gap-4">
+    <!-- Brand -->
+    <div class="flex items-center gap-2">
+      <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-white shadow-lg shadow-blue-600/40 border border-blue-400">
+        DL
+      </div>
+      <div>
+        <div class="text-base font-bold tracking-tight text-white flex items-center gap-1.5">
+          Data<span class="text-blue-500">Link</span>
+          <span id="backendBadge" class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded border border-blue-800 text-blue-400 bg-blue-950/40">D1 Intel</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div id="quickStats" class="hidden sm:flex items-center gap-2 text-xs border-l border-blue-950 pl-4 text-white/70">
+      <span class="px-2 py-0.5 rounded bg-blue-950/40 border border-blue-900/50 text-white font-medium">
+        <span id="statEntities" class="text-blue-400 font-bold">0</span> entities
+      </span>
+      <span class="px-2 py-0.5 rounded bg-blue-950/40 border border-blue-900/50 text-white font-medium">
+        <span id="statLinks" class="text-blue-400 font-bold">0</span> links
+      </span>
+      <span class="px-2 py-0.5 rounded bg-blue-950/40 border border-blue-900/50 text-white font-medium">
+        <span id="statMapped" class="text-blue-400 font-bold">0</span> mapped
+      </span>
+    </div>
+  </div>
+
+  <!-- Header Right (Autosave Status, User & Actions) -->
+  <div class="flex items-center gap-3">
+    <!-- Autosave Status Indicator -->
+    <div class="flex items-center gap-2 px-3 py-1 rounded-full border border-blue-900/60 bg-black text-xs font-medium">
+      <span id="statusDot" class="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_#3b82f6] animate-pulse"></span>
+      <span id="status" class="text-white/80">Connecting…</span>
+    </div>
+
+    <!-- Demo sample data button -->
+    <button id="btnSampleData" title="Load sample dataset" class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-md border border-blue-600/60 text-white bg-blue-950/40 hover:bg-blue-600 hover:text-white transition font-medium">
+      <span>⚡ Sample Data</span>
+    </button>
+
+    <!-- Clear / Reset workspace -->
+    <button id="btnClearData" title="Clear all data" class="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-md border border-white/20 text-white/70 hover:text-white hover:border-white transition font-medium">
+      <span>Clear</span>
+    </button>
+
+    <!-- User identity / Sign out -->
+    <div id="userSection" class="hidden items-center gap-2 border-l border-blue-950 pl-3">
+      <span id="who" class="text-xs text-white/60 max-w-[140px] truncate" title=""></span>
+      <button id="logout" class="px-2.5 py-1 text-xs rounded-md border border-white/30 text-white hover:bg-white hover:text-black transition font-semibold">
+        Sign out
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ==================== AUTH VIEW ==================== -->
+<div id="auth" class="flex-1 overflow-y-auto flex items-center justify-center p-4 bg-black">
+  <div class="w-full max-w-md bg-black border border-blue-900/70 rounded-2xl p-8 shadow-2xl shadow-blue-950/50 relative overflow-hidden">
+    <!-- Blue Glow Accent -->
+    <div class="absolute -top-24 -left-24 w-48 h-48 bg-blue-600/20 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-24 -right-24 w-48 h-48 bg-blue-600/20 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="relative z-10">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center font-bold text-lg text-white shadow-lg shadow-blue-600/40 border border-blue-400">
+          DL
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-2xl font-bold tracking-tight text-white">DataLink</h1>
+            <span id="authBackendBadge" class="text-[10px] px-1.5 py-0.5 rounded bg-blue-950 border border-blue-900 text-blue-400 font-semibold">Cloudflare D1</span>
+          </div>
+          <p class="text-xs text-white/60">Entity Link Analysis & Geospatial Intelligence</p>
+        </div>
+      </div>
+
+      <div class="mb-5 p-3 rounded-lg bg-blue-950/30 border border-blue-900/50 text-xs text-white/80 leading-relaxed">
+        Serverless workspace powered by Cloudflare D1 SQL database. Every node position and link autosaves immediately.
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label for="em" class="block text-xs font-semibold text-white/80 uppercase tracking-wider mb-1.5">Email address</label>
+          <input id="em" type="email" autocomplete="email" placeholder="agent@agency.gov"
+            class="w-full px-3.5 py-2.5 rounded-lg bg-black border border-blue-900/80 text-white placeholder-white/30 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
+        </div>
+
+        <div>
+          <label for="pw" class="block text-xs font-semibold text-white/80 uppercase tracking-wider mb-1.5">Password</label>
+          <input id="pw" type="password" autocomplete="current-password" placeholder="••••••••••••"
+            class="w-full px-3.5 py-2.5 rounded-lg bg-black border border-blue-900/80 text-white placeholder-white/30 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 pt-1">
+          <button id="btnIn"
+            class="w-full py-2.5 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold text-sm shadow-md shadow-blue-600/30 transition flex items-center justify-center gap-2">
+            Sign in
+          </button>
+          <button id="btnUp"
+            class="w-full py-2.5 px-4 rounded-lg bg-black border border-white/40 hover:border-white hover:bg-white hover:text-black text-white font-semibold text-sm transition flex items-center justify-center gap-2">
+            Create account
+          </button>
+        </div>
+
+        <div id="authMsg" role="alert" class="min-h-[20px] text-xs font-medium text-white/90 text-center"></div>
+
+        <div class="pt-2 border-t border-blue-950">
+          <button id="btnDemo"
+            class="w-full py-2.5 px-4 rounded-lg bg-blue-950/50 hover:bg-blue-900/60 border border-blue-600/80 text-white font-semibold text-sm transition flex items-center justify-center gap-2">
+            <span>Open Demo Workspace</span>
+            <span class="text-xs text-blue-400 font-normal">(Saves to browser)</span>
+          </button>
+        </div>
+
+        <!-- Optional Config Expander -->
+        <details class="text-xs text-white/60 pt-2 cursor-pointer">
+          <summary class="hover:text-blue-400 transition font-medium">Alternative: Supabase Credentials</summary>
+          <div class="mt-3 p-3 rounded-lg bg-black border border-blue-900/50 space-y-2">
+            <div>
+              <label class="block text-[11px] text-white/60 mb-1">Supabase URL</label>
+              <input id="cfgUrl" placeholder="https://xxxx.supabase.co" class="w-full px-2 py-1.5 bg-black border border-blue-900/60 rounded text-xs text-white focus:outline-none focus:border-blue-500">
+            </div>
+            <div>
+              <label class="block text-[11px] text-white/60 mb-1">Anon Public Key</label>
+              <input id="cfgKey" placeholder="eyJhbGciOi..." class="w-full px-2 py-1.5 bg-black border border-blue-900/60 rounded text-xs text-white focus:outline-none focus:border-blue-500">
+            </div>
+            <button id="btnSaveConfig" class="w-full mt-2 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-semibold">
+              Apply Supabase Credentials
+            </button>
+          </div>
+        </details>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MAIN WORKSPACE APP ==================== -->
+<div id="app" class="flex-1 min-h-0 hidden flex-col lg:grid lg:grid-cols-[330px_1fr_1fr] overflow-hidden bg-black">
+
+  <!-- ==================== SIDEBAR / CONTROL PANEL ==================== -->
+  <aside class="w-full h-full border-r border-blue-900/60 bg-black flex flex-col min-h-0 overflow-hidden">
+    <!-- Sidebar Navigation Tabs -->
+    <div class="shrink-0 flex border-b border-blue-900/60 bg-black p-1 gap-1">
+      <button id="tabBtnCreate" class="flex-1 py-1.5 text-xs font-semibold rounded-md bg-blue-600 text-white transition">
+        Create
+      </button>
+      <button id="tabBtnInspect" class="flex-1 py-1.5 text-xs font-semibold rounded-md text-white/60 hover:text-white hover:bg-blue-950/40 transition">
+        Selected
+      </button>
+      <button id="tabBtnList" class="flex-1 py-1.5 text-xs font-semibold rounded-md text-white/60 hover:text-white hover:bg-blue-950/40 transition">
+        Entities (<span id="tabCount">0</span>)
+      </button>
+    </div>
+
+    <!-- Scrollable Tab Content Container -->
+    <div class="flex-1 overflow-y-auto p-4 space-y-6">
+
+      <!-- ================= TAB 1: CREATE (ENTITY & LINK) ================= -->
+      <div id="tabContentCreate" class="space-y-6">
+        <!-- Add Entity Section -->
+        <section class="space-y-3">
+          <div class="flex items-center justify-between">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-2">
+              <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+              Add Entity
+            </h2>
+            <span class="text-[11px] text-white/50">Node</span>
+          </div>
+
+          <div>
+            <label for="eName" class="block text-[11px] font-semibold text-white/70 uppercase tracking-wide mb-1">Entity Name</label>
+            <input id="eName" placeholder="e.g. Maria Santos, Apex Corp"
+              class="w-full px-3 py-2 rounded-lg bg-black border border-blue-900/70 text-white placeholder-white/30 text-xs focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label for="eType" class="block text-[11px] font-semibold text-white/70 uppercase tracking-wide mb-1">Type</label>
+              <select id="eType"
+                class="w-full px-2.5 py-2 rounded-lg bg-black border border-blue-900/70 text-white text-xs focus:outline-none focus:border-blue-500">
+              </select>
+            </div>
+            <div>
+              <label for="eLat" class="block text-[11px] font-semibold text-white/70 uppercase tracking-wide mb-1">Latitude</label>
+              <input id="eLat" placeholder="e.g. 14.5995"
+                class="w-full px-2.5 py-2 rounded-lg bg-black border border-blue-900/70 text-white placeholder-white/30 text-xs focus:outline-none focus:border-blue-500">
+            </div>
+          </div>
+
+          <div>
+            <label for="eLng" class="block text-[11px] font-semibold text-white/70 uppercase tracking-wide mb-1">Longitude</label>
+            <input id="eLng" placeholder="e.g. 120.9842"
+              class="w-full px-3 py-2 rounded-lg bg-black border border-blue-900/70 text-white placeholder-white/30 text-xs focus:outline-none focus:border-blue-500">
+          </div>
+
+          <div>
+            <label for="eNote" class="block text-[11px] font-semibold text-white/70 uppercase tracking-wide mb-1">Intel / Information</label>
+            <textarea id="eNote" rows="2" placeholder="Key background, affiliations, identifiers..."
+              class="w-full px-3 py-2 rounded-lg bg-black border border-blue-900/70 text-white placeholder-white/30 text-xs focus:outline-none focus:border-blue-500 resize-none"></textarea>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 pt-1">
+            <button id="addE"
+              class="w-full py-2 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold text-xs shadow-md shadow-blue-600/30 transition flex items-center justify-center gap-1.5">
+              <span>+ Add Entity</span>
+            </button>
+            <button id="pickBtn"
+              class="w-full py-2 px-3 rounded-lg bg-black border border-blue-500 text-blue-400 hover:bg-blue-600 hover:text-white font-semibold text-xs transition flex items-center justify-center gap-1.5">
+              <span>📍 Pick on map</span>
+            </button>
+          </div>
+
+          <div id="pickHint" class="hidden text-[11px] text-blue-400 bg-blue-950/40 border border-blue-900 rounded p-2 text-center animate-pulse"></div>
+        </section>
+
+        <hr class="border-blue-950">
+
+        <!-- Add Link Section -->
+        <section class="space-y-3">
+          <div class="flex items-center justify-between">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-2">
+              <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+              Add Link
+            </h2>
+            <span class="text-[11px] text-white/50">Relationship</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label for="lFrom" class="block text-[11px] font-semibold text-white/70 uppercase tracking-wide mb-1">From</label>
+              <select id="lFrom"
+                class="w-full px-2 py-2 rounded-lg bg-black border border-blue-900/70 text-white text-xs focus:outline-none focus:border-blue-500">
+              </select>
+            </div>
+            <div>
+              <label for="lTo" class="block text-[11px] font-semibold text-white/70 uppercase tracking-wide mb-1">To</label>
+              <select id="lTo"
+                class="w-full px-2 py-2 rounded-lg bg-black border border-blue-900/70 text-white text-xs focus:outline-none focus:border-blue-500">
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label for="lLabel" class="block text-[11px] font-semibold text-white/70 uppercase tracking-wide mb-1">Relationship Label</label>
+            <input id="lLabel" placeholder="e.g. employed by, communicated with"
+              class="w-full px-3 py-2 rounded-lg bg-black border border-blue-900/70 text-white placeholder-white/30 text-xs focus:outline-none focus:border-blue-500">
+          </div>
+
+          <button id="addL"
+            class="w-full py-2 px-3 rounded-lg bg-black border border-white/40 hover:border-white hover:bg-white hover:text-black text-white font-semibold text-xs transition flex items-center justify-center gap-1.5">
+            <span>🔗 Connect Entities</span>
+          </button>
+        </section>
+      </div>
+
+      <!-- ================= TAB 2: SELECTED INSPECTOR ================= -->
+      <div id="tabContentInspect" class="hidden space-y-4">
+        <div id="selEmpty" class="text-center py-8 px-4 rounded-xl border border-dashed border-blue-900/50 bg-blue-950/10">
+          <div class="text-2xl mb-2">🔍</div>
+          <p class="text-xs text-white/70 font-medium">No entity selected</p>
+          <p class="text-[11px] text-white/40 mt-1">Click any node on the link chart, map marker, or directory to inspect and edit.</p>
+        </div>
+
+        <div id="selForm" class="hidden space-y-4">
+          <div class="flex items-center justify-between pb-2 border-b border-blue-950">
+            <div class="flex items-center gap-2">
+              <span id="sBadgeType" class="text-xs px-2 py-0.5 rounded font-bold bg-blue-600 text-white"></span>
+              <span class="text-xs font-bold text-white uppercase tracking-wider">Inspector</span>
+            </div>
+            <button id="sBtnDeselect" class="text-[11px] text-white/50 hover:text-white transition">
+              Deselect
+            </button>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-semibold text-white/70 uppercase tracking-wide mb-1">Name</label>
+            <input id="sName" class="w-full px-3 py-2 rounded-lg bg-black border border-blue-900/70 text-white text-xs focus:outline-none focus:border-blue-500">
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-semibold text-white/70 uppercase tracking-wide mb-1">Type</label>
+            <select id="sType" class="w-full px-2.5 py-2 rounded-lg bg-black border border-blue-900/70 text-white text-xs focus:outline-none focus:border-blue-500"></select>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-semibold text-white/70 uppercase tracking-wide mb-1">Information</label>
+            <textarea id="sNote" rows="3" class="w-full px-3 py-2 rounded-lg bg-black border border-blue-900/70 text-white text-xs focus:outline-none focus:border-blue-500 resize-none"></textarea>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[11px] font-semibold text-white/70 uppercase tracking-wide mb-1">Latitude</label>
+              <input id="sLat" class="w-full px-2.5 py-2 rounded-lg bg-black border border-blue-900/70 text-white text-xs focus:outline-none focus:border-blue-500">
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-white/70 uppercase tracking-wide mb-1">Longitude</label>
+              <input id="sLng" class="w-full px-2.5 py-2 rounded-lg bg-black border border-blue-900/70 text-white text-xs focus:outline-none focus:border-blue-500">
+            </div>
+          </div>
+
+          <!-- Pick on map for selected entity -->
+          <button id="sPickBtn" class="w-full py-1.5 px-3 rounded-lg border border-blue-500 text-blue-400 hover:bg-blue-600 hover:text-white text-xs font-semibold transition">
+            📍 Pick New Coordinates on Map
+          </button>
+
+          <!-- Links Section -->
+          <div class="pt-2">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[11px] font-bold text-white/80 uppercase tracking-wider">Connected Links</span>
+              <span id="sLinkCount" class="text-[10px] px-1.5 py-0.5 rounded bg-blue-950 text-blue-400 border border-blue-900">0</span>
+            </div>
+            <div id="sLinksList" class="space-y-1.5 max-h-48 overflow-y-auto"></div>
+          </div>
+
+          <!-- Delete Action -->
+          <div class="pt-2 border-t border-blue-950">
+            <button id="delE"
+              class="w-full py-2 px-3 rounded-lg border border-white/30 text-white hover:bg-white hover:text-black font-semibold text-xs transition">
+              Delete Entity & Relationships
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= TAB 3: ENTITIES DIRECTORY ================= -->
+      <div id="tabContentList" class="hidden space-y-3">
+        <!-- Search filter -->
+        <div>
+          <input id="listSearch" placeholder="Search entities..."
+            class="w-full px-3 py-2 rounded-lg bg-black border border-blue-900/70 text-white placeholder-white/30 text-xs focus:outline-none focus:border-blue-500">
+        </div>
+
+        <div id="list" class="space-y-1"></div>
+      </div>
+
+    </div>
+  </aside>
+
+  <!-- ==================== CENTER PANE: GEOSPATIAL MAP ==================== -->
+  <section class="relative w-full h-full min-w-0 min-h-0 flex flex-col border-r border-blue-900/60 bg-black">
+    <!-- Map Header Overlay -->
+    <div class="absolute top-3 left-3 z-[400] flex items-center gap-2 bg-black/90 backdrop-blur border border-blue-900/80 rounded-lg px-3 py-1.5 shadow-xl">
+      <div class="w-2 h-2 rounded-full bg-blue-500"></div>
+      <span class="text-xs font-bold text-white tracking-wide">Geospatial Intelligence Map</span>
+      <span class="text-[10px] text-white/50 border-l border-blue-950 pl-2">Google Layers (Top Right)</span>
+    </div>
+
+    <!-- Active Pick Banner -->
+    <div id="mapPickBanner" class="hidden absolute top-14 left-1/2 -translate-x-1/2 z-[400] bg-blue-600 text-white text-xs font-semibold px-4 py-2 rounded-full shadow-2xl shadow-blue-500/50 flex items-center gap-3">
+      <span>Click any location on the map to set coordinates</span>
+      <button id="cancelPickBtn" class="bg-black text-white hover:bg-white hover:text-black px-2 py-0.5 rounded text-[11px] font-bold">
+        Cancel
+      </button>
+    </div>
+
+    <!-- Map Leaflet Container -->
+    <div id="map" class="flex-1 w-full h-full"></div>
+  </section>
+
+  <!-- ==================== RIGHT PANE: LINK NETWORK CHART ==================== -->
+  <section class="relative w-full h-full min-w-0 min-h-0 flex flex-col bg-black">
+    <!-- Network Header Overlay -->
+    <div class="absolute top-3 left-3 z-10 flex items-center gap-2 bg-black/90 backdrop-blur border border-blue-900/80 rounded-lg px-3 py-1.5 shadow-xl">
+      <div class="w-2 h-2 rounded-full bg-blue-500"></div>
+      <span class="text-xs font-bold text-white tracking-wide">Relational Link Chart</span>
+      <span class="text-[10px] text-white/50 border-l border-blue-950 pl-2">Vis.Network</span>
+    </div>
+
+    <!-- Chart Control Buttons -->
+    <div class="absolute top-3 right-3 z-10 flex items-center gap-1.5">
+      <button id="btnFitNet" title="Fit All Nodes" class="px-2.5 py-1 text-xs rounded bg-black/90 hover:bg-blue-600 text-white border border-blue-900/80 hover:border-blue-500 transition shadow">
+        Fit View
+      </button>
+      <button id="btnStabilizeNet" title="Re-organize Physics" class="px-2.5 py-1 text-xs rounded bg-black/90 hover:bg-blue-600 text-white border border-blue-900/80 hover:border-blue-500 transition shadow">
+        Stabilize
+      </button>
+    </div>
+
+    <!-- Vis.Network Container -->
+    <div id="net" class="flex-1 w-full h-full bg-black"></div>
+  </section>
+
+</div>
+
+<!-- ==================== JAVASCRIPT ==================== -->
+<script>
+/* ---------- CONFIG & BACKEND ADAPTERS ---------- */
+const CONFIG = {
+  SUPABASE_URL: "",
+  SUPABASE_KEY: ""
+};
+
+// Check localStorage for persisted custom Supabase config
+try {
+  const customUrl = localStorage.getItem("datalink_supabase_url");
+  const customKey = localStorage.getItem("datalink_supabase_key");
+  if (customUrl && customKey) {
+    CONFIG.SUPABASE_URL = customUrl;
+    CONFIG.SUPABASE_KEY = customKey;
+  }
+} catch (e) {}
+
+/* ---------- Constants: 3 Colors Only (Blue, White, Black) ---------- */
+const TYPES = {
+  Person:       { c: "#2563eb", border: "#ffffff", i: "👤", label: "Person" },
+  Organization: { c: "#000000", border: "#3b82f6", i: "🏢", label: "Organization" },
+  Location:     { c: "#1d4ed8", border: "#93c5fd", i: "📍", label: "Location" },
+  Vehicle:      { c: "#0f172a", border: "#ffffff", i: "🚗", label: "Vehicle" },
+  Phone:        { c: "#3b82f6", border: "#000000", i: "📱", label: "Phone" },
+  Event:        { c: "#172554", border: "#60a5fa", i: "⚡", label: "Event" }
+};
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const uid = () => Math.random().toString(36).slice(2, 10);
+
+/* ---------- State ---------- */
+let backendMode = "detecting"; // 'cf' (Cloudflare D1), 'sb' (Supabase), or 'demo'
+let cfToken = localStorage.getItem("datalink_cf_token") || null;
+let sb = null, user = null, demo = false;
+let data = { entities: [], links: [] };
+let selected = null, picking = false, pickTarget = "new", saveTimer = null, ready = false;
+let map, net, nodes, edges, markerLayer, lineLayer;
+
+/* ---------- Sample Data Definition ---------- */
+const SAMPLE_DATA = {
+  entities: [
+    { id: "e1", name: "Dr. Evelyn Reed", type: "Person", lat: 51.5074, lng: -0.1278, note: "Principal Cyber Intelligence Analyst. Stationed in London." },
+    { id: "e2", name: "Apex Global Dynamics", type: "Organization", lat: 47.3769, lng: 8.5417, note: "Defense Contractor & Secure Hardware HQ, Zurich." },
+    { id: "e3", name: "Safehouse Delta", type: "Location", lat: 48.8566, lng: 2.3522, note: "Classified rendezvous point, Paris sector." },
+    { id: "e4", name: "Armored Transport #07", type: "Vehicle", lat: 50.8503, lng: 4.3517, note: "Encrypted logistic transit route via Brussels." },
+    { id: "e5", name: "Burner Terminal +41 79", type: "Phone", note: "Satellite voice communicator linked to Apex executives." },
+    { id: "e6", name: "Project BlueSky Incident", type: "Event", lat: 52.5200, lng: 13.4050, note: "Berlin perimeter network compromise detected 2026." }
+  ],
+  links: [
+    { id: "l1", from: "e1", to: "e2", label: "Employed by" },
+    { id: "l2", from: "e1", to: "e3", label: "Inspected" },
+    { id: "l3", from: "e2", to: "e4", label: "Dispatched" },
+    { id: "l4", from: "e4", to: "e3", label: "Routed towards" },
+    { id: "l5", from: "e1", to: "e5", label: "Contacted" },
+    { id: "l6", from: "e3", to: "e6", label: "Investigating" }
+  ]
+};
+
+/* ---------- Automatic Backend Detection ---------- */
+async function detectBackend() {
+  // 1. Check if Cloudflare Pages API is active
+  if (window.location.protocol.startsWith("http")) {
+    try {
+      const res = await fetch("/api/auth/me", {
+        headers: cfToken ? { "Authorization": `Bearer ${cfToken}` } : {}
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.user) {
+          backendMode = "cf";
+          user = json.user;
+          openApp();
+          return;
+        }
+      }
+      if (res.status === 401 || res.status === 200) {
+        backendMode = "cf";
+        $("authBackendBadge").textContent = "Cloudflare D1";
+        $("authMsg").textContent = "Connected to Cloudflare D1 Database. Sign in or create an account.";
+        $("authMsg").className = "min-h-[20px] text-xs font-medium text-blue-400 text-center";
+        return;
+      }
+    } catch (e) {
+      // Local file or static host without Cloudflare Pages Functions
+    }
+  }
+
+  // 2. Check Supabase
+  if (CONFIG.SUPABASE_URL && CONFIG.SUPABASE_KEY) {
+    try {
+      sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
+      backendMode = "sb";
+      $("authBackendBadge").textContent = "Supabase";
+      $("authMsg").textContent = "Connected to Supabase. Sign in or create an account.";
+      $("authMsg").className = "min-h-[20px] text-xs font-medium text-blue-400 text-center";
+
+      sb.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+          user = session.user;
+          openApp();
+        }
+      });
+      sb.auth.onAuthStateChange((_e, session) => {
+        if (session && !user) {
+          user = session.user;
+          openApp();
+        }
+      });
+      return;
+    } catch (e) {}
+  }
+
+  // 3. Fallback: Demo / Local mode
+  backendMode = "demo_ready";
+  $("authBackendBadge").textContent = "Demo / D1 Ready";
+  $("authMsg").textContent = "Sign in with Cloudflare D1 account, or click 'Open Demo Workspace' below.";
+  $("authMsg").className = "min-h-[20px] text-xs font-medium text-white/60 text-center";
+}
+detectBackend();
+
+// Save Supabase credentials via expander
+$("btnSaveConfig").onclick = () => {
+  const u = $("cfgUrl").value.trim();
+  const k = $("cfgKey").value.trim();
+  if (!u || !k) { alert("Please provide both Supabase URL and Anon key."); return; }
+  localStorage.setItem("datalink_supabase_url", u);
+  localStorage.setItem("datalink_supabase_key", k);
+  location.reload();
+};
+
+/* ---------- Sign In & Sign Up Handler ---------- */
+async function signIn(isSignUp) {
+  const email = $("em").value.trim();
+  const password = $("pw").value;
+  if (!email || !password) {
+    $("authMsg").textContent = "Please enter both email and password.";
+    $("authMsg").className = "min-h-[20px] text-xs font-medium text-white text-center";
+    return;
+  }
+
+  $("authMsg").textContent = isSignUp ? "Creating account…" : "Authenticating…";
+  $("authMsg").className = "min-h-[20px] text-xs font-medium text-blue-400 text-center";
+
+  // Try Cloudflare D1 first if running via HTTP
+  if (window.location.protocol.startsWith("http") && backendMode !== "sb") {
+    try {
+      const endpoint = isSignUp ? "/api/auth/signup" : "/api/auth/login";
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
+      const resJson = await res.json();
+
+      if (!res.ok) {
+        if (res.status === 404 && sb) {
+          // Fall through to Supabase if endpoint doesn't exist
+        } else {
+          $("authMsg").textContent = resJson.error || "Authentication failed.";
+          $("authMsg").className = "min-h-[20px] text-xs font-medium text-white text-center";
+          return;
+        }
+      } else {
+        backendMode = "cf";
+        cfToken = resJson.token;
+        localStorage.setItem("datalink_cf_token", cfToken);
+        user = resJson.user;
+        openApp();
+        return;
+      }
+    } catch (err) {
+      if (!sb) {
+        $("authMsg").textContent = "Cloudflare D1 API not reachable. Try Demo mode or check deployment.";
+        $("authMsg").className = "min-h-[20px] text-xs font-medium text-white text-center";
+        return;
+      }
+    }
+  }
+
+  // Supabase fallback
+  if (sb) {
+    try {
+      const { data: r, error } = isSignUp
+        ? await sb.auth.signUp({ email, password })
+        : await sb.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        $("authMsg").textContent = error.message;
+        $("authMsg").className = "min-h-[20px] text-xs font-medium text-white text-center";
+        return;
+      }
+
+      backendMode = "sb";
+      if (isSignUp && !r.session) {
+        $("authMsg").textContent = "Account created! Please check your email to confirm, then sign in.";
+        $("authMsg").className = "min-h-[20px] text-xs font-medium text-blue-400 text-center";
+      }
+    } catch (err) {
+      $("authMsg").textContent = err.message || "Authentication failed.";
+      $("authMsg").className = "min-h-[20px] text-xs font-medium text-white text-center";
+    }
+    return;
+  }
+
+  $("authMsg").textContent = "Backend not connected. Click 'Open Demo Workspace' below to use locally.";
+  $("authMsg").className = "min-h-[20px] text-xs font-medium text-blue-400 text-center";
+}
+
+$("btnIn").onclick = () => signIn(false);
+$("btnUp").onclick = () => signIn(true);
+$("pw").onkeydown = e => { if (e.key === "Enter") signIn(false); };
+
+$("btnDemo").onclick = () => {
+  demo = true;
+  backendMode = "demo";
+  user = { id: "demo_local_user", email: "demo@datalink.local" };
+  openApp();
+};
+
+$("logout").onclick = async () => {
+  if (backendMode === "cf" && cfToken) {
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${cfToken}` }
+      });
+    } catch (e) {}
+    localStorage.removeItem("datalink_cf_token");
+  }
+  if (sb && !demo) await sb.auth.signOut();
+  location.reload();
+};
+
+/* ---------- Workspace Data Storage & Autosave Engine ---------- */
+async function load() {
+  if (backendMode === "cf" && cfToken) {
+    try {
+      const res = await fetch("/api/workspace/load", {
+        headers: { "Authorization": `Bearer ${cfToken}` }
+      });
+      if (res.ok) {
+        const body = await res.json();
+        if (body.data && Array.isArray(body.data.entities)) {
+          data = body.data;
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn("Cloudflare D1 load failed:", e);
+    }
+  }
+
+  if (backendMode === "sb" && sb) {
+    const { data: row, error } = await sb.from("datalink_workspaces")
+      .select("data")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (row && row.data && Array.isArray(row.data.entities)) {
+      data = row.data;
+      return;
+    }
+  }
+
+  // Demo / Local storage
+  try {
+    const saved = localStorage.getItem("datalink_demo_workspace");
+    if (saved) {
+      data = JSON.parse(saved);
+    } else {
+      data = JSON.parse(JSON.stringify(SAMPLE_DATA));
+    }
+  } catch (e) {
+    data = JSON.parse(JSON.stringify(SAMPLE_DATA));
+  }
+}
+
+function queueSave() {
+  if (!ready) return;
+  setStatus("Saving…");
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(save, 1000); // 1-second autosave debounce
+}
+
+async function save() {
+  if (backendMode === "cf" && cfToken) {
+    try {
+      const res = await fetch("/api/workspace/save", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${cfToken}`
+        },
+        body: JSON.stringify({ data })
+      });
+      if (res.ok) {
+        setStatus("All changes saved (Cloudflare D1)");
+      } else {
+        const errJson = await res.json().catch(() => ({}));
+        setStatus("Save failed: " + (errJson.error || "Network error"), true);
+      }
+    } catch (e) {
+      setStatus("Save failed: " + e.message, true);
+    }
+    return;
+  }
+
+  if (backendMode === "sb" && sb) {
+    const { error } = await sb.from("datalink_workspaces").upsert({
+      user_id: user.id,
+      data: data,
+      updated_at: new Date().toISOString()
+    }, { onConflict: "user_id" });
+
+    setStatus(error ? "Save failed: " + error.message : "All changes saved (Supabase)", !!error);
+    return;
+  }
+
+  // Demo mode
+  try {
+    localStorage.setItem("datalink_demo_workspace", JSON.stringify(data));
+    setStatus("All changes saved (Local)");
+  } catch (e) {
+    setStatus("Could not save to browser storage", true);
+  }
+}
+
+function setStatus(text, isError = false) {
+  const st = $("status");
+  const dot = $("statusDot");
+  st.textContent = text;
+  if (isError) {
+    dot.className = "w-2 h-2 rounded-full bg-white shadow-[0_0_8px_#ffffff] animate-ping";
+    st.className = "text-white font-bold";
+  } else if (text.includes("Saving")) {
+    dot.className = "w-2 h-2 rounded-full bg-blue-400 shadow-[0_0_8px_#60a5fa] animate-spin";
+    st.className = "text-blue-300";
+  } else {
+    dot.className = "w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_#3b82f6]";
+    st.className = "text-white/80";
+  }
+}
+
+/* ---------- App Initialization ---------- */
+async function openApp() {
+  $("auth").style.display = "none";
+  $("app").classList.remove("hidden");
+  $("app").classList.add("flex");
+  $("userSection").classList.remove("hidden");
+  $("userSection").classList.add("flex");
+  $("who").textContent = user.email || "Operator";
+  $("who").title = user.email || "";
+
+  // Update header badge
+  if (backendMode === "cf") $("backendBadge").textContent = "Cloudflare D1";
+  else if (backendMode === "sb") $("backendBadge").textContent = "Supabase";
+  else $("backendBadge").textContent = "Demo Mode";
+
+  // Populate Type Selectors
+  const typeOpts = Object.keys(TYPES).map(t => `<option value="${t}">${TYPES[t].i} ${t}</option>`).join("");
+  $("eType").innerHTML = typeOpts;
+  $("sType").innerHTML = typeOpts;
+
+  initMap();
+  initNet();
+  await load();
+  render(true);
+  ready = true;
+  setStatus(backendMode === "cf" ? "Connected (Cloudflare D1)" : (backendMode === "sb" ? "Connected (Supabase)" : "Demo Mode (Local)"));
+
+  setTimeout(() => {
+    if (map) map.invalidateSize();
+    if (net) net.fit();
+  }, 250);
+}
+
+/* ---------- Map Setup: Google Terrain, Satellite & Hybrid ---------- */
+function initMap() {
+  const terrain = L.tileLayer("https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}", {
+    maxZoom: 20,
+    attribution: "Map data © Google"
+  });
+  const sat = L.tileLayer("https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", {
+    maxZoom: 20,
+    attribution: "Imagery © Google"
+  });
+  const hybrid = L.tileLayer("https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}", {
+    maxZoom: 20,
+    attribution: "Map data © Google"
+  });
+
+  map = L.map("map", {
+    layers: [hybrid],
+    zoomControl: true
+  }).setView([48.8566, 2.3522], 4);
+
+  L.control.layers(
+    { "Google Hybrid": hybrid, "Google Satellite": sat, "Google Terrain": terrain },
+    null,
+    { position: "topright" }
+  ).addTo(map);
+
+  lineLayer = L.layerGroup().addTo(map);
+  markerLayer = L.layerGroup().addTo(map);
+
+  map.on("click", e => {
+    if (!picking) return;
+    const latStr = e.latlng.lat.toFixed(6);
+    const lngStr = e.latlng.lng.toFixed(6);
+
+    if (pickTarget === "selected" && selected) {
+      const entity = data.entities.find(x => x.id === selected);
+      if (entity) {
+        entity.lat = parseFloat(latStr);
+        entity.lng = parseFloat(lngStr);
+        $("sLat").value = latStr;
+        $("sLng").value = lngStr;
+        render(false);
+        queueSave();
+      }
+    } else {
+      $("eLat").value = latStr;
+      $("eLng").value = lngStr;
+    }
+    stopPick();
+  });
+}
+
+/* ---------- Link Chart Setup (vis.Network) ---------- */
+function initNet() {
+  nodes = new vis.DataSet();
+  edges = new vis.DataSet();
+
+  const container = $("net");
+  const options = {
+    nodes: {
+      shape: "box",
+      margin: 10,
+      borderWidth: 2,
+      shadow: { enabled: true, color: "rgba(0,0,0,0.8)", size: 8, x: 2, y: 2 },
+      font: {
+        color: "#ffffff",
+        size: 13,
+        face: '"DM Sans", sans-serif',
+        multi: "html"
+      }
+    },
+    edges: {
+      arrows: { to: { enabled: true, scaleFactor: 0.8 } },
+      color: {
+        color: "#2563eb",
+        highlight: "#ffffff",
+        hover: "#3b82f6"
+      },
+      width: 2,
+      font: {
+        color: "#ffffff",
+        size: 11,
+        face: '"DM Sans", sans-serif',
+        strokeWidth: 4,
+        strokeColor: "#000000",
+        align: "middle"
+      },
+      smooth: { type: "cubicBezier", forceDirection: "none", roundness: 0.25 }
+    },
+    physics: {
+      stabilization: { iterations: 120 },
+      barnesHut: { springLength: 150, springConstant: 0.04, damping: 0.09 }
+    },
+    interaction: {
+      hover: true,
+      multiselect: false,
+      tooltipDelay: 100
+    }
+  };
+
+  net = new vis.Network(container, { nodes, edges }, options);
+
+  net.on("selectNode", p => select(p.nodes[0], "net"));
+  net.on("deselectNode", () => select(null, "net"));
+
+  net.on("dragEnd", p => {
+    if (p.nodes && p.nodes.length) {
+      const positions = net.getPositions(p.nodes);
+      p.nodes.forEach(id => {
+        const ent = data.entities.find(x => x.id === id);
+        if (ent && positions[id]) {
+          ent.x = Math.round(positions[id].x);
+          ent.y = Math.round(positions[id].y);
+        }
+      });
+      queueSave();
+    }
+  });
+
+  net.once("stabilizationIterationsDone", () => net.setOptions({ physics: false }));
+}
+
+/* ---------- Rendering Engine ---------- */
+function render(fitAll = false) {
+  nodes.clear();
+  edges.clear();
+  markerLayer.clearLayers();
+  lineLayer.clearLayers();
+
+  const byId = {};
+  let mappedCount = 0;
+
+  data.entities.forEach(e => {
+    byId[e.id] = e;
+    const t = TYPES[e.type] || TYPES.Person;
+    const isSel = e.id === selected;
+
+    const n = {
+      id: e.id,
+      label: `<b>${t.i} ${esc(e.name)}</b>\n<span style="font-size:10px;color:#93c5fd">${esc(e.type)}</span>`,
+      color: {
+        background: isSel ? "#2563eb" : (t.c || "#000000"),
+        border: isSel ? "#ffffff" : (t.border || "#2563eb"),
+        highlight: {
+          background: "#2563eb",
+          border: "#ffffff"
+        }
+      },
+      borderWidth: isSel ? 3 : 2
+    };
+
+    if (e.x != null && e.y != null) {
+      n.x = e.x;
+      n.y = e.y;
+    }
+    nodes.add(n);
+
+    if (e.lat != null && e.lng != null && !isNaN(e.lat) && !isNaN(e.lng)) {
+      mappedCount++;
+      const pinHtml = `
+        <div class="custom-map-pin ${isSel ? 'is-selected' : ''}" style="background-color:${t.c}; border-color:${isSel ? '#ffffff' : t.border};">
+          <i>${t.i}</i>
+        </div>
+      `;
+      const icon = L.divIcon({
+        className: "",
+        iconSize: [32, 32],
+        iconAnchor: [16, 32],
+        popupAnchor: [0, -32],
+        html: pinHtml
+      });
+
+      const marker = L.marker([e.lat, e.lng], { icon, title: e.name }).addTo(markerLayer);
+      marker.bindPopup(`
+        <div class="p-1 min-w-[150px]">
+          <div class="flex items-center gap-1.5 font-bold text-sm text-white mb-1">
+            <span>${t.i}</span>
+            <span>${esc(e.name)}</span>
+          </div>
+          <div class="text-[11px] font-semibold text-blue-400 mb-1.5">${esc(e.type)}</div>
+          ${e.note ? `<div class="text-xs text-white/80 border-t border-blue-900/60 pt-1 leading-snug">${esc(e.note)}</div>` : ''}
+          <div class="text-[10px] text-white/40 mt-1 font-mono">${e.lat.toFixed(4)}, ${e.lng.toFixed(4)}</div>
+        </div>
+      `);
+      marker.on("click", () => select(e.id, "map"));
+    }
+  });
+
+  data.links.forEach(l => {
+    const a = byId[l.from];
+    const b = byId[l.to];
+    if (!a || !b) return;
+
+    edges.add({
+      id: l.id,
+      from: l.from,
+      to: l.to,
+      label: l.label || ""
+    });
+
+    if (a.lat != null && a.lng != null && b.lat != null && b.lng != null) {
+      const isConnectedToSel = selected && (a.id === selected || b.id === selected);
+      const poly = L.polyline([[a.lat, a.lng], [b.lat, b.lng]], {
+        color: isConnectedToSel ? "#ffffff" : "#2563eb",
+        weight: isConnectedToSel ? 3.5 : 2.5,
+        opacity: isConnectedToSel ? 1 : 0.85,
+        dashArray: "6, 6"
+      }).addTo(lineLayer);
+
+      poly.bindTooltip(`${esc(a.name)} → [${esc(l.label || "linked")}] → ${esc(b.name)}`, {
+        sticky: true
+      });
+    }
+  });
+
+  const sortedEntities = [...data.entities].sort((x, y) => x.name.localeCompare(y.name));
+  const optionsHtml = sortedEntities.map(e => `<option value="${e.id}">${esc(e.name)} (${esc(e.type)})</option>`).join("");
+  const currFrom = $("lFrom").value;
+  const currTo = $("lTo").value;
+  $("lFrom").innerHTML = optionsHtml;
+  $("lTo").innerHTML = optionsHtml;
+  if (byId[currFrom]) $("lFrom").value = currFrom;
+  if (byId[currTo]) $("lTo").value = currTo;
+
+  $("statEntities").textContent = data.entities.length;
+  $("statLinks").textContent = data.links.length;
+  $("statMapped").textContent = mappedCount;
+  $("tabCount").textContent = data.entities.length;
+
+  renderList();
+  renderInspector();
+
+  if (fitAll && mappedCount > 0) {
+    const pts = data.entities.filter(e => e.lat != null && e.lng != null).map(e => [e.lat, e.lng]);
+    if (pts.length) {
+      map.fitBounds(pts, { padding: [50, 50], maxZoom: 12 });
+    }
+  }
+}
+
+/* ---------- Synchronized Selection Engine ---------- */
+function select(id, fromSource) {
+  selected = id;
+  render(false);
+
+  if (id && fromSource !== "net" && net) {
+    net.selectNodes([id]);
+  }
+
+  const ent = data.entities.find(x => x.id === id);
+  if (ent && ent.lat != null && ent.lng != null && fromSource !== "map" && map) {
+    map.flyTo([ent.lat, ent.lng], Math.max(map.getZoom(), 8), { duration: 0.8 });
+  }
+
+  if (id) {
+    switchTab("inspect");
+  }
+}
+
+/* ---------- Inspector Panel ---------- */
+function renderInspector() {
+  const e = data.entities.find(x => x.id === selected);
+  if (!e) {
+    $("selEmpty").classList.remove("hidden");
+    $("selForm").classList.add("hidden");
+    return;
+  }
+
+  $("selEmpty").classList.add("hidden");
+  $("selForm").classList.remove("hidden");
+
+  const t = TYPES[e.type] || TYPES.Person;
+  $("sBadgeType").textContent = `${t.i} ${e.type}`;
+  $("sName").value = e.name || "";
+  $("sType").value = e.type || "Person";
+  $("sNote").value = e.note || "";
+  $("sLat").value = e.lat != null ? e.lat : "";
+  $("sLng").value = e.lng != null ? e.lng : "";
+
+  const links = data.links.filter(l => l.from === e.id || l.to === e.id);
+  $("sLinkCount").textContent = links.length;
+
+  if (links.length === 0) {
+    $("sLinksList").innerHTML = `<div class="text-[11px] text-white/40 italic p-2 rounded bg-black border border-blue-950">No relationships connected yet.</div>`;
+  } else {
+    $("sLinksList").innerHTML = links.map(l => {
+      const isOutgoing = l.from === e.id;
+      const otherId = isOutgoing ? l.to : l.from;
+      const other = data.entities.find(x => x.id === otherId);
+      const otherName = other ? other.name : "Unknown";
+      const otherType = other ? (TYPES[other.type] || {}).i || "" : "";
+      return `
+        <div class="flex items-center justify-between p-2 rounded bg-black border border-blue-900/50 hover:border-blue-500 transition text-xs">
+          <div class="truncate mr-2">
+            <span class="text-blue-400 font-bold">${isOutgoing ? "→" : "←"}</span>
+            <span class="text-white/60 font-medium">[${esc(l.label || "linked")}]</span>
+            <span class="text-white font-semibold">${otherType} ${esc(otherName)}</span>
+          </div>
+          <button data-del-link="${l.id}" title="Remove link"
+            class="px-2 py-0.5 rounded border border-white/20 hover:border-white hover:bg-white hover:text-black text-white text-[10px] font-bold transition shrink-0">
+            Remove
+          </button>
+        </div>
+      `;
+    }).join("");
+  }
+
+  $("sLinksList").querySelectorAll("[data-del-link]").forEach(btn => {
+    btn.onclick = ev => {
+      ev.stopPropagation();
+      const lid = btn.dataset.delLink;
+      data.links = data.links.filter(l => l.id !== lid);
+      render(false);
+      queueSave();
+    };
+  });
+}
+
+function updateSelectedFromForm() {
+  const e = data.entities.find(x => x.id === selected);
+  if (!e) return;
+  e.name = $("sName").value.trim() || e.name;
+  e.type = $("sType").value;
+  e.note = $("sNote").value.trim();
+
+  const latVal = parseFloat($("sLat").value);
+  const lngVal = parseFloat($("sLng").value);
+  if (!isNaN(latVal) && !isNaN(lngVal)) {
+    e.lat = latVal;
+    e.lng = lngVal;
+  } else {
+    delete e.lat;
+    delete e.lng;
+  }
+
+  render(false);
+  queueSave();
+}
+
+["sName", "sType", "sNote", "sLat", "sLng"].forEach(id => {
+  $(id).onchange = updateSelectedFromForm;
+  $(id).oninput = () => {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(updateSelectedFromForm, 400);
+  };
+});
+
+$("sBtnDeselect").onclick = () => select(null);
+
+$("delE").onclick = () => {
+  const e = data.entities.find(x => x.id === selected);
+  if (!e) return;
+  if (!confirm(`Permanently delete "${e.name}" and all associated links?`)) return;
+
+  data.entities = data.entities.filter(x => x.id !== e.id);
+  data.links = data.links.filter(l => l.from !== e.id && l.to !== e.id);
+  selected = null;
+  render(false);
+  queueSave();
+  switchTab("list");
+};
+
+$("sPickBtn").onclick = () => {
+  if (picking) { stopPick(); return; }
+  startPick("selected");
+};
+
+/* ---------- Directory List Tab ---------- */
+function renderList() {
+  const q = ($("listSearch").value || "").toLowerCase().trim();
+  const filtered = data.entities.filter(e => {
+    if (!q) return true;
+    return e.name.toLowerCase().includes(q) || e.type.toLowerCase().includes(q) || (e.note && e.note.toLowerCase().includes(q));
+  });
+
+  if (!filtered.length) {
+    $("list").innerHTML = `<div class="text-xs text-white/50 text-center py-6">${data.entities.length === 0 ? "No entities added yet." : "No matching entities found."}</div>`;
+    return;
+  }
+
+  $("list").innerHTML = filtered.map(e => {
+    const t = TYPES[e.type] || TYPES.Person;
+    const isSel = e.id === selected;
+    const isMapped = e.lat != null && e.lng != null;
+    return `
+      <div data-id="${e.id}" class="flex items-center gap-2 p-2 rounded-lg cursor-pointer transition border ${isSel ? 'bg-blue-950/70 border-blue-500 shadow-md shadow-blue-950' : 'bg-black border-blue-950 hover:border-blue-800 hover:bg-blue-950/20'}">
+        <span class="text-base">${t.i}</span>
+        <div class="flex-1 min-w-0">
+          <div class="text-xs font-semibold text-white truncate">${esc(e.name)}</div>
+          <div class="text-[10px] text-white/50">${esc(e.type)}</div>
+        </div>
+        ${isMapped ? `<span class="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase bg-blue-950 border border-blue-900 text-blue-400">Map</span>` : ''}
+      </div>
+    `;
+  }).join("");
+}
+
+$("list").onclick = e => {
+  const row = e.target.closest("[data-id]");
+  if (row) select(row.dataset.id, "list");
+};
+$("listSearch").oninput = renderList;
+
+/* ---------- Tab Navigation ---------- */
+function switchTab(tab) {
+  ["Create", "Inspect", "List"].forEach(t => {
+    $(`tabContent${t}`).classList.add("hidden");
+    $(`tabBtn${t}`).className = "flex-1 py-1.5 text-xs font-semibold rounded-md text-white/60 hover:text-white hover:bg-blue-950/40 transition";
+  });
+
+  const cap = tab.charAt(0).toUpperCase() + tab.slice(1);
+  $(`tabContent${cap}`).classList.remove("hidden");
+  $(`tabBtn${cap}`).className = "flex-1 py-1.5 text-xs font-semibold rounded-md bg-blue-600 text-white transition";
+}
+$("tabBtnCreate").onclick = () => switchTab("create");
+$("tabBtnInspect").onclick = () => switchTab("inspect");
+$("tabBtnList").onclick = () => switchTab("list");
+
+/* ---------- Actions: Adding Entities & Links ---------- */
+$("addE").onclick = () => {
+  const name = $("eName").value.trim();
+  if (!name) { $("eName").focus(); return; }
+
+  const e = {
+    id: uid(),
+    name,
+    type: $("eType").value,
+    note: $("eNote").value.trim()
+  };
+
+  const lat = parseFloat($("eLat").value);
+  const lng = parseFloat($("eLng").value);
+  if (!isNaN(lat) && !isNaN(lng)) {
+    e.lat = lat;
+    e.lng = lng;
+  }
+
+  data.entities.push(e);
+  $("eName").value = "";
+  $("eLat").value = "";
+  $("eLng").value = "";
+  $("eNote").value = "";
+
+  selected = e.id;
+  render(false);
+  queueSave();
+
+  if (e.lat != null && e.lng != null && map) {
+    map.flyTo([e.lat, e.lng], Math.max(map.getZoom(), 8));
+  }
+};
+
+$("addL").onclick = () => {
+  const from = $("lFrom").value;
+  const to = $("lTo").value;
+  if (!from || !to || from === to) {
+    alert("Please select two distinct entities to establish a relationship.");
+    return;
+  }
+  const label = $("lLabel").value.trim();
+  data.links.push({
+    id: uid(),
+    from,
+    to,
+    label
+  });
+
+  $("lLabel").value = "";
+  render(false);
+  queueSave();
+};
+
+/* ---------- Map Coordinate Picking Tool ---------- */
+function startPick(target = "new") {
+  picking = true;
+  pickTarget = target;
+  map.getContainer().classList.add("pick-crosshair");
+  $("mapPickBanner").classList.remove("hidden");
+  $("pickHint").textContent = "Click any point on the map to set coordinates.";
+  $("pickHint").classList.remove("hidden");
+  $("pickBtn").textContent = "Cancel Pick";
+  $("pickBtn").className = "w-full py-2 px-3 rounded-lg bg-blue-600 text-white font-semibold text-xs transition";
+}
+
+function stopPick() {
+  picking = false;
+  map.getContainer().classList.remove("pick-crosshair");
+  $("mapPickBanner").classList.add("hidden");
+  $("pickHint").classList.add("hidden");
+  $("pickBtn").textContent = "📍 Pick on map";
+  $("pickBtn").className = "w-full py-2 px-3 rounded-lg bg-black border border-blue-500 text-blue-400 hover:bg-blue-600 hover:text-white font-semibold text-xs transition";
+}
+
+$("pickBtn").onclick = () => {
+  if (picking) stopPick();
+  else startPick("new");
+};
+$("cancelPickBtn").onclick = stopPick;
+
+/* ---------- Network Tools (Fit & Stabilize) ---------- */
+$("btnFitNet").onclick = () => {
+  if (net) net.fit({ animation: { duration: 600, easingFunction: "easeInOutQuad" } });
+};
+$("btnStabilizeNet").onclick = () => {
+  if (net) {
+    net.setOptions({ physics: true });
+    net.stabilize();
+    setTimeout(() => net.setOptions({ physics: false }), 2000);
+  }
+};
+
+/* ---------- Sample Data & Workspace Management ---------- */
+$("btnSampleData").onclick = () => {
+  if (data.entities.length && !confirm("Replace current workspace with the Intelligence Sample Dataset?")) return;
+  data = JSON.parse(JSON.stringify(SAMPLE_DATA));
+  selected = null;
+  render(true);
+  queueSave();
+  setTimeout(() => { if (net) net.fit(); }, 200);
+};
+
+$("btnClearData").onclick = () => {
+  if (!confirm("Clear all entities and relationships in this workspace?")) return;
+  data = { entities: [], links: [] };
+  selected = null;
+  render(false);
+  queueSave();
+};
+
+// Auto-save on page exit
+window.addEventListener("beforeunload", () => {
+  if (saveTimer && ready) {
+    clearTimeout(saveTimer);
+    save();
+  }
+});
+</script>
+</body>
+</html>
