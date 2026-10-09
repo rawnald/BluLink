@@ -145,3 +145,4 @@ export async function onRequestDelete({ request, env, params }) {
     return error(err.message || "Failed to delete project", 500);
   }
 }
+

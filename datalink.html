@@ -335,9 +335,6 @@
     <!-- Brand (Uploaded Full Logo) -->
     <div class="flex items-center gap-2">
       <img src="assets/logo-full.png" alt="BluLink" class="h-8 object-contain">
-      <span class="hidden sm:inline-block text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded border border-blue-600 text-blue-600 bg-blue-50 font-bold">
-        Cloudflare D1
-      </span>
     </div>
 
     <!-- Project Switcher & Management -->
@@ -374,12 +371,12 @@
     </div>
   </div>
 
-  <!-- Header Right (Storage Status, User & Actions) -->
+  <!-- Header Right (User & Actions) -->
   <div class="flex items-center gap-3">
-    <!-- Storage & Autosave Status Indicator -->
-    <div class="flex items-center gap-2 px-3 py-1 rounded-full border border-black/20 bg-white text-xs font-medium">
+    <!-- Autosave Status Dot (Minimal) -->
+    <div id="statusContainer" class="hidden items-center gap-1.5 text-xs">
       <span id="statusDot" class="w-2 h-2 rounded-full bg-blue-600"></span>
-      <span id="status" class="text-black font-semibold">Cloudflare R2</span>
+      <span id="status" class="text-black font-semibold text-[11px]"></span>
     </div>
 
     <!-- User identity / Sign out -->
@@ -1087,7 +1084,7 @@ async function selectProject(projectId) {
       }
       render(true);
       ready = true;
-      setStatus("Cloudflare R2 Synced");
+      setStatus("All changes saved");
       return;
     }
   } catch (e) {
@@ -1249,7 +1246,6 @@ async function openApp() {
   await loadProjectsList();
   render(true);
   ready = true;
-  setStatus("Cloudflare R2 Synchronized");
 
   setTimeout(() => {
     if (map) map.invalidateSize();
