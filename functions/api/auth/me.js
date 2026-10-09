@@ -11,3 +11,4 @@ export async function onRequestGet({ request, env }) {
     return error(err.message || "Failed to authenticate", 500);
   }
 }
+

@@ -63,3 +63,4 @@ export async function getSessionUser(request, env) {
     token: row.token
   };
 }
+

@@ -58,3 +58,4 @@ export async function onRequestPost({ request, env }) {
     return error(err.message || "Sign up failed", 500);
   }
 }
+

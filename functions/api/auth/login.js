@@ -47,3 +47,4 @@ export async function onRequestPost({ request, env }) {
     return error(err.message || "Login failed", 500);
   }
 }
+

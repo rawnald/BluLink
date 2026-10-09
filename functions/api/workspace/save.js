@@ -26,3 +26,4 @@ export async function onRequestPost({ request, env }) {
     return error(err.message || "Failed to save workspace", 500);
   }
 }
+

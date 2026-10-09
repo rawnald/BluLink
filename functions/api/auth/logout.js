@@ -11,3 +11,4 @@ export async function onRequestPost({ request, env }) {
 
   return json({ success: true });
 }
+

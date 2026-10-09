@@ -31,3 +31,4 @@ export async function onRequestGet({ request, env }) {
     return error(err.message || "Failed to load workspace", 500);
   }
 }
+
