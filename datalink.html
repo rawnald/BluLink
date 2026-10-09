@@ -175,6 +175,11 @@
   .pick-crosshair {
     cursor: crosshair !important;
   }
+
+  /* Modal stacking above all Leaflet map tiles, popups, and controls (Leaflet z-indexes go up to 1000) */
+  #newProjectModal {
+    z-index: 99999 !important;
+  }
 </style>
 </head>
 
@@ -288,8 +293,8 @@
 </div>
 
 <!-- ==================== NEW PROJECT MODAL ==================== -->
-<div id="newProjectModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-  <div class="w-full max-w-sm bg-white border-2 border-black rounded-2xl p-6 shadow-2xl space-y-4">
+<div id="newProjectModal" class="hidden fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+  <div class="w-full max-w-sm bg-white border-2 border-black rounded-2xl p-6 shadow-2xl space-y-4 relative z-10">
     <div class="flex items-center justify-between border-b border-black/15 pb-3">
       <h3 class="text-sm font-bold text-black flex items-center gap-2">
         <span class="w-2 h-2 rounded-full bg-blue-600"></span>
