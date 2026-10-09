@@ -78,38 +78,7 @@ export async function onRequestGet({ request, env }) {
       ORDER BY updated_at DESC
     `).bind(user.id).all();
 
-    // If user has zero projects, create a default "Main Project" (migrate from old single workspace if present)
-    if (!results || results.length === 0) {
-      const oldWs = await env.DB.prepare(`
-        SELECT data FROM workspaces WHERE user_id = ?
-      `).bind(user.id).first().catch(() => null);
-
-      const initialData = oldWs && oldWs.data ? oldWs.data : JSON.stringify({ entities: [], links: [] });
-      const newProjId = "proj_" + randomHex(8);
-      const newProjName = "Main Project";
-
-      await env.DB.prepare(`
-        INSERT INTO projects (id, user_id, name, description, data)
-        VALUES (?, ?, ?, 'Default Project Workspace', ?)
-      `).bind(newProjId, user.id, newProjName, initialData).run();
-
-      // Store into R2 if bucket exists
-      if (env.PROJECTS_BUCKET) {
-        await env.PROJECTS_BUCKET.put(`users/${user.id}/projects/${newProjId}.json`, initialData, {
-          httpMetadata: { contentType: "application/json" }
-        }).catch(() => {});
-      }
-
-      results = [{
-        id: newProjId,
-        name: newProjName,
-        description: "Default Project Workspace",
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }];
-    }
-
-    return json({ projects: results });
+    return json({ projects: results || [] });
   } catch (err) {
     return error(err.message || "Failed to list projects", 500);
   }

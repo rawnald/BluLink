@@ -339,22 +339,26 @@
 
     <!-- Project Switcher & Management -->
     <div class="flex items-center gap-2 border-l border-black/15 pl-4">
-      <div class="relative">
-        <select id="projectSelect" class="bg-white border-2 border-black rounded-lg px-2.5 py-1 text-xs font-bold text-black focus:outline-none focus:border-blue-600 transition cursor-pointer max-w-[170px] sm:max-w-[210px] truncate">
-          <option value="">Loading Projects…</option>
-        </select>
+      <!-- Standalone New Project Button (Shown when user has 0 projects) -->
+      <button id="btnInitialNewProject" title="Create Your First Project"
+        class="hidden items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-sm">
+        <span class="text-sm font-bold leading-none">+</span>
+        <span>New Project</span>
+      </button>
+
+      <!-- Project Dropdown (Shown once projects exist, with '+ New Project' inside dropdown) -->
+      <div id="projectDropdownContainer" class="hidden items-center gap-2">
+        <div class="relative">
+          <select id="projectSelect" class="bg-white border-2 border-black rounded-lg px-2.5 py-1 text-xs font-bold text-black focus:outline-none focus:border-blue-600 transition cursor-pointer max-w-[170px] sm:max-w-[210px] truncate">
+            <option value="">Loading Projects…</option>
+          </select>
+        </div>
+
+        <button id="btnDeleteProject" title="Delete Active Project"
+          class="flex items-center px-2 py-1 rounded-lg border border-black/20 hover:border-black text-black/60 hover:text-black text-xs font-bold transition">
+          🗑️
+        </button>
       </div>
-
-      <button id="btnNewProject" title="Create New Project"
-        class="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-sm">
-        <span class="text-sm leading-none">+</span>
-        <span class="hidden md:inline">New Project</span>
-      </button>
-
-      <button id="btnDeleteProject" title="Delete Active Project"
-        class="hidden sm:flex items-center px-2 py-1 rounded-lg border border-black/20 hover:border-black text-black/60 hover:text-black text-xs font-bold transition">
-        🗑️
-      </button>
     </div>
 
     <!-- Quick Stats -->
@@ -1051,16 +1055,42 @@ async function loadProjectsList() {
 
 function renderProjectSelect() {
   const sel = $("projectSelect");
-  if (!sel) return;
+  const initialBtn = $("btnInitialNewProject");
+  const dropdownContainer = $("projectDropdownContainer");
+
   if (!projects || projects.length === 0) {
-    sel.innerHTML = `<option value="">No Projects</option>`;
+    // When there is NO project yet: show only the standalone New Project button
+    if (initialBtn) {
+      initialBtn.classList.remove("hidden");
+      initialBtn.classList.add("flex");
+    }
+    if (dropdownContainer) {
+      dropdownContainer.classList.add("hidden");
+      dropdownContainer.classList.remove("flex");
+    }
+    if (sel) sel.innerHTML = `<option value="">No Projects</option>`;
     return;
   }
-  sel.innerHTML = projects.map(p => `
+
+  // When projects exist: hide standalone button, show dropdown container
+  if (initialBtn) {
+    initialBtn.classList.add("hidden");
+    initialBtn.classList.remove("flex");
+  }
+  if (dropdownContainer) {
+    dropdownContainer.classList.remove("hidden");
+    dropdownContainer.classList.add("flex");
+  }
+
+  // Populate dropdown with projects + '+ New Project' action at bottom
+  let html = projects.map(p => `
     <option value="${p.id}" ${p.id === currentProjectId ? "selected" : ""}>
       📁 ${esc(p.name)}
     </option>
   `).join("");
+
+  html += `<option value="__NEW_PROJECT__" class="font-bold text-blue-600 bg-blue-50">+ New Project…</option>`;
+  if (sel) sel.innerHTML = html;
 }
 
 async function selectProject(projectId) {
@@ -1097,18 +1127,26 @@ async function selectProject(projectId) {
 
 $("projectSelect").onchange = e => {
   const pid = e.target.value;
+  if (pid === "__NEW_PROJECT__") {
+    // Re-select current project in UI while modal is open
+    renderProjectSelect();
+    openNewProjectModal();
+    return;
+  }
   if (pid && pid !== currentProjectId) {
     selectProject(pid);
   }
 };
 
-// Modal handlers for New Project
-$("btnNewProject").onclick = () => {
+function openNewProjectModal() {
   $("newProjectName").value = "";
   $("newProjectDesc").value = "";
   $("newProjectModal").classList.remove("hidden");
   $("newProjectName").focus();
-};
+}
+
+// Modal handlers for New Project
+$("btnInitialNewProject").onclick = openNewProjectModal;
 
 $("btnCloseProjectModal").onclick = () => {
   $("newProjectModal").classList.add("hidden");
