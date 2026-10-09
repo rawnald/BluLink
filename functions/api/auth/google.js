@@ -18,7 +18,7 @@ export async function onRequestPost({ request, env }) {
     }
 
     const payload = await googleRes.json();
-    const { email, sub: googleId, email_verified } = payload;
+    const { email, sub: googleId } = payload;
 
     if (!email) {
       return error("Google profile did not provide an email address.", 400);
@@ -33,10 +33,10 @@ export async function onRequestPost({ request, env }) {
 
     let userId;
     if (!user) {
-      // Create new user in Cloudflare D1
+      // Create new user in Cloudflare D1 (Google accounts are automatically email_verified = 1)
       userId = "g_" + randomHex(8);
       await env.DB.prepare(`
-        INSERT INTO users (id, email, auth_provider, google_id) VALUES (?, ?, 'google', ?)
+        INSERT INTO users (id, email, auth_provider, google_id, email_verified) VALUES (?, ?, 'google', ?, 1)
       `).bind(userId, trimmedEmail, googleId).run();
 
       // Initialize empty workspace for new Google user in D1
@@ -45,9 +45,9 @@ export async function onRequestPost({ request, env }) {
       `).bind(userId, JSON.stringify({ entities: [], links: [] })).run();
     } else {
       userId = user.id;
-      // Update google_id if missing
+      // Update google_id and mark email as verified
       await env.DB.prepare(`
-        UPDATE users SET google_id = ?, auth_provider = 'google' WHERE id = ?
+        UPDATE users SET google_id = ?, auth_provider = 'google', email_verified = 1 WHERE id = ?
       `).bind(googleId, userId).run();
     }
 

@@ -15,7 +15,7 @@ export async function onRequestPost({ request, env }) {
 
     // Query user by email
     const user = await env.DB.prepare(`
-      SELECT id, email, password_hash, salt, auth_provider FROM users WHERE email = ?
+      SELECT id, email, password_hash, salt, auth_provider, email_verified FROM users WHERE email = ?
     `).bind(trimmedEmail).first();
 
     if (!user) {
@@ -30,6 +30,15 @@ export async function onRequestPost({ request, env }) {
     const computedHash = await hashPassword(password, user.salt);
     if (computedHash !== user.password_hash) {
       return error("Invalid email or password.", 401);
+    }
+
+    // Check if email has been confirmed
+    if (user.email_verified === 0) {
+      return json({
+        require_verification: true,
+        email: user.email,
+        error: "Please confirm your email first before entering the workspace."
+      }, 403);
     }
 
     // Create session token valid for 30 days
