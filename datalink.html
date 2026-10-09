@@ -287,6 +287,48 @@
   </div>
 </div>
 
+<!-- ==================== NEW PROJECT MODAL ==================== -->
+<div id="newProjectModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+  <div class="w-full max-w-sm bg-white border-2 border-black rounded-2xl p-6 shadow-2xl space-y-4">
+    <div class="flex items-center justify-between border-b border-black/15 pb-3">
+      <h3 class="text-sm font-bold text-black flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-blue-600"></span>
+        Create New Project
+      </h3>
+      <button id="btnCloseProjectModal" class="text-black/60 hover:text-black font-bold text-sm">✕</button>
+    </div>
+
+    <div class="space-y-3">
+      <div>
+        <label for="newProjectName" class="block text-xs font-bold text-black uppercase tracking-wider mb-1">Project Name</label>
+        <input id="newProjectName" placeholder="e.g. Operation Blue Horizon"
+          class="w-full px-3 py-2 rounded-lg bg-white border-2 border-black/30 text-black text-sm focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600">
+      </div>
+
+      <div>
+        <label for="newProjectDesc" class="block text-xs font-bold text-black uppercase tracking-wider mb-1">Description (Optional)</label>
+        <input id="newProjectDesc" placeholder="e.g. Pacific maritime intelligence & link analysis"
+          class="w-full px-3 py-2 rounded-lg bg-white border-2 border-black/30 text-black text-sm focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600">
+      </div>
+
+      <div class="p-2.5 rounded-lg bg-blue-50 border border-blue-200 text-[11px] text-black">
+        <span class="font-bold text-blue-600">Storage:</span> Stored safely in <strong>Cloudflare R2 Object Storage</strong>.
+      </div>
+
+      <div class="flex items-center gap-2 pt-2">
+        <button id="btnCreateProjectSubmit"
+          class="flex-1 py-2 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow transition">
+          Create Project
+        </button>
+        <button id="btnCancelProjectSubmit"
+          class="py-2 px-3 rounded-lg border border-black text-black hover:bg-black hover:text-white font-bold text-xs transition">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ==================== HEADER ==================== -->
 <header class="h-14 shrink-0 bg-white border-b-2 border-black/10 px-4 flex items-center justify-between z-30">
   <div class="flex items-center gap-4">
@@ -298,8 +340,28 @@
       </span>
     </div>
 
+    <!-- Project Switcher & Management -->
+    <div class="flex items-center gap-2 border-l border-black/15 pl-4">
+      <div class="relative">
+        <select id="projectSelect" class="bg-white border-2 border-black rounded-lg px-2.5 py-1 text-xs font-bold text-black focus:outline-none focus:border-blue-600 transition cursor-pointer max-w-[170px] sm:max-w-[210px] truncate">
+          <option value="">Loading Projects…</option>
+        </select>
+      </div>
+
+      <button id="btnNewProject" title="Create New Project"
+        class="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-sm">
+        <span class="text-sm leading-none">+</span>
+        <span class="hidden md:inline">New Project</span>
+      </button>
+
+      <button id="btnDeleteProject" title="Delete Active Project"
+        class="hidden sm:flex items-center px-2 py-1 rounded-lg border border-black/20 hover:border-black text-black/60 hover:text-black text-xs font-bold transition">
+        🗑️
+      </button>
+    </div>
+
     <!-- Quick Stats -->
-    <div id="quickStats" class="hidden sm:flex items-center gap-2 text-xs border-l border-black/15 pl-4 text-black">
+    <div id="quickStats" class="hidden xl:flex items-center gap-2 border-l border-black/15 pl-4 text-black">
       <span class="px-2 py-0.5 rounded bg-slate-50 border border-black/20 text-black font-semibold">
         <span id="statEntities" class="text-blue-600 font-bold">0</span> entities
       </span>
@@ -312,12 +374,12 @@
     </div>
   </div>
 
-  <!-- Header Right (Autosave Status, User & Actions) -->
+  <!-- Header Right (Storage Status, User & Actions) -->
   <div class="flex items-center gap-3">
-    <!-- Autosave Status Indicator -->
+    <!-- Storage & Autosave Status Indicator -->
     <div class="flex items-center gap-2 px-3 py-1 rounded-full border border-black/20 bg-white text-xs font-medium">
       <span id="statusDot" class="w-2 h-2 rounded-full bg-blue-600"></span>
-      <span id="status" class="text-black font-semibold">Cloudflare D1</span>
+      <span id="status" class="text-black font-semibold">Cloudflare R2</span>
     </div>
 
     <!-- User identity / Sign out -->
@@ -596,6 +658,8 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 let cfToken = localStorage.getItem("blulink_cf_token") || null;
 let user = null;
 let data = { entities: [], links: [] };
+let projects = [];
+let currentProjectId = null;
 let selected = null, picking = false, pickTarget = "new", saveTimer = null, ready = false;
 let isSignUpMode = false;
 let pendingEmail = "";
@@ -964,37 +1028,174 @@ $("logout").onclick = async () => {
   location.reload();
 };
 
-/* ---------- Cloudflare D1 Workspace Persistence ---------- */
-async function loadWorkspace() {
+/* ---------- Cloudflare R2 Multi-Project Persistence ---------- */
+async function loadProjectsList() {
   if (!cfToken) return;
   try {
-    const res = await fetch("/api/workspace/load", {
+    const res = await fetch("/api/projects", {
+      headers: { "Authorization": `Bearer ${cfToken}` }
+    });
+    if (res.ok) {
+      const body = await res.json();
+      projects = body.projects || [];
+      renderProjectSelect();
+      if (projects.length > 0) {
+        // Switch to the first project or previous active project
+        const savedProjId = localStorage.getItem("blulink_active_project");
+        const found = projects.find(p => p.id === savedProjId);
+        const targetId = found ? found.id : projects[0].id;
+        await selectProject(targetId);
+      }
+    }
+  } catch (e) {
+    setStatus("Failed to load projects: " + e.message, true);
+  }
+}
+
+function renderProjectSelect() {
+  const sel = $("projectSelect");
+  if (!sel) return;
+  if (!projects || projects.length === 0) {
+    sel.innerHTML = `<option value="">No Projects</option>`;
+    return;
+  }
+  sel.innerHTML = projects.map(p => `
+    <option value="${p.id}" ${p.id === currentProjectId ? "selected" : ""}>
+      📁 ${esc(p.name)}
+    </option>
+  `).join("");
+}
+
+async function selectProject(projectId) {
+  if (!projectId || !cfToken) return;
+  ready = false;
+  currentProjectId = projectId;
+  localStorage.setItem("blulink_active_project", projectId);
+  renderProjectSelect();
+
+  setStatus("Loading Project from R2…");
+  try {
+    const res = await fetch(`/api/projects/${projectId}`, {
       headers: { "Authorization": `Bearer ${cfToken}` }
     });
     if (res.ok) {
       const body = await res.json();
       if (body.data && Array.isArray(body.data.entities)) {
         data = body.data;
-        return;
+      } else {
+        data = { entities: [], links: [] };
       }
+      render(true);
+      ready = true;
+      setStatus("Cloudflare R2 Synced");
+      return;
     }
   } catch (e) {
-    setStatus("Failed to load Cloudflare D1 workspace: " + e.message, true);
+    setStatus("Load error: " + e.message, true);
   }
   data = { entities: [], links: [] };
+  render(true);
+  ready = true;
 }
 
+$("projectSelect").onchange = e => {
+  const pid = e.target.value;
+  if (pid && pid !== currentProjectId) {
+    selectProject(pid);
+  }
+};
+
+// Modal handlers for New Project
+$("btnNewProject").onclick = () => {
+  $("newProjectName").value = "";
+  $("newProjectDesc").value = "";
+  $("newProjectModal").classList.remove("hidden");
+  $("newProjectName").focus();
+};
+
+$("btnCloseProjectModal").onclick = () => {
+  $("newProjectModal").classList.add("hidden");
+};
+$("btnCancelProjectSubmit").onclick = () => {
+  $("newProjectModal").classList.add("hidden");
+};
+
+$("btnCreateProjectSubmit").onclick = async () => {
+  const name = $("newProjectName").value.trim();
+  if (!name) {
+    alert("Please enter a project name.");
+    return;
+  }
+  const description = $("newProjectDesc").value.trim();
+
+  setStatus("Creating project in R2…");
+  try {
+    const res = await fetch("/api/projects", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${cfToken}`
+      },
+      body: JSON.stringify({ name, description })
+    });
+    const body = await res.json();
+    if (!res.ok) {
+      alert(body.error || "Failed to create project");
+      return;
+    }
+    $("newProjectModal").classList.add("hidden");
+    projects.unshift(body.project);
+    await selectProject(body.project.id);
+    setStatus("New project active");
+  } catch (e) {
+    alert("Error creating project: " + e.message);
+  }
+};
+
+$("newProjectName").onkeydown = e => {
+  if (e.key === "Enter") $("btnCreateProjectSubmit").click();
+};
+
+// Delete active project
+$("btnDeleteProject").onclick = async () => {
+  if (!currentProjectId) return;
+  const current = projects.find(p => p.id === currentProjectId);
+  const projName = current ? current.name : "this project";
+  if (!confirm(`Are you sure you want to delete "${projName}"? All entity and geospatial link data stored in R2 will be removed.`)) {
+    return;
+  }
+
+  setStatus("Deleting project…");
+  try {
+    const res = await fetch(`/api/projects/${currentProjectId}`, {
+      method: "DELETE",
+      headers: { "Authorization": `Bearer ${cfToken}` }
+    });
+    if (res.ok) {
+      projects = projects.filter(p => p.id !== currentProjectId);
+      if (projects.length > 0) {
+        await selectProject(projects[0].id);
+      } else {
+        await loadProjectsList();
+      }
+      setStatus("Project deleted");
+    }
+  } catch (e) {
+    alert("Failed to delete project: " + e.message);
+  }
+};
+
 function queueSave() {
-  if (!ready) return;
-  setStatus("Saving…");
+  if (!ready || !currentProjectId) return;
+  setStatus("Saving to R2…");
   clearTimeout(saveTimer);
   saveTimer = setTimeout(saveWorkspace, 1000);
 }
 
 async function saveWorkspace() {
-  if (!cfToken) return;
+  if (!cfToken || !currentProjectId) return;
   try {
-    const res = await fetch("/api/workspace/save", {
+    const res = await fetch(`/api/projects/${currentProjectId}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -1003,7 +1204,7 @@ async function saveWorkspace() {
       body: JSON.stringify({ data })
     });
     if (res.ok) {
-      setStatus("All changes saved");
+      setStatus("All changes saved to R2");
     } else {
       const errJson = await res.json().catch(() => ({}));
       setStatus("Save failed: " + (errJson.error || "Error"), true);
@@ -1045,10 +1246,10 @@ async function openApp() {
 
   initMap();
   initNet();
-  await loadWorkspace();
+  await loadProjectsList();
   render(true);
   ready = true;
-  setStatus("Cloudflare D1 Synchronized");
+  setStatus("Cloudflare R2 Synchronized");
 
   setTimeout(() => {
     if (map) map.invalidateSize();
