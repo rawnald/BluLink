@@ -42,3 +42,4 @@ export async function onRequestPost({ request, env }) {
     return error(err.message || "Failed to resend confirmation code", 500);
   }
 }
+

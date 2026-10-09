@@ -72,3 +72,4 @@ export async function onRequestPost({ request, env }) {
     return error(err.message || "Email verification failed", 500);
   }
 }
+
