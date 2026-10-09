@@ -1,10 +1,11 @@
 {
-  "name": "datalink",
+  "name": "blulink",
   "version": "1.0.0",
   "description": "Entity Link Analysis & Geospatial Intelligence with Cloudflare D1 and Tailwind CSS",
   "main": "index.html",
   "scripts": {
     "dev": "wrangler pages dev . --d1 DB=datalink-db",
+    "deploy": "wrangler pages deploy .",
     "d1:create": "wrangler d1 create datalink-db",
     "d1:migrate:local": "wrangler d1 execute datalink-db --local --file=./schema.sql",
     "d1:migrate:remote": "wrangler d1 execute datalink-db --remote --file=./schema.sql"
@@ -22,4 +23,3 @@
   "author": "",
   "license": "MIT"
 }
-
