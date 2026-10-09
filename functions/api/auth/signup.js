@@ -20,8 +20,11 @@ export async function onRequestPost({ request, env }) {
     }
 
     // Check if user already exists
-    const existing = await env.DB.prepare("SELECT id FROM users WHERE email = ?").bind(trimmedEmail).first();
+    const existing = await env.DB.prepare("SELECT id, auth_provider FROM users WHERE email = ?").bind(trimmedEmail).first();
     if (existing) {
+      if (existing.auth_provider === "google") {
+        return error("This email is registered via Google. Please sign in with Google.");
+      }
       return error("An account with this email already exists. Please sign in instead.");
     }
 
@@ -31,7 +34,7 @@ export async function onRequestPost({ request, env }) {
 
     // Insert user into D1
     await env.DB.prepare(`
-      INSERT INTO users (id, email, password_hash, salt) VALUES (?, ?, ?, ?)
+      INSERT INTO users (id, email, password_hash, salt, auth_provider) VALUES (?, ?, ?, ?, 'local')
     `).bind(userId, trimmedEmail, passwordHash, salt).run();
 
     // Create session token valid for 30 days
@@ -58,4 +61,3 @@ export async function onRequestPost({ request, env }) {
     return error(err.message || "Sign up failed", 500);
   }
 }
-

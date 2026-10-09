@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-black text-white">
+<html lang="en" class="h-full bg-white text-black">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>DataLink — Link Analysis & Geospatial Intelligence</title>
+<title>BluLink — Secure Link Analysis & Geospatial Intelligence</title>
 
 <!-- Fonts: DM Sans -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,8 +17,8 @@
 <!-- Vis.js Network -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.9/standalone/umd/vis-network.min.js"></script>
 
-<!-- Supabase JS (Fallback / Alternative Backend) -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<!-- Google Identity Services (GIS) for Google OAuth Sign-In -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <!-- Tailwind CSS CDN -->
 <script src="https://cdn.tailwindcss.com"></script>
@@ -35,7 +35,7 @@
             'blue-hover': '#1d4ed8',
             'blue-light': '#3b82f6',
             'blue-dark': '#1e40af',
-            'blue-subtle': '#172554',
+            'blue-subtle': '#eff6ff',
           }
         }
       }
@@ -43,86 +43,60 @@
   }
 </script>
 
-<!--
-=============================================================================
-CLOUDFLARE D1 & SUPABASE SETUP GUIDE
-=============================================================================
-Option A (Recommended): Cloudflare D1 & Pages
-1. Deploy this repository to Cloudflare Pages (connected via GitHub).
-2. Create D1 database: npx wrangler d1 create datalink-db
-3. Run migrations: npx wrangler d1 execute datalink-db --remote --file=./schema.sql
-4. Bind D1 database as 'DB' in Cloudflare Pages Settings -> Functions.
-
-Option B: Supabase
-Run this SQL once in Supabase SQL editor:
-   create table datalink_workspaces (
-     user_id uuid primary key references auth.users(id) on delete cascade,
-     data jsonb not null default '{}',
-     updated_at timestamptz default now()
-   );
-   alter table datalink_workspaces enable row level security;
-   create policy "own workspace" on datalink_workspaces
-     for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
-=============================================================================
--->
-
 <style>
   * {
     box-sizing: border-box;
     font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
   }
   
-  /* Scrollbars */
+  /* Scrollbars: 3 Colors Only (White, Black, Blue) */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
   }
   ::-webkit-scrollbar-track {
-    background: #000000;
+    background: #ffffff;
   }
   ::-webkit-scrollbar-thumb {
-    background: #1e3a8a;
+    background: #cbd5e1;
     border-radius: 3px;
   }
   ::-webkit-scrollbar-thumb:hover {
     background: #2563eb;
   }
 
-  /* Leaflet Custom UI: 3 Colors Only (Blue, White, Black) */
+  /* Leaflet Controls & Popups: White background, Black text, Blue accents */
   .leaflet-container {
-    background-color: #000000 !important;
+    background-color: #ffffff !important;
     font-family: 'DM Sans', sans-serif !important;
   }
   .leaflet-control-zoom a {
-    background-color: #000000 !important;
-    color: #ffffff !important;
-    border: 1px solid #1e3a8a !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border: 1px solid #000000 !important;
     transition: all 0.15s ease;
   }
   .leaflet-control-zoom a:hover {
     background-color: #2563eb !important;
     color: #ffffff !important;
-    border-color: #3b82f6 !important;
+    border-color: #2563eb !important;
   }
   .leaflet-control-layers {
-    background: #000000 !important;
-    border: 1px solid #1e3a8a !important;
+    background: #ffffff !important;
+    border: 1px solid #000000 !important;
     border-radius: 8px !important;
-    color: #ffffff !important;
+    color: #000000 !important;
     padding: 8px 12px !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8) !important;
-  }
-  .leaflet-control-layers-toggle {
-    filter: invert(1) brightness(1.8);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12) !important;
   }
   .leaflet-control-layers-expanded {
-    background-color: #000000 !important;
-    color: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
   }
   .leaflet-control-layers label {
-    color: #ffffff !important;
+    color: #000000 !important;
     font-size: 12px !important;
-    font-weight: 500 !important;
+    font-weight: 600 !important;
     display: flex !important;
     align-items: center !important;
     gap: 6px !important;
@@ -130,38 +104,38 @@ Run this SQL once in Supabase SQL editor:
     margin-bottom: 4px !important;
   }
   .leaflet-popup-content-wrapper {
-    background: #000000 !important;
-    color: #ffffff !important;
-    border: 1px solid #2563eb !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    border: 2px solid #2563eb !important;
     border-radius: 8px !important;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.9), 0 0 15px rgba(37,99,235,0.3) !important;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important;
   }
   .leaflet-popup-tip {
-    background: #000000 !important;
-    border: 1px solid #2563eb !important;
+    background: #ffffff !important;
+    border: 2px solid #2563eb !important;
   }
   .leaflet-popup-close-button {
-    color: #ffffff !important;
+    color: #000000 !important;
     padding: 6px 8px !important;
   }
   .leaflet-popup-close-button:hover {
-    color: #3b82f6 !important;
+    color: #2563eb !important;
   }
   .leaflet-tooltip {
-    background-color: #000000 !important;
+    background-color: #ffffff !important;
     border: 1px solid #2563eb !important;
-    color: #ffffff !important;
+    color: #000000 !important;
     font-size: 11px !important;
     font-weight: 600 !important;
     border-radius: 4px !important;
     padding: 3px 8px !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.6) !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
   }
   .leaflet-tooltip:before {
     border-top-color: #2563eb !important;
   }
 
-  /* Custom Map Pin Icon */
+  /* Custom Map Pin Icon (White body, Black & Blue accents) */
   .custom-map-pin {
     width: 32px;
     height: 32px;
@@ -170,8 +144,9 @@ Run this SQL once in Supabase SQL editor:
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 2px solid #ffffff;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.8);
+    background-color: #ffffff;
+    border: 2px solid #2563eb;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
     cursor: pointer;
   }
@@ -180,14 +155,18 @@ Run this SQL once in Supabase SQL editor:
     font-style: normal;
     font-size: 14px;
     line-height: 1;
-    color: #ffffff;
+    color: #000000;
     user-select: none;
   }
   .custom-map-pin.is-selected {
     transform: rotate(-45deg) scale(1.22);
-    box-shadow: 0 0 0 4px #ffffff, 0 0 18px #2563eb;
-    border-color: #ffffff;
+    background-color: #2563eb !important;
+    border-color: #000000 !important;
+    box-shadow: 0 0 0 4px #2563eb, 0 8px 20px rgba(0,0,0,0.3) !important;
     z-index: 1000 !important;
+  }
+  .custom-map-pin.is-selected i {
+    color: #ffffff !important;
   }
 
   .pick-crosshair {
@@ -196,34 +175,129 @@ Run this SQL once in Supabase SQL editor:
 </style>
 </head>
 
-<body class="h-full flex flex-col bg-black text-white antialiased overflow-hidden select-none">
+<body class="h-full flex flex-col bg-white text-black antialiased overflow-hidden select-none">
+
+<!-- ==================== SECURED AUTH / LOGIN SCREEN ==================== -->
+<div id="auth" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white overflow-y-auto">
+  <div class="w-full max-w-md bg-white border-2 border-black rounded-2xl p-8 shadow-2xl relative">
+    
+    <!-- Brand Header -->
+    <div class="flex items-center gap-3 mb-6">
+      <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center font-bold text-lg text-white shadow-md border border-black">
+        BL
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-2xl font-bold tracking-tight text-black">BluLink</h1>
+          <span class="text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider bg-blue-50 text-blue-600 border border-blue-600">
+            Cloudflare D1
+          </span>
+        </div>
+        <p class="text-xs text-black/70">Secured Link Analysis & Geospatial Intelligence</p>
+      </div>
+    </div>
+
+    <!-- Security Banner -->
+    <div class="mb-5 p-3 rounded-lg bg-blue-50 border border-blue-200 text-xs text-black leading-relaxed flex items-center gap-2">
+      <span class="text-blue-600 font-bold">🔒</span>
+      <span>Protected Workspace. Authentication is required to access your Cloudflare database.</span>
+    </div>
+
+    <!-- 1. GOOGLE SIGN-IN BUTTON (PRIMARY) -->
+    <div class="space-y-3">
+      <div id="googleBtnWrapper" class="w-full flex justify-center">
+        <!-- Rendered GIS button -->
+        <div id="googleBtnContainer" class="w-full"></div>
+      </div>
+
+      <!-- Fallback Styled Google Button (if GIS is loading) -->
+      <button id="btnGoogleCustom" class="w-full py-2.5 px-4 rounded-lg bg-white border-2 border-black text-black font-semibold text-sm hover:bg-black hover:text-white transition flex items-center justify-center gap-3 shadow-sm">
+        <svg class="w-4 h-4" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+        </svg>
+        <span>Continue with Google</span>
+      </button>
+
+      <!-- Divider -->
+      <div class="relative my-4 flex items-center justify-center">
+        <div class="border-t border-black/20 w-full"></div>
+        <span class="bg-white px-3 text-[11px] font-semibold text-black/50 uppercase tracking-wider relative">or email & password</span>
+        <div class="border-t border-black/20 w-full"></div>
+      </div>
+
+      <!-- Auth Mode Tabs (Sign In / Create Account) -->
+      <div class="grid grid-cols-2 p-1 bg-slate-100 rounded-lg border border-black/15 text-xs font-semibold">
+        <button id="tabAuthIn" class="py-1.5 rounded-md bg-white text-black shadow-sm transition">Sign In</button>
+        <button id="tabAuthUp" class="py-1.5 rounded-md text-black/60 hover:text-black transition">Create Account</button>
+      </div>
+
+      <!-- Form Inputs -->
+      <div class="space-y-3 pt-1">
+        <div>
+          <label for="em" class="block text-xs font-semibold text-black uppercase tracking-wider mb-1">Email</label>
+          <input id="em" type="email" autocomplete="email" placeholder="agent@agency.gov"
+            class="w-full px-3.5 py-2.5 rounded-lg bg-white border-2 border-black/30 text-black placeholder-black/30 text-sm focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition">
+        </div>
+
+        <div>
+          <label for="pw" class="block text-xs font-semibold text-black uppercase tracking-wider mb-1">Password</label>
+          <input id="pw" type="password" autocomplete="current-password" placeholder="••••••••••••"
+            class="w-full px-3.5 py-2.5 rounded-lg bg-white border-2 border-black/30 text-black placeholder-black/30 text-sm focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition">
+        </div>
+
+        <button id="btnSubmitAuth"
+          class="w-full py-2.5 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold text-sm shadow-md transition flex items-center justify-center gap-2">
+          Sign In
+        </button>
+
+        <div id="authMsg" role="alert" class="min-h-[20px] text-xs font-medium text-black text-center pt-1"></div>
+      </div>
+
+      <!-- Google OAuth Client ID Configuration (Optional helper) -->
+      <details class="text-[11px] text-black/60 pt-2 cursor-pointer border-t border-slate-200">
+        <summary class="hover:text-blue-600 font-medium">Google OAuth Client ID Settings</summary>
+        <div class="mt-2 p-2.5 rounded-lg bg-slate-50 border border-slate-200 space-y-2">
+          <p class="text-[10px] text-black/70">To enable your own Google Sign-In button, paste your Google Web Client ID below:</p>
+          <input id="googleClientIdInput" placeholder="xxxx.apps.googleusercontent.com" class="w-full px-2 py-1.5 bg-white border border-black/30 rounded text-xs text-black focus:outline-none focus:border-blue-600">
+          <button id="btnSaveGoogleClientId" class="w-full py-1 bg-black text-white hover:bg-blue-600 rounded text-[11px] font-semibold transition">
+            Save Google Client ID
+          </button>
+        </div>
+      </details>
+
+    </div>
+  </div>
+</div>
 
 <!-- ==================== HEADER ==================== -->
-<header class="h-14 shrink-0 bg-black border-b border-blue-900/60 px-4 flex items-center justify-between z-30">
+<header class="h-14 shrink-0 bg-white border-b-2 border-black/10 px-4 flex items-center justify-between z-30">
   <div class="flex items-center gap-4">
     <!-- Brand -->
     <div class="flex items-center gap-2">
-      <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-white shadow-lg shadow-blue-600/40 border border-blue-400">
-        DL
+      <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-white shadow-sm border border-black">
+        BL
       </div>
       <div>
-        <div class="text-base font-bold tracking-tight text-white flex items-center gap-1.5">
-          Data<span class="text-blue-500">Link</span>
-          <span id="backendBadge" class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded border border-blue-800 text-blue-400 bg-blue-950/40">D1 Intel</span>
+        <div class="text-base font-bold tracking-tight text-black flex items-center gap-1.5">
+          Blu<span class="text-blue-600">Link</span>
+          <span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded border border-blue-600 text-blue-600 bg-blue-50 font-bold">Cloudflare D1</span>
         </div>
       </div>
     </div>
 
     <!-- Quick Stats -->
-    <div id="quickStats" class="hidden sm:flex items-center gap-2 text-xs border-l border-blue-950 pl-4 text-white/70">
-      <span class="px-2 py-0.5 rounded bg-blue-950/40 border border-blue-900/50 text-white font-medium">
-        <span id="statEntities" class="text-blue-400 font-bold">0</span> entities
+    <div id="quickStats" class="hidden sm:flex items-center gap-2 text-xs border-l border-black/15 pl-4 text-black">
+      <span class="px-2 py-0.5 rounded bg-slate-50 border border-black/20 text-black font-semibold">
+        <span id="statEntities" class="text-blue-600 font-bold">0</span> entities
       </span>
-      <span class="px-2 py-0.5 rounded bg-blue-950/40 border border-blue-900/50 text-white font-medium">
-        <span id="statLinks" class="text-blue-400 font-bold">0</span> links
+      <span class="px-2 py-0.5 rounded bg-slate-50 border border-black/20 text-black font-semibold">
+        <span id="statLinks" class="text-blue-600 font-bold">0</span> links
       </span>
-      <span class="px-2 py-0.5 rounded bg-blue-950/40 border border-blue-900/50 text-white font-medium">
-        <span id="statMapped" class="text-blue-400 font-bold">0</span> mapped
+      <span class="px-2 py-0.5 rounded bg-slate-50 border border-black/20 text-black font-semibold">
+        <span id="statMapped" class="text-blue-600 font-bold">0</span> mapped
       </span>
     </div>
   </div>
@@ -231,126 +305,35 @@ Run this SQL once in Supabase SQL editor:
   <!-- Header Right (Autosave Status, User & Actions) -->
   <div class="flex items-center gap-3">
     <!-- Autosave Status Indicator -->
-    <div class="flex items-center gap-2 px-3 py-1 rounded-full border border-blue-900/60 bg-black text-xs font-medium">
-      <span id="statusDot" class="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_#3b82f6] animate-pulse"></span>
-      <span id="status" class="text-white/80">Connecting…</span>
+    <div class="flex items-center gap-2 px-3 py-1 rounded-full border border-black/20 bg-white text-xs font-medium">
+      <span id="statusDot" class="w-2 h-2 rounded-full bg-blue-600"></span>
+      <span id="status" class="text-black font-semibold">Cloudflare D1</span>
     </div>
 
-    <!-- Demo sample data button -->
-    <button id="btnSampleData" title="Load sample dataset" class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-md border border-blue-600/60 text-white bg-blue-950/40 hover:bg-blue-600 hover:text-white transition font-medium">
-      <span>⚡ Sample Data</span>
-    </button>
-
-    <!-- Clear / Reset workspace -->
-    <button id="btnClearData" title="Clear all data" class="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-md border border-white/20 text-white/70 hover:text-white hover:border-white transition font-medium">
-      <span>Clear</span>
-    </button>
-
     <!-- User identity / Sign out -->
-    <div id="userSection" class="hidden items-center gap-2 border-l border-blue-950 pl-3">
-      <span id="who" class="text-xs text-white/60 max-w-[140px] truncate" title=""></span>
-      <button id="logout" class="px-2.5 py-1 text-xs rounded-md border border-white/30 text-white hover:bg-white hover:text-black transition font-semibold">
+    <div id="userSection" class="flex items-center gap-2 border-l border-black/15 pl-3">
+      <span id="who" class="text-xs text-black/80 font-medium max-w-[160px] truncate" title=""></span>
+      <button id="logout" class="px-2.5 py-1 text-xs rounded-md border-2 border-black text-black hover:bg-black hover:text-white transition font-bold">
         Sign out
       </button>
     </div>
   </div>
 </header>
 
-<!-- ==================== AUTH VIEW ==================== -->
-<div id="auth" class="flex-1 overflow-y-auto flex items-center justify-center p-4 bg-black">
-  <div class="w-full max-w-md bg-black border border-blue-900/70 rounded-2xl p-8 shadow-2xl shadow-blue-950/50 relative overflow-hidden">
-    <!-- Blue Glow Accent -->
-    <div class="absolute -top-24 -left-24 w-48 h-48 bg-blue-600/20 rounded-full blur-3xl pointer-events-none"></div>
-    <div class="absolute -bottom-24 -right-24 w-48 h-48 bg-blue-600/20 rounded-full blur-3xl pointer-events-none"></div>
-
-    <div class="relative z-10">
-      <div class="flex items-center gap-3 mb-6">
-        <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center font-bold text-lg text-white shadow-lg shadow-blue-600/40 border border-blue-400">
-          DL
-        </div>
-        <div>
-          <div class="flex items-center gap-2">
-            <h1 class="text-2xl font-bold tracking-tight text-white">DataLink</h1>
-            <span id="authBackendBadge" class="text-[10px] px-1.5 py-0.5 rounded bg-blue-950 border border-blue-900 text-blue-400 font-semibold">Cloudflare D1</span>
-          </div>
-          <p class="text-xs text-white/60">Entity Link Analysis & Geospatial Intelligence</p>
-        </div>
-      </div>
-
-      <div class="mb-5 p-3 rounded-lg bg-blue-950/30 border border-blue-900/50 text-xs text-white/80 leading-relaxed">
-        Serverless workspace powered by Cloudflare D1 SQL database. Every node position and link autosaves immediately.
-      </div>
-
-      <div class="space-y-4">
-        <div>
-          <label for="em" class="block text-xs font-semibold text-white/80 uppercase tracking-wider mb-1.5">Email address</label>
-          <input id="em" type="email" autocomplete="email" placeholder="agent@agency.gov"
-            class="w-full px-3.5 py-2.5 rounded-lg bg-black border border-blue-900/80 text-white placeholder-white/30 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
-        </div>
-
-        <div>
-          <label for="pw" class="block text-xs font-semibold text-white/80 uppercase tracking-wider mb-1.5">Password</label>
-          <input id="pw" type="password" autocomplete="current-password" placeholder="••••••••••••"
-            class="w-full px-3.5 py-2.5 rounded-lg bg-black border border-blue-900/80 text-white placeholder-white/30 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
-        </div>
-
-        <div class="grid grid-cols-2 gap-3 pt-1">
-          <button id="btnIn"
-            class="w-full py-2.5 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold text-sm shadow-md shadow-blue-600/30 transition flex items-center justify-center gap-2">
-            Sign in
-          </button>
-          <button id="btnUp"
-            class="w-full py-2.5 px-4 rounded-lg bg-black border border-white/40 hover:border-white hover:bg-white hover:text-black text-white font-semibold text-sm transition flex items-center justify-center gap-2">
-            Create account
-          </button>
-        </div>
-
-        <div id="authMsg" role="alert" class="min-h-[20px] text-xs font-medium text-white/90 text-center"></div>
-
-        <div class="pt-2 border-t border-blue-950">
-          <button id="btnDemo"
-            class="w-full py-2.5 px-4 rounded-lg bg-blue-950/50 hover:bg-blue-900/60 border border-blue-600/80 text-white font-semibold text-sm transition flex items-center justify-center gap-2">
-            <span>Open Demo Workspace</span>
-            <span class="text-xs text-blue-400 font-normal">(Saves to browser)</span>
-          </button>
-        </div>
-
-        <!-- Optional Config Expander -->
-        <details class="text-xs text-white/60 pt-2 cursor-pointer">
-          <summary class="hover:text-blue-400 transition font-medium">Alternative: Supabase Credentials</summary>
-          <div class="mt-3 p-3 rounded-lg bg-black border border-blue-900/50 space-y-2">
-            <div>
-              <label class="block text-[11px] text-white/60 mb-1">Supabase URL</label>
-              <input id="cfgUrl" placeholder="https://xxxx.supabase.co" class="w-full px-2 py-1.5 bg-black border border-blue-900/60 rounded text-xs text-white focus:outline-none focus:border-blue-500">
-            </div>
-            <div>
-              <label class="block text-[11px] text-white/60 mb-1">Anon Public Key</label>
-              <input id="cfgKey" placeholder="eyJhbGciOi..." class="w-full px-2 py-1.5 bg-black border border-blue-900/60 rounded text-xs text-white focus:outline-none focus:border-blue-500">
-            </div>
-            <button id="btnSaveConfig" class="w-full mt-2 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-semibold">
-              Apply Supabase Credentials
-            </button>
-          </div>
-        </details>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- ==================== MAIN WORKSPACE APP ==================== -->
-<div id="app" class="flex-1 min-h-0 hidden flex-col lg:grid lg:grid-cols-[330px_1fr_1fr] overflow-hidden bg-black">
+<div id="app" class="flex-1 min-h-0 hidden flex-col lg:grid lg:grid-cols-[330px_1fr_1fr] overflow-hidden bg-white">
 
   <!-- ==================== SIDEBAR / CONTROL PANEL ==================== -->
-  <aside class="w-full h-full border-r border-blue-900/60 bg-black flex flex-col min-h-0 overflow-hidden">
+  <aside class="w-full h-full border-r-2 border-black/10 bg-white flex flex-col min-h-0 overflow-hidden">
     <!-- Sidebar Navigation Tabs -->
-    <div class="shrink-0 flex border-b border-blue-900/60 bg-black p-1 gap-1">
-      <button id="tabBtnCreate" class="flex-1 py-1.5 text-xs font-semibold rounded-md bg-blue-600 text-white transition">
+    <div class="shrink-0 flex border-b-2 border-black/10 bg-slate-50 p-1 gap-1">
+      <button id="tabBtnCreate" class="flex-1 py-1.5 text-xs font-bold rounded-md bg-blue-600 text-white transition">
         Create
       </button>
-      <button id="tabBtnInspect" class="flex-1 py-1.5 text-xs font-semibold rounded-md text-white/60 hover:text-white hover:bg-blue-950/40 transition">
+      <button id="tabBtnInspect" class="flex-1 py-1.5 text-xs font-bold rounded-md text-black/70 hover:text-black hover:bg-white transition">
         Selected
       </button>
-      <button id="tabBtnList" class="flex-1 py-1.5 text-xs font-semibold rounded-md text-white/60 hover:text-white hover:bg-blue-950/40 transition">
+      <button id="tabBtnList" class="flex-1 py-1.5 text-xs font-bold rounded-md text-black/70 hover:text-black hover:bg-white transition">
         Entities (<span id="tabCount">0</span>)
       </button>
     </div>
@@ -363,94 +346,94 @@ Run this SQL once in Supabase SQL editor:
         <!-- Add Entity Section -->
         <section class="space-y-3">
           <div class="flex items-center justify-between">
-            <h2 class="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-2">
-              <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+            <h2 class="text-xs font-bold uppercase tracking-wider text-black flex items-center gap-2">
+              <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
               Add Entity
             </h2>
-            <span class="text-[11px] text-white/50">Node</span>
+            <span class="text-[11px] text-blue-600 font-semibold">Node</span>
           </div>
 
           <div>
-            <label for="eName" class="block text-[11px] font-semibold text-white/70 uppercase tracking-wide mb-1">Entity Name</label>
+            <label for="eName" class="block text-[11px] font-bold text-black uppercase tracking-wide mb-1">Entity Name</label>
             <input id="eName" placeholder="e.g. Maria Santos, Apex Corp"
-              class="w-full px-3 py-2 rounded-lg bg-black border border-blue-900/70 text-white placeholder-white/30 text-xs focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+              class="w-full px-3 py-2 rounded-lg bg-white border border-black/30 text-black placeholder-black/30 text-xs focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600">
           </div>
 
           <div class="grid grid-cols-2 gap-2">
             <div>
-              <label for="eType" class="block text-[11px] font-semibold text-white/70 uppercase tracking-wide mb-1">Type</label>
+              <label for="eType" class="block text-[11px] font-bold text-black uppercase tracking-wide mb-1">Type</label>
               <select id="eType"
-                class="w-full px-2.5 py-2 rounded-lg bg-black border border-blue-900/70 text-white text-xs focus:outline-none focus:border-blue-500">
+                class="w-full px-2.5 py-2 rounded-lg bg-white border border-black/30 text-black text-xs focus:outline-none focus:border-blue-600">
               </select>
             </div>
             <div>
-              <label for="eLat" class="block text-[11px] font-semibold text-white/70 uppercase tracking-wide mb-1">Latitude</label>
+              <label for="eLat" class="block text-[11px] font-bold text-black uppercase tracking-wide mb-1">Latitude</label>
               <input id="eLat" placeholder="e.g. 14.5995"
-                class="w-full px-2.5 py-2 rounded-lg bg-black border border-blue-900/70 text-white placeholder-white/30 text-xs focus:outline-none focus:border-blue-500">
+                class="w-full px-2.5 py-2 rounded-lg bg-white border border-black/30 text-black placeholder-black/30 text-xs focus:outline-none focus:border-blue-600">
             </div>
           </div>
 
           <div>
-            <label for="eLng" class="block text-[11px] font-semibold text-white/70 uppercase tracking-wide mb-1">Longitude</label>
+            <label for="eLng" class="block text-[11px] font-bold text-black uppercase tracking-wide mb-1">Longitude</label>
             <input id="eLng" placeholder="e.g. 120.9842"
-              class="w-full px-3 py-2 rounded-lg bg-black border border-blue-900/70 text-white placeholder-white/30 text-xs focus:outline-none focus:border-blue-500">
+              class="w-full px-3 py-2 rounded-lg bg-white border border-black/30 text-black placeholder-black/30 text-xs focus:outline-none focus:border-blue-600">
           </div>
 
           <div>
-            <label for="eNote" class="block text-[11px] font-semibold text-white/70 uppercase tracking-wide mb-1">Intel / Information</label>
+            <label for="eNote" class="block text-[11px] font-bold text-black uppercase tracking-wide mb-1">Information</label>
             <textarea id="eNote" rows="2" placeholder="Key background, affiliations, identifiers..."
-              class="w-full px-3 py-2 rounded-lg bg-black border border-blue-900/70 text-white placeholder-white/30 text-xs focus:outline-none focus:border-blue-500 resize-none"></textarea>
+              class="w-full px-3 py-2 rounded-lg bg-white border border-black/30 text-black placeholder-black/30 text-xs focus:outline-none focus:border-blue-600 resize-none"></textarea>
           </div>
 
           <div class="grid grid-cols-2 gap-2 pt-1">
             <button id="addE"
-              class="w-full py-2 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold text-xs shadow-md shadow-blue-600/30 transition flex items-center justify-center gap-1.5">
+              class="w-full py-2 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold text-xs shadow transition flex items-center justify-center gap-1.5">
               <span>+ Add Entity</span>
             </button>
             <button id="pickBtn"
-              class="w-full py-2 px-3 rounded-lg bg-black border border-blue-500 text-blue-400 hover:bg-blue-600 hover:text-white font-semibold text-xs transition flex items-center justify-center gap-1.5">
+              class="w-full py-2 px-3 rounded-lg bg-white border-2 border-black text-black hover:bg-black hover:text-white font-bold text-xs transition flex items-center justify-center gap-1.5">
               <span>📍 Pick on map</span>
             </button>
           </div>
 
-          <div id="pickHint" class="hidden text-[11px] text-blue-400 bg-blue-950/40 border border-blue-900 rounded p-2 text-center animate-pulse"></div>
+          <div id="pickHint" class="hidden text-[11px] text-blue-600 bg-blue-50 border border-blue-200 rounded p-2 text-center font-semibold animate-pulse"></div>
         </section>
 
-        <hr class="border-blue-950">
+        <hr class="border-black/10">
 
         <!-- Add Link Section -->
         <section class="space-y-3">
           <div class="flex items-center justify-between">
-            <h2 class="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-2">
-              <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+            <h2 class="text-xs font-bold uppercase tracking-wider text-black flex items-center gap-2">
+              <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
               Add Link
             </h2>
-            <span class="text-[11px] text-white/50">Relationship</span>
+            <span class="text-[11px] text-blue-600 font-semibold">Relationship</span>
           </div>
 
           <div class="grid grid-cols-2 gap-2">
             <div>
-              <label for="lFrom" class="block text-[11px] font-semibold text-white/70 uppercase tracking-wide mb-1">From</label>
+              <label for="lFrom" class="block text-[11px] font-bold text-black uppercase tracking-wide mb-1">From</label>
               <select id="lFrom"
-                class="w-full px-2 py-2 rounded-lg bg-black border border-blue-900/70 text-white text-xs focus:outline-none focus:border-blue-500">
+                class="w-full px-2 py-2 rounded-lg bg-white border border-black/30 text-black text-xs focus:outline-none focus:border-blue-600">
               </select>
             </div>
             <div>
-              <label for="lTo" class="block text-[11px] font-semibold text-white/70 uppercase tracking-wide mb-1">To</label>
+              <label for="lTo" class="block text-[11px] font-bold text-black uppercase tracking-wide mb-1">To</label>
               <select id="lTo"
-                class="w-full px-2 py-2 rounded-lg bg-black border border-blue-900/70 text-white text-xs focus:outline-none focus:border-blue-500">
+                class="w-full px-2 py-2 rounded-lg bg-white border border-black/30 text-black text-xs focus:outline-none focus:border-blue-600">
               </select>
             </div>
           </div>
 
           <div>
-            <label for="lLabel" class="block text-[11px] font-semibold text-white/70 uppercase tracking-wide mb-1">Relationship Label</label>
+            <label for="lLabel" class="block text-[11px] font-bold text-black uppercase tracking-wide mb-1">Relationship Label</label>
             <input id="lLabel" placeholder="e.g. employed by, communicated with"
-              class="w-full px-3 py-2 rounded-lg bg-black border border-blue-900/70 text-white placeholder-white/30 text-xs focus:outline-none focus:border-blue-500">
+              class="w-full px-3 py-2 rounded-lg bg-white border border-black/30 text-black placeholder-black/30 text-xs focus:outline-none focus:border-blue-600">
           </div>
 
           <button id="addL"
-            class="w-full py-2 px-3 rounded-lg bg-black border border-white/40 hover:border-white hover:bg-white hover:text-black text-white font-semibold text-xs transition flex items-center justify-center gap-1.5">
+            class="w-full py-2 px-3 rounded-lg bg-white border-2 border-black hover:bg-black hover:text-white text-black font-bold text-xs transition flex items-center justify-center gap-1.5">
             <span>🔗 Connect Entities</span>
           </button>
         </section>
@@ -458,67 +441,67 @@ Run this SQL once in Supabase SQL editor:
 
       <!-- ================= TAB 2: SELECTED INSPECTOR ================= -->
       <div id="tabContentInspect" class="hidden space-y-4">
-        <div id="selEmpty" class="text-center py-8 px-4 rounded-xl border border-dashed border-blue-900/50 bg-blue-950/10">
+        <div id="selEmpty" class="text-center py-8 px-4 rounded-xl border-2 border-dashed border-black/20 bg-slate-50">
           <div class="text-2xl mb-2">🔍</div>
-          <p class="text-xs text-white/70 font-medium">No entity selected</p>
-          <p class="text-[11px] text-white/40 mt-1">Click any node on the link chart, map marker, or directory to inspect and edit.</p>
+          <p class="text-xs text-black font-bold">No entity selected</p>
+          <p class="text-[11px] text-black/60 mt-1">Click any node on the link chart, map marker, or directory to inspect and edit.</p>
         </div>
 
         <div id="selForm" class="hidden space-y-4">
-          <div class="flex items-center justify-between pb-2 border-b border-blue-950">
+          <div class="flex items-center justify-between pb-2 border-b border-black/10">
             <div class="flex items-center gap-2">
               <span id="sBadgeType" class="text-xs px-2 py-0.5 rounded font-bold bg-blue-600 text-white"></span>
-              <span class="text-xs font-bold text-white uppercase tracking-wider">Inspector</span>
+              <span class="text-xs font-bold text-black uppercase tracking-wider">Inspector</span>
             </div>
-            <button id="sBtnDeselect" class="text-[11px] text-white/50 hover:text-white transition">
+            <button id="sBtnDeselect" class="text-[11px] text-black/60 hover:text-black font-bold transition">
               Deselect
             </button>
           </div>
 
           <div>
-            <label class="block text-[11px] font-semibold text-white/70 uppercase tracking-wide mb-1">Name</label>
-            <input id="sName" class="w-full px-3 py-2 rounded-lg bg-black border border-blue-900/70 text-white text-xs focus:outline-none focus:border-blue-500">
+            <label class="block text-[11px] font-bold text-black uppercase tracking-wide mb-1">Name</label>
+            <input id="sName" class="w-full px-3 py-2 rounded-lg bg-white border border-black/30 text-black text-xs focus:outline-none focus:border-blue-600">
           </div>
 
           <div>
-            <label class="block text-[11px] font-semibold text-white/70 uppercase tracking-wide mb-1">Type</label>
-            <select id="sType" class="w-full px-2.5 py-2 rounded-lg bg-black border border-blue-900/70 text-white text-xs focus:outline-none focus:border-blue-500"></select>
+            <label class="block text-[11px] font-bold text-black uppercase tracking-wide mb-1">Type</label>
+            <select id="sType" class="w-full px-2.5 py-2 rounded-lg bg-white border border-black/30 text-black text-xs focus:outline-none focus:border-blue-600"></select>
           </div>
 
           <div>
-            <label class="block text-[11px] font-semibold text-white/70 uppercase tracking-wide mb-1">Information</label>
-            <textarea id="sNote" rows="3" class="w-full px-3 py-2 rounded-lg bg-black border border-blue-900/70 text-white text-xs focus:outline-none focus:border-blue-500 resize-none"></textarea>
+            <label class="block text-[11px] font-bold text-black uppercase tracking-wide mb-1">Information</label>
+            <textarea id="sNote" rows="3" class="w-full px-3 py-2 rounded-lg bg-white border border-black/30 text-black text-xs focus:outline-none focus:border-blue-600 resize-none"></textarea>
           </div>
 
           <div class="grid grid-cols-2 gap-2">
             <div>
-              <label class="block text-[11px] font-semibold text-white/70 uppercase tracking-wide mb-1">Latitude</label>
-              <input id="sLat" class="w-full px-2.5 py-2 rounded-lg bg-black border border-blue-900/70 text-white text-xs focus:outline-none focus:border-blue-500">
+              <label class="block text-[11px] font-bold text-black uppercase tracking-wide mb-1">Latitude</label>
+              <input id="sLat" class="w-full px-2.5 py-2 rounded-lg bg-white border border-black/30 text-black text-xs focus:outline-none focus:border-blue-600">
             </div>
             <div>
-              <label class="block text-[11px] font-semibold text-white/70 uppercase tracking-wide mb-1">Longitude</label>
-              <input id="sLng" class="w-full px-2.5 py-2 rounded-lg bg-black border border-blue-900/70 text-white text-xs focus:outline-none focus:border-blue-500">
+              <label class="block text-[11px] font-bold text-black uppercase tracking-wide mb-1">Longitude</label>
+              <input id="sLng" class="w-full px-2.5 py-2 rounded-lg bg-white border border-black/30 text-black text-xs focus:outline-none focus:border-blue-600">
             </div>
           </div>
 
           <!-- Pick on map for selected entity -->
-          <button id="sPickBtn" class="w-full py-1.5 px-3 rounded-lg border border-blue-500 text-blue-400 hover:bg-blue-600 hover:text-white text-xs font-semibold transition">
+          <button id="sPickBtn" class="w-full py-1.5 px-3 rounded-lg border-2 border-black text-black hover:bg-black hover:text-white text-xs font-bold transition">
             📍 Pick New Coordinates on Map
           </button>
 
           <!-- Links Section -->
           <div class="pt-2">
             <div class="flex items-center justify-between mb-2">
-              <span class="text-[11px] font-bold text-white/80 uppercase tracking-wider">Connected Links</span>
-              <span id="sLinkCount" class="text-[10px] px-1.5 py-0.5 rounded bg-blue-950 text-blue-400 border border-blue-900">0</span>
+              <span class="text-[11px] font-bold text-black uppercase tracking-wider">Connected Links</span>
+              <span id="sLinkCount" class="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 border border-blue-200 font-bold">0</span>
             </div>
             <div id="sLinksList" class="space-y-1.5 max-h-48 overflow-y-auto"></div>
           </div>
 
           <!-- Delete Action -->
-          <div class="pt-2 border-t border-blue-950">
+          <div class="pt-2 border-t border-black/10">
             <button id="delE"
-              class="w-full py-2 px-3 rounded-lg border border-white/30 text-white hover:bg-white hover:text-black font-semibold text-xs transition">
+              class="w-full py-2 px-3 rounded-lg border-2 border-black text-black hover:bg-black hover:text-white font-bold text-xs transition">
               Delete Entity & Relationships
             </button>
           </div>
@@ -527,12 +510,10 @@ Run this SQL once in Supabase SQL editor:
 
       <!-- ================= TAB 3: ENTITIES DIRECTORY ================= -->
       <div id="tabContentList" class="hidden space-y-3">
-        <!-- Search filter -->
         <div>
           <input id="listSearch" placeholder="Search entities..."
-            class="w-full px-3 py-2 rounded-lg bg-black border border-blue-900/70 text-white placeholder-white/30 text-xs focus:outline-none focus:border-blue-500">
+            class="w-full px-3 py-2 rounded-lg bg-white border border-black/30 text-black placeholder-black/30 text-xs focus:outline-none focus:border-blue-600">
         </div>
-
         <div id="list" class="space-y-1"></div>
       </div>
 
@@ -540,18 +521,18 @@ Run this SQL once in Supabase SQL editor:
   </aside>
 
   <!-- ==================== CENTER PANE: GEOSPATIAL MAP ==================== -->
-  <section class="relative w-full h-full min-w-0 min-h-0 flex flex-col border-r border-blue-900/60 bg-black">
+  <section class="relative w-full h-full min-w-0 min-h-0 flex flex-col border-r-2 border-black/10 bg-white">
     <!-- Map Header Overlay -->
-    <div class="absolute top-3 left-3 z-[400] flex items-center gap-2 bg-black/90 backdrop-blur border border-blue-900/80 rounded-lg px-3 py-1.5 shadow-xl">
-      <div class="w-2 h-2 rounded-full bg-blue-500"></div>
-      <span class="text-xs font-bold text-white tracking-wide">Geospatial Intelligence Map</span>
-      <span class="text-[10px] text-white/50 border-l border-blue-950 pl-2">Google Layers (Top Right)</span>
+    <div class="absolute top-3 left-3 z-[400] flex items-center gap-2 bg-white/95 backdrop-blur border-2 border-black rounded-lg px-3 py-1.5 shadow-md">
+      <div class="w-2 h-2 rounded-full bg-blue-600"></div>
+      <span class="text-xs font-bold text-black tracking-wide">Geospatial Intelligence Map</span>
+      <span class="text-[10px] text-black/60 border-l border-black/20 pl-2">Google Layers (Top Right)</span>
     </div>
 
     <!-- Active Pick Banner -->
-    <div id="mapPickBanner" class="hidden absolute top-14 left-1/2 -translate-x-1/2 z-[400] bg-blue-600 text-white text-xs font-semibold px-4 py-2 rounded-full shadow-2xl shadow-blue-500/50 flex items-center gap-3">
+    <div id="mapPickBanner" class="hidden absolute top-14 left-1/2 -translate-x-1/2 z-[400] bg-blue-600 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg flex items-center gap-3">
       <span>Click any location on the map to set coordinates</span>
-      <button id="cancelPickBtn" class="bg-black text-white hover:bg-white hover:text-black px-2 py-0.5 rounded text-[11px] font-bold">
+      <button id="cancelPickBtn" class="bg-white text-black hover:bg-black hover:text-white px-2 py-0.5 rounded text-[11px] font-bold transition">
         Cancel
       </button>
     </div>
@@ -561,56 +542,40 @@ Run this SQL once in Supabase SQL editor:
   </section>
 
   <!-- ==================== RIGHT PANE: LINK NETWORK CHART ==================== -->
-  <section class="relative w-full h-full min-w-0 min-h-0 flex flex-col bg-black">
+  <section class="relative w-full h-full min-w-0 min-h-0 flex flex-col bg-white">
     <!-- Network Header Overlay -->
-    <div class="absolute top-3 left-3 z-10 flex items-center gap-2 bg-black/90 backdrop-blur border border-blue-900/80 rounded-lg px-3 py-1.5 shadow-xl">
-      <div class="w-2 h-2 rounded-full bg-blue-500"></div>
-      <span class="text-xs font-bold text-white tracking-wide">Relational Link Chart</span>
-      <span class="text-[10px] text-white/50 border-l border-blue-950 pl-2">Vis.Network</span>
+    <div class="absolute top-3 left-3 z-10 flex items-center gap-2 bg-white/95 backdrop-blur border-2 border-black rounded-lg px-3 py-1.5 shadow-md">
+      <div class="w-2 h-2 rounded-full bg-blue-600"></div>
+      <span class="text-xs font-bold text-black tracking-wide">Relational Link Chart</span>
+      <span class="text-[10px] text-black/60 border-l border-black/20 pl-2">Vis.Network</span>
     </div>
 
     <!-- Chart Control Buttons -->
     <div class="absolute top-3 right-3 z-10 flex items-center gap-1.5">
-      <button id="btnFitNet" title="Fit All Nodes" class="px-2.5 py-1 text-xs rounded bg-black/90 hover:bg-blue-600 text-white border border-blue-900/80 hover:border-blue-500 transition shadow">
+      <button id="btnFitNet" title="Fit All Nodes" class="px-2.5 py-1 text-xs rounded bg-white hover:bg-black hover:text-white text-black border-2 border-black transition font-bold shadow-sm">
         Fit View
       </button>
-      <button id="btnStabilizeNet" title="Re-organize Physics" class="px-2.5 py-1 text-xs rounded bg-black/90 hover:bg-blue-600 text-white border border-blue-900/80 hover:border-blue-500 transition shadow">
+      <button id="btnStabilizeNet" title="Re-organize Physics" class="px-2.5 py-1 text-xs rounded bg-white hover:bg-black hover:text-white text-black border-2 border-black transition font-bold shadow-sm">
         Stabilize
       </button>
     </div>
 
-    <!-- Vis.Network Container -->
-    <div id="net" class="flex-1 w-full h-full bg-black"></div>
+    <!-- Vis.Network Container (Pure White) -->
+    <div id="net" class="flex-1 w-full h-full bg-white"></div>
   </section>
 
 </div>
 
 <!-- ==================== JAVASCRIPT ==================== -->
 <script>
-/* ---------- CONFIG & BACKEND ADAPTERS ---------- */
-const CONFIG = {
-  SUPABASE_URL: "",
-  SUPABASE_KEY: ""
-};
-
-// Check localStorage for persisted custom Supabase config
-try {
-  const customUrl = localStorage.getItem("datalink_supabase_url");
-  const customKey = localStorage.getItem("datalink_supabase_key");
-  if (customUrl && customKey) {
-    CONFIG.SUPABASE_URL = customUrl;
-    CONFIG.SUPABASE_KEY = customKey;
-  }
-} catch (e) {}
-
 /* ---------- Constants: 3 Colors Only (Blue, White, Black) ---------- */
 const TYPES = {
-  Person:       { c: "#2563eb", border: "#ffffff", i: "👤", label: "Person" },
-  Organization: { c: "#000000", border: "#3b82f6", i: "🏢", label: "Organization" },
-  Location:     { c: "#1d4ed8", border: "#93c5fd", i: "📍", label: "Location" },
-  Vehicle:      { c: "#0f172a", border: "#ffffff", i: "🚗", label: "Vehicle" },
-  Phone:        { c: "#3b82f6", border: "#000000", i: "📱", label: "Phone" },
-  Event:        { c: "#172554", border: "#60a5fa", i: "⚡", label: "Event" }
+  Person:       { c: "#2563eb", border: "#000000", fontColor: "#ffffff", i: "👤", label: "Person" },
+  Organization: { c: "#000000", border: "#2563eb", fontColor: "#ffffff", i: "🏢", label: "Organization" },
+  Location:     { c: "#ffffff", border: "#2563eb", fontColor: "#000000", i: "📍", label: "Location" },
+  Vehicle:      { c: "#1e40af", border: "#000000", fontColor: "#ffffff", i: "🚗", label: "Vehicle" },
+  Phone:        { c: "#3b82f6", border: "#000000", fontColor: "#ffffff", i: "📱", label: "Phone" },
+  Event:        { c: "#ffffff", border: "#000000", fontColor: "#000000", i: "⚡", label: "Event" }
 };
 
 const $ = id => document.getElementById(id);
@@ -618,299 +583,243 @@ const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;
 const uid = () => Math.random().toString(36).slice(2, 10);
 
 /* ---------- State ---------- */
-let backendMode = "detecting"; // 'cf' (Cloudflare D1), 'sb' (Supabase), or 'demo'
-let cfToken = localStorage.getItem("datalink_cf_token") || null;
-let sb = null, user = null, demo = false;
+let cfToken = localStorage.getItem("blulink_cf_token") || null;
+let user = null;
 let data = { entities: [], links: [] };
 let selected = null, picking = false, pickTarget = "new", saveTimer = null, ready = false;
+let isSignUpMode = false;
 let map, net, nodes, edges, markerLayer, lineLayer;
 
-/* ---------- Sample Data Definition ---------- */
-const SAMPLE_DATA = {
-  entities: [
-    { id: "e1", name: "Dr. Evelyn Reed", type: "Person", lat: 51.5074, lng: -0.1278, note: "Principal Cyber Intelligence Analyst. Stationed in London." },
-    { id: "e2", name: "Apex Global Dynamics", type: "Organization", lat: 47.3769, lng: 8.5417, note: "Defense Contractor & Secure Hardware HQ, Zurich." },
-    { id: "e3", name: "Safehouse Delta", type: "Location", lat: 48.8566, lng: 2.3522, note: "Classified rendezvous point, Paris sector." },
-    { id: "e4", name: "Armored Transport #07", type: "Vehicle", lat: 50.8503, lng: 4.3517, note: "Encrypted logistic transit route via Brussels." },
-    { id: "e5", name: "Burner Terminal +41 79", type: "Phone", note: "Satellite voice communicator linked to Apex executives." },
-    { id: "e6", name: "Project BlueSky Incident", type: "Event", lat: 52.5200, lng: 13.4050, note: "Berlin perimeter network compromise detected 2026." }
-  ],
-  links: [
-    { id: "l1", from: "e1", to: "e2", label: "Employed by" },
-    { id: "l2", from: "e1", to: "e3", label: "Inspected" },
-    { id: "l3", from: "e2", to: "e4", label: "Dispatched" },
-    { id: "l4", from: "e4", to: "e3", label: "Routed towards" },
-    { id: "l5", from: "e1", to: "e5", label: "Contacted" },
-    { id: "l6", from: "e3", to: "e6", label: "Investigating" }
-  ]
-};
+/* ---------- Google OAuth Initialization ---------- */
+function initGoogleAuth() {
+  const customClientId = localStorage.getItem("blulink_google_client_id") || "1082531641042-blulink.apps.googleusercontent.com";
+  $("googleClientIdInput").value = localStorage.getItem("blulink_google_client_id") || "";
 
-/* ---------- Automatic Backend Detection ---------- */
-async function detectBackend() {
-  // 1. Check if Cloudflare Pages API is active
-  if (window.location.protocol.startsWith("http")) {
+  if (window.google && window.google.accounts && window.google.accounts.id) {
     try {
-      const res = await fetch("/api/auth/me", {
-        headers: cfToken ? { "Authorization": `Bearer ${cfToken}` } : {}
+      google.accounts.id.initialize({
+        client_id: customClientId,
+        callback: handleGoogleCredentialResponse,
+        auto_select: false,
+        cancel_on_tap_outside: true
       });
-      if (res.ok) {
-        const json = await res.json();
-        if (json.user) {
-          backendMode = "cf";
-          user = json.user;
-          openApp();
-          return;
-        }
-      }
-      if (res.status === 401 || res.status === 200) {
-        backendMode = "cf";
-        $("authBackendBadge").textContent = "Cloudflare D1";
-        $("authMsg").textContent = "Connected to Cloudflare D1 Database. Sign in or create an account.";
-        $("authMsg").className = "min-h-[20px] text-xs font-medium text-blue-400 text-center";
-        return;
-      }
+      google.accounts.id.renderButton(
+        $("googleBtnContainer"),
+        { theme: "outline", size: "large", width: "100%", text: "continue_with", shape: "rectangular" }
+      );
+      // Hide custom fallback button if GIS rendered successfully
+      $("btnGoogleCustom").style.display = "none";
     } catch (e) {
-      // Local file or static host without Cloudflare Pages Functions
+      console.warn("GIS initialization notice:", e);
     }
   }
-
-  // 2. Check Supabase
-  if (CONFIG.SUPABASE_URL && CONFIG.SUPABASE_KEY) {
-    try {
-      sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
-      backendMode = "sb";
-      $("authBackendBadge").textContent = "Supabase";
-      $("authMsg").textContent = "Connected to Supabase. Sign in or create an account.";
-      $("authMsg").className = "min-h-[20px] text-xs font-medium text-blue-400 text-center";
-
-      sb.auth.getSession().then(({ data: { session } }) => {
-        if (session) {
-          user = session.user;
-          openApp();
-        }
-      });
-      sb.auth.onAuthStateChange((_e, session) => {
-        if (session && !user) {
-          user = session.user;
-          openApp();
-        }
-      });
-      return;
-    } catch (e) {}
-  }
-
-  // 3. Fallback: Demo / Local mode
-  backendMode = "demo_ready";
-  $("authBackendBadge").textContent = "Demo / D1 Ready";
-  $("authMsg").textContent = "Sign in with Cloudflare D1 account, or click 'Open Demo Workspace' below.";
-  $("authMsg").className = "min-h-[20px] text-xs font-medium text-white/60 text-center";
 }
-detectBackend();
 
-// Save Supabase credentials via expander
-$("btnSaveConfig").onclick = () => {
-  const u = $("cfgUrl").value.trim();
-  const k = $("cfgKey").value.trim();
-  if (!u || !k) { alert("Please provide both Supabase URL and Anon key."); return; }
-  localStorage.setItem("datalink_supabase_url", u);
-  localStorage.setItem("datalink_supabase_key", k);
-  location.reload();
+// Check every 300ms if GIS script has loaded
+const gisInterval = setInterval(() => {
+  if (window.google && window.google.accounts) {
+    clearInterval(gisInterval);
+    initGoogleAuth();
+  }
+}, 300);
+
+$("btnSaveGoogleClientId").onclick = () => {
+  const val = $("googleClientIdInput").value.trim();
+  if (val) {
+    localStorage.setItem("blulink_google_client_id", val);
+    alert("Google Client ID saved. Reloading page...");
+    location.reload();
+  }
 };
 
-/* ---------- Sign In & Sign Up Handler ---------- */
-async function signIn(isSignUp) {
-  const email = $("em").value.trim();
-  const password = $("pw").value;
-  if (!email || !password) {
-    $("authMsg").textContent = "Please enter both email and password.";
-    $("authMsg").className = "min-h-[20px] text-xs font-medium text-white text-center";
+// Handle Google GIS response
+async function handleGoogleCredentialResponse(response) {
+  if (!response || !response.credential) {
+    showAuthMsg("No Google credential received.", true);
+    return;
+  }
+  showAuthMsg("Authenticating with Cloudflare D1…", false);
+  try {
+    const res = await fetch("/api/auth/google", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ credential: response.credential })
+    });
+    const resJson = await res.json();
+    if (!res.ok) {
+      showAuthMsg(resJson.error || "Google authentication failed", true);
+      return;
+    }
+    cfToken = resJson.token;
+    localStorage.setItem("blulink_cf_token", cfToken);
+    user = resJson.user;
+    openApp();
+  } catch (err) {
+    showAuthMsg(err.message || "Failed to reach Cloudflare API", true);
+  }
+}
+
+// Fallback Google custom button
+$("btnGoogleCustom").onclick = () => {
+  if (window.google && window.google.accounts && window.google.accounts.id) {
+    google.accounts.id.prompt();
+  } else {
+    showAuthMsg("Google Sign-In is loading or blocked by your browser extensions.", true);
+  }
+};
+
+/* ---------- Session Verification on Load (Strict Login Gate) ---------- */
+async function checkCurrentSession() {
+  if (!cfToken) {
+    // No session: remain securely on login page
+    $("auth").classList.remove("hidden");
+    $("app").classList.add("hidden");
     return;
   }
 
-  $("authMsg").textContent = isSignUp ? "Creating account…" : "Authenticating…";
-  $("authMsg").className = "min-h-[20px] text-xs font-medium text-blue-400 text-center";
-
-  // Try Cloudflare D1 first if running via HTTP
-  if (window.location.protocol.startsWith("http") && backendMode !== "sb") {
-    try {
-      const endpoint = isSignUp ? "/api/auth/signup" : "/api/auth/login";
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password })
-      });
+  try {
+    const res = await fetch("/api/auth/me", {
+      headers: { "Authorization": `Bearer ${cfToken}` }
+    });
+    if (res.ok) {
       const resJson = await res.json();
-
-      if (!res.ok) {
-        if (res.status === 404 && sb) {
-          // Fall through to Supabase if endpoint doesn't exist
-        } else {
-          $("authMsg").textContent = resJson.error || "Authentication failed.";
-          $("authMsg").className = "min-h-[20px] text-xs font-medium text-white text-center";
-          return;
-        }
-      } else {
-        backendMode = "cf";
-        cfToken = resJson.token;
-        localStorage.setItem("datalink_cf_token", cfToken);
+      if (resJson.user) {
         user = resJson.user;
         openApp();
         return;
       }
-    } catch (err) {
-      if (!sb) {
-        $("authMsg").textContent = "Cloudflare D1 API not reachable. Try Demo mode or check deployment.";
-        $("authMsg").className = "min-h-[20px] text-xs font-medium text-white text-center";
-        return;
-      }
     }
+  } catch (e) {
+    console.warn("Session check error:", e);
   }
 
-  // Supabase fallback
-  if (sb) {
-    try {
-      const { data: r, error } = isSignUp
-        ? await sb.auth.signUp({ email, password })
-        : await sb.auth.signInWithPassword({ email, password });
+  // Token invalid or expired: clear and show login page
+  localStorage.removeItem("blulink_cf_token");
+  cfToken = null;
+  $("auth").classList.remove("hidden");
+  $("app").classList.add("hidden");
+}
+checkCurrentSession();
 
-      if (error) {
-        $("authMsg").textContent = error.message;
-        $("authMsg").className = "min-h-[20px] text-xs font-medium text-white text-center";
-        return;
-      }
+/* ---------- Email/Password Sign In & Sign Up ---------- */
+$("tabAuthIn").onclick = () => {
+  isSignUpMode = false;
+  $("tabAuthIn").className = "py-1.5 rounded-md bg-white text-black shadow-sm transition font-bold";
+  $("tabAuthUp").className = "py-1.5 rounded-md text-black/60 hover:text-black transition font-semibold";
+  $("btnSubmitAuth").textContent = "Sign In";
+  $("authMsg").textContent = "";
+};
 
-      backendMode = "sb";
-      if (isSignUp && !r.session) {
-        $("authMsg").textContent = "Account created! Please check your email to confirm, then sign in.";
-        $("authMsg").className = "min-h-[20px] text-xs font-medium text-blue-400 text-center";
-      }
-    } catch (err) {
-      $("authMsg").textContent = err.message || "Authentication failed.";
-      $("authMsg").className = "min-h-[20px] text-xs font-medium text-white text-center";
-    }
+$("tabAuthUp").onclick = () => {
+  isSignUpMode = true;
+  $("tabAuthUp").className = "py-1.5 rounded-md bg-white text-black shadow-sm transition font-bold";
+  $("tabAuthIn").className = "py-1.5 rounded-md text-black/60 hover:text-black transition font-semibold";
+  $("btnSubmitAuth").textContent = "Create Account";
+  $("authMsg").textContent = "";
+};
+
+function showAuthMsg(msg, isError) {
+  $("authMsg").textContent = msg;
+  $("authMsg").className = isError 
+    ? "min-h-[20px] text-xs font-bold text-black border border-black/30 p-2 rounded bg-slate-50 text-center"
+    : "min-h-[20px] text-xs font-semibold text-blue-600 text-center";
+}
+
+$("btnSubmitAuth").onclick = async () => {
+  const email = $("em").value.trim();
+  const password = $("pw").value;
+  if (!email || !password) {
+    showAuthMsg("Please enter both email and password.", true);
     return;
   }
 
-  $("authMsg").textContent = "Backend not connected. Click 'Open Demo Workspace' below to use locally.";
-  $("authMsg").className = "min-h-[20px] text-xs font-medium text-blue-400 text-center";
-}
+  showAuthMsg(isSignUpMode ? "Creating account in Cloudflare D1…" : "Authenticating…", false);
 
-$("btnIn").onclick = () => signIn(false);
-$("btnUp").onclick = () => signIn(true);
-$("pw").onkeydown = e => { if (e.key === "Enter") signIn(false); };
+  try {
+    const endpoint = isSignUpMode ? "/api/auth/signup" : "/api/auth/login";
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
+    });
+    const resJson = await res.json();
 
-$("btnDemo").onclick = () => {
-  demo = true;
-  backendMode = "demo";
-  user = { id: "demo_local_user", email: "demo@datalink.local" };
-  openApp();
+    if (!res.ok) {
+      showAuthMsg(resJson.error || "Authentication failed", true);
+      return;
+    }
+
+    cfToken = resJson.token;
+    localStorage.setItem("blulink_cf_token", cfToken);
+    user = resJson.user;
+    openApp();
+  } catch (err) {
+    showAuthMsg(err.message || "Failed to connect to Cloudflare D1 API", true);
+  }
 };
+$("pw").onkeydown = e => { if (e.key === "Enter") $("btnSubmitAuth").click(); };
 
+/* ---------- Logout ---------- */
 $("logout").onclick = async () => {
-  if (backendMode === "cf" && cfToken) {
+  if (cfToken) {
     try {
       await fetch("/api/auth/logout", {
         method: "POST",
         headers: { "Authorization": `Bearer ${cfToken}` }
       });
     } catch (e) {}
-    localStorage.removeItem("datalink_cf_token");
+    localStorage.removeItem("blulink_cf_token");
+    cfToken = null;
   }
-  if (sb && !demo) await sb.auth.signOut();
   location.reload();
 };
 
-/* ---------- Workspace Data Storage & Autosave Engine ---------- */
-async function load() {
-  if (backendMode === "cf" && cfToken) {
-    try {
-      const res = await fetch("/api/workspace/load", {
-        headers: { "Authorization": `Bearer ${cfToken}` }
-      });
-      if (res.ok) {
-        const body = await res.json();
-        if (body.data && Array.isArray(body.data.entities)) {
-          data = body.data;
-          return;
-        }
-      }
-    } catch (e) {
-      console.warn("Cloudflare D1 load failed:", e);
-    }
-  }
-
-  if (backendMode === "sb" && sb) {
-    const { data: row, error } = await sb.from("datalink_workspaces")
-      .select("data")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    if (row && row.data && Array.isArray(row.data.entities)) {
-      data = row.data;
-      return;
-    }
-  }
-
-  // Demo / Local storage
+/* ---------- Cloudflare D1 Workspace Persistence ---------- */
+async function loadWorkspace() {
+  if (!cfToken) return;
   try {
-    const saved = localStorage.getItem("datalink_demo_workspace");
-    if (saved) {
-      data = JSON.parse(saved);
-    } else {
-      data = JSON.parse(JSON.stringify(SAMPLE_DATA));
+    const res = await fetch("/api/workspace/load", {
+      headers: { "Authorization": `Bearer ${cfToken}` }
+    });
+    if (res.ok) {
+      const body = await res.json();
+      if (body.data && Array.isArray(body.data.entities)) {
+        data = body.data;
+        return;
+      }
     }
   } catch (e) {
-    data = JSON.parse(JSON.stringify(SAMPLE_DATA));
+    setStatus("Failed to load Cloudflare D1 workspace: " + e.message, true);
   }
+  data = { entities: [], links: [] };
 }
 
 function queueSave() {
   if (!ready) return;
   setStatus("Saving…");
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(save, 1000); // 1-second autosave debounce
+  saveTimer = setTimeout(saveWorkspace, 1000);
 }
 
-async function save() {
-  if (backendMode === "cf" && cfToken) {
-    try {
-      const res = await fetch("/api/workspace/save", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${cfToken}`
-        },
-        body: JSON.stringify({ data })
-      });
-      if (res.ok) {
-        setStatus("All changes saved (Cloudflare D1)");
-      } else {
-        const errJson = await res.json().catch(() => ({}));
-        setStatus("Save failed: " + (errJson.error || "Network error"), true);
-      }
-    } catch (e) {
-      setStatus("Save failed: " + e.message, true);
-    }
-    return;
-  }
-
-  if (backendMode === "sb" && sb) {
-    const { error } = await sb.from("datalink_workspaces").upsert({
-      user_id: user.id,
-      data: data,
-      updated_at: new Date().toISOString()
-    }, { onConflict: "user_id" });
-
-    setStatus(error ? "Save failed: " + error.message : "All changes saved (Supabase)", !!error);
-    return;
-  }
-
-  // Demo mode
+async function saveWorkspace() {
+  if (!cfToken) return;
   try {
-    localStorage.setItem("datalink_demo_workspace", JSON.stringify(data));
-    setStatus("All changes saved (Local)");
+    const res = await fetch("/api/workspace/save", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${cfToken}`
+      },
+      body: JSON.stringify({ data })
+    });
+    if (res.ok) {
+      setStatus("All changes saved");
+    } else {
+      const errJson = await res.json().catch(() => ({}));
+      setStatus("Save failed: " + (errJson.error || "Error"), true);
+    }
   } catch (e) {
-    setStatus("Could not save to browser storage", true);
+    setStatus("Save failed: " + e.message, true);
   }
 }
 
@@ -919,31 +828,24 @@ function setStatus(text, isError = false) {
   const dot = $("statusDot");
   st.textContent = text;
   if (isError) {
-    dot.className = "w-2 h-2 rounded-full bg-white shadow-[0_0_8px_#ffffff] animate-ping";
-    st.className = "text-white font-bold";
+    dot.className = "w-2 h-2 rounded-full bg-black animate-ping";
+    st.className = "text-black font-bold";
   } else if (text.includes("Saving")) {
-    dot.className = "w-2 h-2 rounded-full bg-blue-400 shadow-[0_0_8px_#60a5fa] animate-spin";
-    st.className = "text-blue-300";
+    dot.className = "w-2 h-2 rounded-full bg-blue-600 animate-spin";
+    st.className = "text-blue-600 font-semibold";
   } else {
-    dot.className = "w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_#3b82f6]";
-    st.className = "text-white/80";
+    dot.className = "w-2 h-2 rounded-full bg-blue-600";
+    st.className = "text-black font-semibold";
   }
 }
 
-/* ---------- App Initialization ---------- */
+/* ---------- App Launch (Once Authenticated) ---------- */
 async function openApp() {
-  $("auth").style.display = "none";
+  $("auth").classList.add("hidden");
   $("app").classList.remove("hidden");
   $("app").classList.add("flex");
-  $("userSection").classList.remove("hidden");
-  $("userSection").classList.add("flex");
-  $("who").textContent = user.email || "Operator";
+  $("who").textContent = user.email || "Authenticated User";
   $("who").title = user.email || "";
-
-  // Update header badge
-  if (backendMode === "cf") $("backendBadge").textContent = "Cloudflare D1";
-  else if (backendMode === "sb") $("backendBadge").textContent = "Supabase";
-  else $("backendBadge").textContent = "Demo Mode";
 
   // Populate Type Selectors
   const typeOpts = Object.keys(TYPES).map(t => `<option value="${t}">${TYPES[t].i} ${t}</option>`).join("");
@@ -952,10 +854,10 @@ async function openApp() {
 
   initMap();
   initNet();
-  await load();
+  await loadWorkspace();
   render(true);
   ready = true;
-  setStatus(backendMode === "cf" ? "Connected (Cloudflare D1)" : (backendMode === "sb" ? "Connected (Supabase)" : "Demo Mode (Local)"));
+  setStatus("Cloudflare D1 Synchronized");
 
   setTimeout(() => {
     if (map) map.invalidateSize();
@@ -981,7 +883,7 @@ function initMap() {
   map = L.map("map", {
     layers: [hybrid],
     zoomControl: true
-  }).setView([48.8566, 2.3522], 4);
+  }).setView([14.5995, 120.9842], 5);
 
   L.control.layers(
     { "Google Hybrid": hybrid, "Google Satellite": sat, "Google Terrain": terrain },
@@ -1026,9 +928,9 @@ function initNet() {
       shape: "box",
       margin: 10,
       borderWidth: 2,
-      shadow: { enabled: true, color: "rgba(0,0,0,0.8)", size: 8, x: 2, y: 2 },
+      shadow: { enabled: true, color: "rgba(0,0,0,0.15)", size: 6, x: 2, y: 2 },
       font: {
-        color: "#ffffff",
+        color: "#000000",
         size: 13,
         face: '"DM Sans", sans-serif',
         multi: "html"
@@ -1038,16 +940,16 @@ function initNet() {
       arrows: { to: { enabled: true, scaleFactor: 0.8 } },
       color: {
         color: "#2563eb",
-        highlight: "#ffffff",
-        hover: "#3b82f6"
+        highlight: "#000000",
+        hover: "#1d4ed8"
       },
       width: 2,
       font: {
-        color: "#ffffff",
+        color: "#000000",
         size: 11,
         face: '"DM Sans", sans-serif',
         strokeWidth: 4,
-        strokeColor: "#000000",
+        strokeColor: "#ffffff",
         align: "middle"
       },
       smooth: { type: "cubicBezier", forceDirection: "none", roundness: 0.25 }
@@ -1102,14 +1004,17 @@ function render(fitAll = false) {
 
     const n = {
       id: e.id,
-      label: `<b>${t.i} ${esc(e.name)}</b>\n<span style="font-size:10px;color:#93c5fd">${esc(e.type)}</span>`,
+      label: `<b>${t.i} ${esc(e.name)}</b>\n<span style="font-size:10px;font-weight:600">${esc(e.type)}</span>`,
       color: {
-        background: isSel ? "#2563eb" : (t.c || "#000000"),
-        border: isSel ? "#ffffff" : (t.border || "#2563eb"),
+        background: isSel ? "#2563eb" : t.c,
+        border: isSel ? "#000000" : t.border,
         highlight: {
           background: "#2563eb",
-          border: "#ffffff"
+          border: "#000000"
         }
+      },
+      font: {
+        color: isSel ? "#ffffff" : t.fontColor
       },
       borderWidth: isSel ? 3 : 2
     };
@@ -1123,7 +1028,7 @@ function render(fitAll = false) {
     if (e.lat != null && e.lng != null && !isNaN(e.lat) && !isNaN(e.lng)) {
       mappedCount++;
       const pinHtml = `
-        <div class="custom-map-pin ${isSel ? 'is-selected' : ''}" style="background-color:${t.c}; border-color:${isSel ? '#ffffff' : t.border};">
+        <div class="custom-map-pin ${isSel ? 'is-selected' : ''}">
           <i>${t.i}</i>
         </div>
       `;
@@ -1138,13 +1043,13 @@ function render(fitAll = false) {
       const marker = L.marker([e.lat, e.lng], { icon, title: e.name }).addTo(markerLayer);
       marker.bindPopup(`
         <div class="p-1 min-w-[150px]">
-          <div class="flex items-center gap-1.5 font-bold text-sm text-white mb-1">
+          <div class="flex items-center gap-1.5 font-bold text-sm text-black mb-1">
             <span>${t.i}</span>
             <span>${esc(e.name)}</span>
           </div>
-          <div class="text-[11px] font-semibold text-blue-400 mb-1.5">${esc(e.type)}</div>
-          ${e.note ? `<div class="text-xs text-white/80 border-t border-blue-900/60 pt-1 leading-snug">${esc(e.note)}</div>` : ''}
-          <div class="text-[10px] text-white/40 mt-1 font-mono">${e.lat.toFixed(4)}, ${e.lng.toFixed(4)}</div>
+          <div class="text-[11px] font-bold text-blue-600 mb-1.5">${esc(e.type)}</div>
+          ${e.note ? `<div class="text-xs text-black/80 border-t border-black/10 pt-1 leading-snug">${esc(e.note)}</div>` : ''}
+          <div class="text-[10px] text-black/40 mt-1 font-mono">${e.lat.toFixed(4)}, ${e.lng.toFixed(4)}</div>
         </div>
       `);
       marker.on("click", () => select(e.id, "map"));
@@ -1166,9 +1071,9 @@ function render(fitAll = false) {
     if (a.lat != null && a.lng != null && b.lat != null && b.lng != null) {
       const isConnectedToSel = selected && (a.id === selected || b.id === selected);
       const poly = L.polyline([[a.lat, a.lng], [b.lat, b.lng]], {
-        color: isConnectedToSel ? "#ffffff" : "#2563eb",
+        color: isConnectedToSel ? "#000000" : "#2563eb",
         weight: isConnectedToSel ? 3.5 : 2.5,
-        opacity: isConnectedToSel ? 1 : 0.85,
+        opacity: 0.9,
         dashArray: "6, 6"
       }).addTo(lineLayer);
 
@@ -1246,7 +1151,7 @@ function renderInspector() {
   $("sLinkCount").textContent = links.length;
 
   if (links.length === 0) {
-    $("sLinksList").innerHTML = `<div class="text-[11px] text-white/40 italic p-2 rounded bg-black border border-blue-950">No relationships connected yet.</div>`;
+    $("sLinksList").innerHTML = `<div class="text-[11px] text-black/50 italic p-2 rounded bg-slate-50 border border-black/15">No relationships connected yet.</div>`;
   } else {
     $("sLinksList").innerHTML = links.map(l => {
       const isOutgoing = l.from === e.id;
@@ -1255,14 +1160,14 @@ function renderInspector() {
       const otherName = other ? other.name : "Unknown";
       const otherType = other ? (TYPES[other.type] || {}).i || "" : "";
       return `
-        <div class="flex items-center justify-between p-2 rounded bg-black border border-blue-900/50 hover:border-blue-500 transition text-xs">
+        <div class="flex items-center justify-between p-2 rounded bg-white border border-black/20 hover:border-blue-600 transition text-xs">
           <div class="truncate mr-2">
-            <span class="text-blue-400 font-bold">${isOutgoing ? "→" : "←"}</span>
-            <span class="text-white/60 font-medium">[${esc(l.label || "linked")}]</span>
-            <span class="text-white font-semibold">${otherType} ${esc(otherName)}</span>
+            <span class="text-blue-600 font-bold">${isOutgoing ? "→" : "←"}</span>
+            <span class="text-black/60 font-semibold">[${esc(l.label || "linked")}]</span>
+            <span class="text-black font-bold">${otherType} ${esc(otherName)}</span>
           </div>
           <button data-del-link="${l.id}" title="Remove link"
-            class="px-2 py-0.5 rounded border border-white/20 hover:border-white hover:bg-white hover:text-black text-white text-[10px] font-bold transition shrink-0">
+            class="px-2 py-0.5 rounded border border-black text-black hover:bg-black hover:text-white text-[10px] font-bold transition shrink-0">
             Remove
           </button>
         </div>
@@ -1339,7 +1244,7 @@ function renderList() {
   });
 
   if (!filtered.length) {
-    $("list").innerHTML = `<div class="text-xs text-white/50 text-center py-6">${data.entities.length === 0 ? "No entities added yet." : "No matching entities found."}</div>`;
+    $("list").innerHTML = `<div class="text-xs text-black/50 text-center py-6">${data.entities.length === 0 ? "No entities added yet." : "No matching entities found."}</div>`;
     return;
   }
 
@@ -1348,13 +1253,13 @@ function renderList() {
     const isSel = e.id === selected;
     const isMapped = e.lat != null && e.lng != null;
     return `
-      <div data-id="${e.id}" class="flex items-center gap-2 p-2 rounded-lg cursor-pointer transition border ${isSel ? 'bg-blue-950/70 border-blue-500 shadow-md shadow-blue-950' : 'bg-black border-blue-950 hover:border-blue-800 hover:bg-blue-950/20'}">
+      <div data-id="${e.id}" class="flex items-center gap-2 p-2 rounded-lg cursor-pointer transition border ${isSel ? 'bg-blue-50 border-blue-600 shadow-sm' : 'bg-white border-black/15 hover:border-black hover:bg-slate-50'}">
         <span class="text-base">${t.i}</span>
         <div class="flex-1 min-w-0">
-          <div class="text-xs font-semibold text-white truncate">${esc(e.name)}</div>
-          <div class="text-[10px] text-white/50">${esc(e.type)}</div>
+          <div class="text-xs font-bold text-black truncate">${esc(e.name)}</div>
+          <div class="text-[10px] text-black/60 font-medium">${esc(e.type)}</div>
         </div>
-        ${isMapped ? `<span class="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase bg-blue-950 border border-blue-900 text-blue-400">Map</span>` : ''}
+        ${isMapped ? `<span class="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase bg-blue-100 text-blue-700">Map</span>` : ''}
       </div>
     `;
   }).join("");
@@ -1370,12 +1275,12 @@ $("listSearch").oninput = renderList;
 function switchTab(tab) {
   ["Create", "Inspect", "List"].forEach(t => {
     $(`tabContent${t}`).classList.add("hidden");
-    $(`tabBtn${t}`).className = "flex-1 py-1.5 text-xs font-semibold rounded-md text-white/60 hover:text-white hover:bg-blue-950/40 transition";
+    $(`tabBtn${t}`).className = "flex-1 py-1.5 text-xs font-bold rounded-md text-black/70 hover:text-black hover:bg-white transition";
   });
 
   const cap = tab.charAt(0).toUpperCase() + tab.slice(1);
   $(`tabContent${cap}`).classList.remove("hidden");
-  $(`tabBtn${cap}`).className = "flex-1 py-1.5 text-xs font-semibold rounded-md bg-blue-600 text-white transition";
+  $(`tabBtn${cap}`).className = "flex-1 py-1.5 text-xs font-bold rounded-md bg-blue-600 text-white transition";
 }
 $("tabBtnCreate").onclick = () => switchTab("create");
 $("tabBtnInspect").onclick = () => switchTab("inspect");
@@ -1444,7 +1349,7 @@ function startPick(target = "new") {
   $("pickHint").textContent = "Click any point on the map to set coordinates.";
   $("pickHint").classList.remove("hidden");
   $("pickBtn").textContent = "Cancel Pick";
-  $("pickBtn").className = "w-full py-2 px-3 rounded-lg bg-blue-600 text-white font-semibold text-xs transition";
+  $("pickBtn").className = "w-full py-2 px-3 rounded-lg bg-black text-white font-bold text-xs transition";
 }
 
 function stopPick() {
@@ -1453,7 +1358,7 @@ function stopPick() {
   $("mapPickBanner").classList.add("hidden");
   $("pickHint").classList.add("hidden");
   $("pickBtn").textContent = "📍 Pick on map";
-  $("pickBtn").className = "w-full py-2 px-3 rounded-lg bg-black border border-blue-500 text-blue-400 hover:bg-blue-600 hover:text-white font-semibold text-xs transition";
+  $("pickBtn").className = "w-full py-2 px-3 rounded-lg bg-white border-2 border-black text-black hover:bg-black hover:text-white font-bold text-xs transition";
 }
 
 $("pickBtn").onclick = () => {
@@ -1474,29 +1379,11 @@ $("btnStabilizeNet").onclick = () => {
   }
 };
 
-/* ---------- Sample Data & Workspace Management ---------- */
-$("btnSampleData").onclick = () => {
-  if (data.entities.length && !confirm("Replace current workspace with the Intelligence Sample Dataset?")) return;
-  data = JSON.parse(JSON.stringify(SAMPLE_DATA));
-  selected = null;
-  render(true);
-  queueSave();
-  setTimeout(() => { if (net) net.fit(); }, 200);
-};
-
-$("btnClearData").onclick = () => {
-  if (!confirm("Clear all entities and relationships in this workspace?")) return;
-  data = { entities: [], links: [] };
-  selected = null;
-  render(false);
-  queueSave();
-};
-
 // Auto-save on page exit
 window.addEventListener("beforeunload", () => {
   if (saveTimer && ready) {
     clearTimeout(saveTimer);
-    save();
+    saveWorkspace();
   }
 });
 </script>

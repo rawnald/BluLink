@@ -15,11 +15,15 @@ export async function onRequestPost({ request, env }) {
 
     // Query user by email
     const user = await env.DB.prepare(`
-      SELECT id, email, password_hash, salt FROM users WHERE email = ?
+      SELECT id, email, password_hash, salt, auth_provider FROM users WHERE email = ?
     `).bind(trimmedEmail).first();
 
     if (!user) {
       return error("Invalid email or password.", 401);
+    }
+
+    if (user.auth_provider === "google" && !user.password_hash) {
+      return error("This account was created with Google. Please click 'Sign in with Google'.", 400);
     }
 
     // Verify hash
@@ -47,4 +51,3 @@ export async function onRequestPost({ request, env }) {
     return error(err.message || "Login failed", 500);
   }
 }
-

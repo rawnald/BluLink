@@ -4,12 +4,14 @@
 -- npx wrangler d1 execute datalink-db --remote --file=./schema.sql
 -- ============================================================
 
--- 1. Users table
+-- 1. Users table (supports both email/password and Google OAuth)
 CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY,
   email TEXT UNIQUE NOT NULL COLLATE NOCASE,
-  password_hash TEXT NOT NULL,
-  salt TEXT NOT NULL,
+  password_hash TEXT,
+  salt TEXT,
+  auth_provider TEXT DEFAULT 'local', -- 'local' or 'google'
+  google_id TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -30,6 +32,6 @@ CREATE TABLE IF NOT EXISTS workspaces (
 
 -- Indexes for high-speed queries on Cloudflare Edge
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_google_id ON users(google_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at);
-
