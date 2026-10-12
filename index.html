@@ -663,41 +663,29 @@
 
         <hr class="border-black/10">
 
-        <!-- Add Link Section -->
+        <!-- Add Link: Drag & Drop Link Tool Section -->
         <section class="space-y-3">
           <div class="flex items-center justify-between">
             <h2 class="text-xs font-bold uppercase tracking-wider text-black flex items-center gap-2">
               <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
               Add Link
             </h2>
-            <span class="text-[11px] text-blue-600 font-semibold">Relationship</span>
+            <span id="linkToolBadge" class="text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-200">Drag & Drop</span>
           </div>
 
-          <div class="grid grid-cols-2 gap-2">
-            <div>
-              <label for="lFrom" class="block text-[11px] font-bold text-black uppercase tracking-wide mb-1">From</label>
-              <select id="lFrom"
-                class="w-full px-2 py-2 rounded-lg bg-white border border-black/30 text-black text-xs focus:outline-none focus:border-blue-600">
-              </select>
+          <p class="text-[11px] text-black/60 leading-relaxed">
+            Click the link icon below, then drag or click from the <strong>first entity</strong> to the <strong>second entity</strong> on the chart.
+          </p>
+
+          <!-- Link Icon Tool Card -->
+          <div id="linkToolCard" draggable="true"
+               class="group flex flex-col items-center justify-center p-3.5 rounded-xl bg-white border-2 border-black/20 hover:border-blue-600 hover:shadow-md transition cursor-grab active:cursor-grabbing select-none text-center">
+            <div class="w-12 h-12 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 mb-2 transition-transform group-hover:scale-110 shadow-sm pointer-events-none">
+              <i class="fi fi-rr-link-alt text-lg"></i>
             </div>
-            <div>
-              <label for="lTo" class="block text-[11px] font-bold text-black uppercase tracking-wide mb-1">To</label>
-              <select id="lTo"
-                class="w-full px-2 py-2 rounded-lg bg-white border border-black/30 text-black text-xs focus:outline-none focus:border-blue-600">
-              </select>
-            </div>
+            <span class="text-xs font-bold text-black tracking-tight pointer-events-none">Relationship Link</span>
+            <span class="text-[10px] text-black/50 mt-0.5 pointer-events-none">Drag or click to connect</span>
           </div>
-
-          <div>
-            <label for="lLabel" class="block text-[11px] font-bold text-black uppercase tracking-wide mb-1">Relationship Label</label>
-            <input id="lLabel" placeholder="e.g. employed by, communicated with"
-              class="w-full px-3 py-2 rounded-lg bg-white border border-black/30 text-black placeholder-black/30 text-xs focus:outline-none focus:border-blue-600">
-          </div>
-
-          <button id="addL" class="w-full btn-secondary py-2 text-xs">
-            <i class="fi fi-rr-link-alt text-xs"></i>
-            <span>Connect Entities</span>
-          </button>
         </section>
       </div>
 
@@ -825,6 +813,17 @@
       <div class="w-2 h-2 rounded-full bg-blue-600"></div>
       <span class="text-xs font-bold text-black tracking-wide">Relational Link Chart</span>
       <span class="text-[10px] text-blue-600 font-semibold border-l border-blue-200 pl-2">Vis.Network</span>
+    </div>
+
+    <!-- Active Link Mode Banner -->
+    <div id="linkModeBanner" class="hidden absolute top-3 left-1/2 -translate-x-1/2 z-20 bg-blue-600 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-xl flex items-center gap-3">
+      <div class="flex items-center gap-2">
+        <i class="fi fi-rr-link-alt text-xs"></i>
+        <span id="linkModeBannerText">Click or drag from the first entity to the second entity</span>
+      </div>
+      <button id="cancelLinkModeBtn" type="button" class="btn-secondary py-0.5 px-2.5 text-[11px] bg-white text-black border-white hover:border-blue-300">
+        <span>Cancel</span>
+      </button>
     </div>
 
     <!-- Chart Control Buttons -->
@@ -1941,6 +1940,18 @@ function initNet() {
 
   const container = $("net");
   const options = {
+    manipulation: {
+      enabled: false,
+      addEdge: function(edgeData, callback) {
+        if (edgeData.from === edgeData.to) {
+          callback(null);
+          return;
+        }
+        createLinkBetween(edgeData.from, edgeData.to);
+        callback(null);
+        exitLinkMode();
+      }
+    },
     nodes: {
       shape: "image",
       size: 26,
@@ -1996,7 +2007,32 @@ function initNet() {
 
   net = new vis.Network(container, { nodes, edges }, options);
 
-  net.on("selectNode", p => select(p.nodes[0], "net"));
+  net.on("selectNode", p => {
+    if (!isLinkMode) select(p.nodes[0], "net");
+  });
+
+  // Handle click-based entity-to-entity linking
+  net.on("click", params => {
+    if (!isLinkMode) return;
+    const clickedId = net.getNodeAt(params.pointer.DOM);
+    if (!clickedId) return;
+
+    if (!linkingSourceId) {
+      // Step 1: Picked first entity
+      linkingSourceId = clickedId;
+      const a = data.entities.find(x => x.id === clickedId);
+      if ($("linkModeBannerText")) {
+        $("linkModeBannerText").textContent = `Selected 1st: "${a ? a.name : 'Entity'}" ➔ Click 2nd entity`;
+      }
+      net.selectNodes([clickedId]);
+    } else {
+      // Step 2: Picked second entity
+      if (clickedId !== linkingSourceId) {
+        createLinkBetween(linkingSourceId, clickedId);
+      }
+      exitLinkMode();
+    }
+  });
   net.on("deselectNode", () => select(null, "net"));
 
   // Double click link to open edit modal
@@ -2033,6 +2069,22 @@ function initNet() {
 
   container.addEventListener("drop", ev => {
     ev.preventDefault();
+
+    // Check if dragging Link Tool
+    const toolType = ev.dataTransfer.getData("application/x-blulink-tool");
+    if (toolType === "link") {
+      if (!currentProjectId) {
+        showNoProjectError();
+        return;
+      }
+      const rect = container.getBoundingClientRect();
+      const domX = ev.clientX - rect.left;
+      const domY = ev.clientY - rect.top;
+      const droppedOnNodeId = net ? net.getNodeAt({ x: domX, y: domY }) : null;
+      enterLinkMode(droppedOnNodeId);
+      return;
+    }
+
     const typeKey = ev.dataTransfer.getData("application/x-blulink-entity") || ev.dataTransfer.getData("text/plain");
     if (!typeKey || !TYPES[typeKey]) return;
 
@@ -2183,14 +2235,16 @@ function render(fitAll = false) {
     }
   });
 
-  const sortedEntities = [...data.entities].sort((x, y) => x.name.localeCompare(y.name));
-  const optionsHtml = sortedEntities.map(e => `<option value="${e.id}">${esc(e.name)} (${esc(e.type)})</option>`).join("");
-  const currFrom = $("lFrom").value;
-  const currTo = $("lTo").value;
-  $("lFrom").innerHTML = optionsHtml;
-  $("lTo").innerHTML = optionsHtml;
-  if (byId[currFrom]) $("lFrom").value = currFrom;
-  if (byId[currTo]) $("lTo").value = currTo;
+  if ($("lFrom") && $("lTo")) {
+    const sortedEntities = [...data.entities].sort((x, y) => x.name.localeCompare(y.name));
+    const optionsHtml = sortedEntities.map(e => `<option value="${e.id}">${esc(e.name)} (${esc(e.type)})</option>`).join("");
+    const currFrom = $("lFrom").value;
+    const currTo = $("lTo").value;
+    $("lFrom").innerHTML = optionsHtml;
+    $("lTo").innerHTML = optionsHtml;
+    if (byId[currFrom]) $("lFrom").value = currFrom;
+    if (byId[currTo]) $("lTo").value = currTo;
+  }
 
   if ($("statEntities")) $("statEntities").textContent = data.entities.length;
   if ($("statLinks")) $("statLinks").textContent = data.links.length;
@@ -2553,30 +2607,110 @@ $("tabBtnCreate").onclick = () => switchTab("create");
 $("tabBtnInspect").onclick = () => switchTab("inspect");
 $("tabBtnList").onclick = () => switchTab("list");
 
-/* ---------- Actions: Adding Links ---------- */
-$("addL").onclick = () => {
+/* ---------- Interactive Drag & Drop Link Mode ---------- */
+let isLinkMode = false;
+let linkingSourceId = null;
+
+function enterLinkMode(fromNodeId = null) {
   if (!currentProjectId) {
     showNoProjectError();
     return;
   }
-  const from = $("lFrom").value;
-  const to = $("lTo").value;
-  if (!from || !to || from === to) {
-    alert("Please select two distinct entities to establish a relationship.");
+  if (data.entities.length < 2) {
+    alert("Please add at least 2 entities to the workspace before creating a relationship link.");
     return;
   }
-  const label = $("lLabel").value.trim();
-  data.links.push({
-    id: uid(),
-    from,
-    to,
-    label
-  });
 
-  $("lLabel").value = "";
+  isLinkMode = true;
+  linkingSourceId = fromNodeId || null;
+
+  if ($("linkToolCard")) {
+    $("linkToolCard").className = "group flex flex-col items-center justify-center p-3.5 rounded-xl bg-blue-50 border-2 border-blue-600 ring-2 ring-blue-500 shadow-md transition cursor-pointer select-none text-center";
+  }
+  if ($("linkToolBadge")) {
+    $("linkToolBadge").className = "text-[10px] text-white font-bold bg-blue-600 px-2 py-0.5 rounded border border-blue-600";
+    $("linkToolBadge").textContent = "Active";
+  }
+  if ($("linkModeBanner")) {
+    $("linkModeBanner").classList.remove("hidden");
+  }
+
+  if (linkingSourceId) {
+    const a = data.entities.find(x => x.id === linkingSourceId);
+    if ($("linkModeBannerText")) {
+      $("linkModeBannerText").textContent = `Selected 1st: "${a ? a.name : 'Entity'}" ➔ Click or drag to 2nd entity`;
+    }
+    if (net) net.selectNodes([linkingSourceId]);
+  } else {
+    if ($("linkModeBannerText")) {
+      $("linkModeBannerText").textContent = "Click or drag from the first entity to the second entity";
+    }
+  }
+
+  if (net) {
+    try { net.addEdgeMode(); } catch(e) {}
+  }
+}
+
+function exitLinkMode() {
+  isLinkMode = false;
+  linkingSourceId = null;
+  if (net) {
+    try { net.disableEditMode(); } catch(e) {}
+    net.unselectAll();
+  }
+  if ($("linkModeBanner")) $("linkModeBanner").classList.add("hidden");
+  if ($("linkToolCard")) {
+    $("linkToolCard").className = "group flex flex-col items-center justify-center p-3.5 rounded-xl bg-white border-2 border-black/20 hover:border-blue-600 hover:shadow-md transition cursor-grab active:cursor-grabbing select-none text-center";
+  }
+  if ($("linkToolBadge")) {
+    $("linkToolBadge").className = "text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-200";
+    $("linkToolBadge").textContent = "Drag & Drop";
+  }
+}
+
+function toggleLinkMode() {
+  if (isLinkMode) exitLinkMode();
+  else enterLinkMode();
+}
+
+function createLinkBetween(fromId, toId) {
+  if (!fromId || !toId || fromId === toId) return;
+  const newLink = {
+    id: uid(),
+    from: fromId,
+    to: toId,
+    label: "",
+    color: "#000000",
+    strength: "Confirmed",
+    width: 1,
+    arrows: "to"
+  };
+  data.links.push(newLink);
   render(false);
   queueSave();
-};
+  openEditLinkModal(newLink.id);
+}
+
+// Sidebar Link Tool Card events
+const linkCard = $("linkToolCard");
+if (linkCard) {
+  linkCard.onclick = () => toggleLinkMode();
+  linkCard.ondragstart = ev => {
+    ev.dataTransfer.setData("application/x-blulink-tool", "link");
+    ev.dataTransfer.setData("text/plain", "link");
+    ev.dataTransfer.effectAllowed = "copy";
+  };
+}
+
+// Cancel link mode button & Esc key
+if ($("cancelLinkModeBtn")) $("cancelLinkModeBtn").onclick = exitLinkMode;
+
+window.addEventListener("keydown", e => {
+  if (e.key === "Escape" && isLinkMode) {
+    exitLinkMode();
+  }
+});
 
 /* ---------- Map Coordinate Picking Tool ---------- */
 function startPick(target = "selected") {
