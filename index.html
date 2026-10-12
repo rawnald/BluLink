@@ -589,7 +589,7 @@
             <h3 class="text-sm font-bold text-black uppercase tracking-wider">All Entities Palette</h3>
             <span id="allEntitiesCountBadge" class="text-[11px] font-bold text-blue-600 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">771 entities</span>
           </div>
-          <p class="text-[11px] text-black/60 mt-0.5">Click any entity to place on chart, or drag & drop onto the workspace.</p>
+          <p class="text-[11px] text-black/60 mt-0.5">Select any entity below, then click "Add Entity" at the bottom to place it on the chart.</p>
         </div>
       </div>
 
@@ -627,16 +627,30 @@
       <p class="text-xs text-black/60 mt-1">Try another search keyword or switch to another category.</p>
     </div>
 
-    <!-- Modal Footer -->
-    <div class="px-5 py-2.5 border-t border-black/10 bg-white flex items-center justify-between text-[11px] text-black/60 shrink-0">
-      <div class="flex items-center gap-2">
-        <span class="w-2 h-2 rounded-full bg-blue-600"></span>
-        <span id="allEntitiesStatusText">Showing 771 entities</span>
+    <!-- Modal Footer with Bottom Add Button -->
+    <div class="px-5 py-3 border-t border-black/10 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-[11px] text-black/60 shrink-0">
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-blue-600"></span>
+          <span id="allEntitiesStatusText">Showing 771 entities</span>
+        </div>
+        <!-- Selected entity preview indicator -->
+        <div id="modalSelectedIndicator" class="hidden items-center gap-1.5 px-2.5 py-1 bg-blue-50 border border-blue-200 rounded-lg text-xs">
+          <i id="modalSelectedIcon" class="fi fi-rr-apps text-blue-600 text-sm"></i>
+          <span id="modalSelectedName" class="font-bold text-black truncate max-w-[150px]">None</span>
+          <span id="modalSelectedCat" class="text-[10px] text-blue-600/70 font-semibold truncate max-w-[100px]"></span>
+        </div>
       </div>
-      <div class="flex items-center gap-2 text-[10px] text-black/50">
-        <span>Click to add • Drag to canvas</span>
-        <span>•</span>
-        <span>Press <kbd class="px-1.5 py-0.5 rounded bg-neutral-100 border border-black/20 font-mono text-[9px]">Esc</kbd> to exit</span>
+
+      <div class="flex items-center gap-2.5">
+        <button id="btnCancelAllEntitiesModal" type="button" class="btn-secondary py-1.5 px-3 text-xs">
+          Cancel
+        </button>
+        <button id="btnAddSelectedEntity" type="button" disabled
+          class="btn-primary py-1.5 px-4 text-xs flex items-center gap-1.5 opacity-50 cursor-not-allowed transition">
+          <i class="fi fi-rr-plus text-xs"></i>
+          <span id="btnAddSelectedEntityText">Add Selected Entity</span>
+        </button>
       </div>
     </div>
 
@@ -1835,10 +1849,49 @@ function populateInspectorTypes() {
 /* ---------- All Entities Palette Modal Controller ---------- */
 let currentModalCategory = "All";
 let currentModalSearch = "";
+let selectedModalEntity = null;
+const flaticonDataUriCache = {};
+
+function getFlaticonDataUri(flaticonName, unicodeHex = null, color = "#2563eb", size = 64) {
+  if (!flaticonName) return null;
+  const cacheKey = `${flaticonName}_${color}_${size}`;
+  if (flaticonDataUriCache[cacheKey]) return flaticonDataUriCache[cacheKey];
+
+  if (!unicodeHex && window.ALL_ENTITIES_DATA) {
+    const item = window.ALL_ENTITIES_DATA.find(e => e.flaticon === flaticonName);
+    if (item && item.unicode) unicodeHex = item.unicode;
+  }
+  if (!unicodeHex) return null;
+
+  try {
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+
+    ctx.clearRect(0, 0, size, size);
+    ctx.fillStyle = color;
+    ctx.font = `${Math.round(size * 0.72)}px "uicons-regular-rounded"`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    const char = String.fromCharCode(parseInt(unicodeHex, 16));
+    ctx.fillText(char, size / 2, size / 2);
+
+    const dataUri = canvas.toDataURL("image/png");
+    flaticonDataUriCache[cacheKey] = dataUri;
+    return dataUri;
+  } catch(err) {
+    return null;
+  }
+}
 
 function openAllEntitiesModal() {
   const modal = $("allEntitiesModal");
   if (!modal) return;
+  selectedModalEntity = null;
+  updateModalSelectedState();
   modal.classList.remove("hidden");
   renderAllEntitiesCategoryPills();
   renderAllEntitiesGrid();
@@ -1855,6 +1908,73 @@ function closeAllEntitiesModal() {
   modal.classList.add("hidden");
   modal.classList.remove("pointer-events-none");
   modal.style.opacity = "";
+}
+
+function updateModalSelectedState() {
+  const indicator = $("modalSelectedIndicator");
+  const iconEl = $("modalSelectedIcon");
+  const nameEl = $("modalSelectedName");
+  const catEl = $("modalSelectedCat");
+  const addBtn = $("btnAddSelectedEntity");
+  const addBtnText = $("btnAddSelectedEntityText");
+
+  // Highlight selected card and unhighlight others
+  const cards = document.querySelectorAll(".all-entity-card");
+  cards.forEach(card => {
+    const isSelected = selectedModalEntity && card.dataset.id === selectedModalEntity.id;
+    if (isSelected) {
+      card.classList.add("bg-blue-50/90", "border-blue-600", "ring-2", "ring-blue-600/40", "shadow-md");
+      card.classList.remove("bg-white", "border-black/15");
+    } else {
+      card.classList.remove("bg-blue-50/90", "border-blue-600", "ring-2", "ring-blue-600/40", "shadow-md");
+      card.classList.add("bg-white", "border-black/15");
+    }
+  });
+
+  if (selectedModalEntity) {
+    if (indicator) {
+      indicator.classList.remove("hidden");
+      indicator.classList.add("flex");
+    }
+    if (iconEl) iconEl.className = `fi fi-rr-${selectedModalEntity.flaticon || 'apps'} text-blue-600 text-sm`;
+    if (nameEl) nameEl.textContent = selectedModalEntity.name;
+    if (catEl) catEl.textContent = `(${selectedModalEntity.category})`;
+
+    if (addBtn) {
+      addBtn.disabled = false;
+      addBtn.classList.remove("opacity-50", "cursor-not-allowed");
+      addBtn.classList.add("cursor-pointer");
+    }
+    if (addBtnText) addBtnText.textContent = `Add "${selectedModalEntity.name}" to Chart`;
+  } else {
+    if (indicator) {
+      indicator.classList.add("hidden");
+      indicator.classList.remove("flex");
+    }
+    if (addBtn) {
+      addBtn.disabled = true;
+      addBtn.classList.add("opacity-50", "cursor-not-allowed");
+      addBtn.classList.remove("cursor-pointer");
+    }
+    if (addBtnText) addBtnText.textContent = "Add Selected Entity";
+  }
+}
+
+function addSelectedEntityToChart() {
+  if (!selectedModalEntity) return;
+
+  const item = selectedModalEntity;
+  const iconUri = getFlaticonDataUri(item.flaticon, item.unicode) || item.icon;
+
+  createEntityFromPalette(item.name, null, null, {
+    icon: iconUri,
+    flaticon: item.flaticon,
+    unicode: item.unicode,
+    category: item.category
+  });
+
+  setStatus(`Added "${item.name}" to Link Chart`);
+  closeAllEntitiesModal();
 }
 
 function renderAllEntitiesCategoryPills() {
@@ -1925,43 +2045,68 @@ function renderAllEntitiesGrid() {
     grid.innerHTML = "";
     grid.classList.add("hidden");
     if (empty) empty.classList.remove("hidden");
+    updateModalSelectedState();
     return;
   }
 
   if (empty) empty.classList.add("hidden");
   grid.classList.remove("hidden");
 
-  grid.innerHTML = filtered.map(item => `
-    <div draggable="true" data-type="${esc(item.name)}" data-category="${esc(item.category)}" data-icon="${esc(item.icon)}"
-         title="${esc(item.name)} (${esc(item.category)})"
-         class="all-entity-card group flex flex-col items-center justify-center p-2 rounded-xl bg-white border border-black/15 hover:border-blue-600 hover:shadow-md hover:bg-blue-50/20 transition cursor-grab active:cursor-grabbing select-none text-center relative">
-      <div class="w-8 h-8 flex items-center justify-center mb-1 transition-transform group-hover:scale-110 pointer-events-none">
-        <img src="${item.icon}" alt="${esc(item.name)}" loading="lazy" class="w-7 h-7 object-contain pointer-events-none">
+  grid.innerHTML = filtered.map(item => {
+    const isSelected = selectedModalEntity && selectedModalEntity.id === item.id;
+    return `
+      <div draggable="true" data-id="${esc(item.id)}" data-type="${esc(item.name)}" data-category="${esc(item.category)}" data-icon="${esc(item.icon)}" data-flaticon="${esc(item.flaticon || 'apps')}" data-unicode="${esc(item.unicode || '')}"
+           title="${esc(item.name)} (${esc(item.category)})"
+           class="all-entity-card group flex flex-col items-center justify-center p-2.5 rounded-xl border transition cursor-pointer select-none text-center relative ${
+             isSelected
+               ? 'bg-blue-50/90 border-blue-600 ring-2 ring-blue-600/40 shadow-md'
+               : 'bg-white border-black/15 hover:border-blue-600 hover:shadow-md hover:bg-blue-50/20'
+           }">
+        <div class="w-9 h-9 flex items-center justify-center mb-1 text-blue-600 transition-transform group-hover:scale-110 pointer-events-none">
+          <i class="fi fi-rr-${esc(item.flaticon || 'apps')} text-2xl"></i>
+        </div>
+        <span class="text-[10px] font-bold text-black tracking-tight leading-tight line-clamp-2 pointer-events-none w-full">
+          ${esc(item.name)}
+        </span>
+        <span class="text-[9px] text-blue-600 font-semibold tracking-tight leading-none mt-1 line-clamp-1 pointer-events-none">
+          ${esc(item.category)}
+        </span>
       </div>
-      <span class="text-[10px] font-bold text-black tracking-tight leading-tight line-clamp-2 pointer-events-none w-full">
-        ${esc(item.name)}
-      </span>
-      <span class="text-[9px] text-blue-600 font-semibold tracking-tight leading-none mt-1 line-clamp-1 pointer-events-none">
-        ${esc(item.category)}
-      </span>
-    </div>
-  `).join("");
+    `;
+  }).join("");
 
   grid.querySelectorAll(".all-entity-card").forEach(card => {
-    const typeName = card.dataset.type;
-    const catName = card.dataset.category;
-    const iconPath = card.dataset.icon;
+    const cardId = card.dataset.id;
+    const item = dataset.find(e => e.id === cardId);
+    if (!item) return;
 
+    // Single Click: SELECT ONLY (Do not add directly)
+    card.addEventListener("click", () => {
+      selectedModalEntity = item;
+      updateModalSelectedState();
+    });
+
+    // Double Click: Add and close
+    card.addEventListener("dblclick", () => {
+      selectedModalEntity = item;
+      addSelectedEntityToChart();
+    });
+
+    // Drag: Drag straight to chart canvas
     card.addEventListener("dragstart", ev => {
+      selectedModalEntity = item;
+      updateModalSelectedState();
+
       ev.dataTransfer.setData("application/x-blulink-entity", JSON.stringify({
-        type: typeName,
-        category: catName,
-        icon: iconPath
+        type: item.name,
+        category: item.category,
+        flaticon: item.flaticon,
+        unicode: item.unicode,
+        icon: item.icon
       }));
-      ev.dataTransfer.setData("text/plain", typeName);
+      ev.dataTransfer.setData("text/plain", item.name);
       ev.dataTransfer.effectAllowed = "copy";
 
-      // During drag, make modal translucent & allow dropping through onto Link Chart
       const modal = $("allEntitiesModal");
       if (modal) {
         modal.classList.add("pointer-events-none");
@@ -1976,26 +2121,22 @@ function renderAllEntitiesGrid() {
         modal.style.opacity = "";
       }
     });
-
-    card.addEventListener("click", () => {
-      createEntityFromPalette(typeName, null, null, {
-        icon: iconPath,
-        category: catName
-      });
-      setStatus(`Added "${typeName}" to Link Chart`);
-
-      // Visual click feedback pulse
-      card.classList.add("ring-2", "ring-blue-600", "bg-blue-100/50");
-      setTimeout(() => {
-        card.classList.remove("ring-2", "ring-blue-600", "bg-blue-100/50");
-      }, 350);
-    });
   });
+
+  updateModalSelectedState();
 }
 
 // Bind modal controls
 if ($("btnCloseAllEntitiesModal")) {
   $("btnCloseAllEntitiesModal").onclick = closeAllEntitiesModal;
+}
+
+if ($("btnCancelAllEntitiesModal")) {
+  $("btnCancelAllEntitiesModal").onclick = closeAllEntitiesModal;
+}
+
+if ($("btnAddSelectedEntity")) {
+  $("btnAddSelectedEntity").onclick = addSelectedEntityToChart;
 }
 
 if ($("allEntitiesModal")) {
@@ -2065,7 +2206,12 @@ async function openApp() {
 /* ---------- Entity Image Helpers ---------- */
 function getEntityIcon(e) {
   if (!e) return ENTITY_ICONS.Male;
-  return e.customImage || e.icon || ENTITY_ICONS[e.type] || ENTITY_ICONS[e.name] || ENTITY_ICONS.Male;
+  if (e.customImage) return e.customImage;
+  if (e.flaticon) {
+    const dataUri = getFlaticonDataUri(e.flaticon, e.unicode);
+    if (dataUri) return dataUri;
+  }
+  return e.icon || ENTITY_ICONS[e.type] || ENTITY_ICONS[e.name] || ENTITY_ICONS.Male;
 }
 
 function processUploadedImage(file, callback) {
@@ -3344,6 +3490,14 @@ function updateSelectedFromForm(isLiveTyping = false) {
 
   e.name = $("sName").value;
   e.type = $("sType").value;
+  if (window.ALL_ENTITIES_DATA) {
+    const item = window.ALL_ENTITIES_DATA.find(x => x.name === e.type);
+    if (item) {
+      e.flaticon = item.flaticon;
+      e.unicode = item.unicode;
+      e.icon = item.icon;
+    }
+  }
   if (ENTITY_ICONS[e.type]) e.icon = ENTITY_ICONS[e.type];
   e.note = $("sNote").value;
 
