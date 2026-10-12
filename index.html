@@ -20,6 +20,9 @@
 <!-- MGRS Coordinate Conversion Library -->
 <script src="assets/mgrs.min.js"></script>
 
+<!-- All Entities Palette Dataset (771 Icons & Categories) -->
+<script src="assets/all_entities.js"></script>
+
 <!-- Vis.js Network -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.9/standalone/umd/vis-network.min.js"></script>
 
@@ -571,6 +574,75 @@
   </div>
 </div>
 
+<!-- ==================== ALL ENTITIES MODAL ==================== -->
+<div id="allEntitiesModal" class="hidden fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-sm">
+  <div class="w-full max-w-5xl h-[88vh] max-h-[850px] bg-white border-2 border-black rounded-2xl shadow-2xl flex flex-col overflow-hidden relative z-10">
+    
+    <!-- Modal Header -->
+    <div class="px-5 py-3.5 border-b border-black/15 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white shrink-0">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-blue-50 border border-blue-600/30 flex items-center justify-center text-blue-600 shrink-0">
+          <i class="fi fi-rr-apps text-lg"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h3 class="text-sm font-bold text-black uppercase tracking-wider">All Entities Palette</h3>
+            <span id="allEntitiesCountBadge" class="text-[11px] font-bold text-blue-600 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">771 entities</span>
+          </div>
+          <p class="text-[11px] text-black/60 mt-0.5">Click any entity to place on chart, or drag & drop onto the workspace.</p>
+        </div>
+      </div>
+
+      <!-- Search & Close -->
+      <div class="flex items-center gap-3 w-full sm:w-auto">
+        <div class="relative flex-1 sm:w-72">
+          <i class="fi fi-rr-search absolute left-3 top-1/2 -translate-y-1/2 text-black/40 text-xs pointer-events-none"></i>
+          <input id="searchAllEntitiesInput" type="text" placeholder="Search entities (e.g. Soldier, Bank, Drone)..."
+            class="w-full pl-8 pr-8 py-2 rounded-xl bg-neutral-50 border border-black/20 text-black text-xs placeholder:text-black/40 focus:outline-none focus:border-blue-600 focus:bg-white focus:ring-2 focus:ring-blue-600/20 transition">
+          <button id="btnClearSearchAllEntities" type="button" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-black/40 hover:text-black text-xs font-bold w-4 h-4 rounded-full flex items-center justify-center">✕</button>
+        </div>
+        <button id="btnCloseAllEntitiesModal" type="button" title="Close (Esc)"
+          class="w-8 h-8 rounded-xl border border-black/15 hover:border-black/30 hover:bg-neutral-100 flex items-center justify-center text-black/70 hover:text-black font-bold transition shrink-0">
+          ✕
+        </button>
+      </div>
+    </div>
+
+    <!-- Category Filter Bar (Horizontal scrolling pills) -->
+    <div id="allEntitiesCategoryBar" class="px-5 py-2.5 border-b border-black/10 bg-neutral-50 flex items-center gap-1.5 overflow-x-auto shrink-0 select-none">
+      <!-- Category pills populated dynamically -->
+    </div>
+
+    <!-- Grid of Entities (Scrollable) -->
+    <div id="allEntitiesGrid" class="flex-1 overflow-y-auto p-4 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2.5 content-start bg-neutral-50/40">
+      <!-- Cards rendered dynamically -->
+    </div>
+
+    <!-- Empty Search State -->
+    <div id="allEntitiesEmptyState" class="hidden flex-1 flex flex-col items-center justify-center p-8 text-center bg-neutral-50/30">
+      <div class="w-12 h-12 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-400 mb-3 text-xl">
+        <i class="fi fi-rr-search"></i>
+      </div>
+      <p class="text-sm font-bold text-black font-bold">No matching entities found</p>
+      <p class="text-xs text-black/60 mt-1">Try another search keyword or switch to another category.</p>
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="px-5 py-2.5 border-t border-black/10 bg-white flex items-center justify-between text-[11px] text-black/60 shrink-0">
+      <div class="flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-blue-600"></span>
+        <span id="allEntitiesStatusText">Showing 771 entities</span>
+      </div>
+      <div class="flex items-center gap-2 text-[10px] text-black/50">
+        <span>Click to add • Drag to canvas</span>
+        <span>•</span>
+        <span>Press <kbd class="px-1.5 py-0.5 rounded bg-neutral-100 border border-black/20 font-mono text-[9px]">Esc</kbd> to exit</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
 <!-- ==================== HEADER ==================== -->
 <header id="headerApp" class="h-14 shrink-0 bg-white border-b-2 border-black/10 px-4 flex items-center justify-between z-30">
   <div class="flex items-center gap-4">
@@ -961,6 +1033,19 @@ const TYPES = {
   "House": { label: "House" },
   "Organisation": { label: "Organisation" }
 };
+
+// Register all entities from all_entities dataset into ENTITY_ICONS and TYPES
+if (window.ALL_ENTITIES_DATA && Array.isArray(window.ALL_ENTITIES_DATA)) {
+  window.ALL_ENTITIES_DATA.forEach(item => {
+    if (!ENTITY_ICONS[item.name]) {
+      ENTITY_ICONS[item.name] = item.icon;
+    }
+    ENTITY_ICONS[item.id] = item.icon;
+    if (!TYPES[item.name]) {
+      TYPES[item.name] = { label: item.name, category: item.category };
+    }
+  });
+}
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -1625,7 +1710,7 @@ function renderPalette() {
     "Organisation"
   ];
 
-  container.innerHTML = paletteKeys.map(k => `
+  const html = paletteKeys.map(k => `
     <div draggable="true" data-type="${k}"
          class="palette-card group flex flex-col items-center justify-center p-2 rounded-xl bg-white border border-black/15 hover:border-blue-600 hover:shadow-md transition cursor-grab active:cursor-grabbing select-none text-center">
       <div class="w-9 h-9 flex items-center justify-center mb-1 transition-transform group-hover:scale-110 pointer-events-none">
@@ -1635,13 +1720,29 @@ function renderPalette() {
         ${k}
       </span>
     </div>
-  `).join("");
+  `).join("") + `
+    <!-- Display All Entity Button next to Organisation -->
+    <button id="btnOpenAllEntitiesModal" type="button" title="Display All Entities"
+         class="palette-card group flex flex-col items-center justify-center p-2 rounded-xl bg-blue-50/80 border-2 border-dashed border-blue-600/40 hover:border-blue-600 hover:bg-blue-100/60 transition cursor-pointer select-none text-center">
+      <div class="w-9 h-9 flex items-center justify-center mb-1 text-blue-600 transition-transform group-hover:scale-110 pointer-events-none">
+        <i class="fi fi-rr-apps text-xl"></i>
+      </div>
+      <span class="text-[10px] font-bold text-blue-700 tracking-tight leading-tight line-clamp-2 pointer-events-none">
+        Display All Entity
+      </span>
+    </button>
+  `;
 
-  container.querySelectorAll(".palette-card").forEach(card => {
+  container.innerHTML = html;
+
+  container.querySelectorAll(".palette-card[data-type]").forEach(card => {
     const typeKey = card.dataset.type;
 
     card.addEventListener("dragstart", ev => {
-      ev.dataTransfer.setData("application/x-blulink-entity", typeKey);
+      ev.dataTransfer.setData("application/x-blulink-entity", JSON.stringify({
+        type: typeKey,
+        icon: ENTITY_ICONS[typeKey]
+      }));
       ev.dataTransfer.setData("text/plain", typeKey);
       ev.dataTransfer.effectAllowed = "copy";
     });
@@ -1651,9 +1752,14 @@ function renderPalette() {
       createEntityFromPalette(typeKey);
     });
   });
+
+  const btnOpenAll = $("btnOpenAllEntitiesModal");
+  if (btnOpenAll) {
+    btnOpenAll.onclick = openAllEntitiesModal;
+  }
 }
 
-function createEntityFromPalette(typeKey, x = null, y = null) {
+function createEntityFromPalette(typeKey, x = null, y = null, extraProps = {}) {
   if (!currentProjectId) {
     showNoProjectError();
     return;
@@ -1687,7 +1793,8 @@ function createEntityFromPalette(typeKey, x = null, y = null) {
     type: typeKey,
     note: "",
     x: x,
-    y: y
+    y: y,
+    ...extraProps
   };
 
   data.entities.push(newEntity);
@@ -1699,6 +1806,236 @@ function createEntityFromPalette(typeKey, x = null, y = null) {
   switchTab("inspect");
 }
 
+/* ---------- Inspector Entity Types Dropdown ---------- */
+function populateInspectorTypes() {
+  const select = $("sType");
+  if (!select) return;
+  if (window.ALL_ENTITIES_DATA && window.ALL_ENTITIES_DATA.length) {
+    const cats = {};
+    window.ALL_ENTITIES_DATA.forEach(item => {
+      const cat = item.category || "Other";
+      if (!cats[cat]) cats[cat] = [];
+      cats[cat].push(item);
+    });
+    let html = "";
+    for (const [catName, list] of Object.entries(cats)) {
+      html += `<optgroup label="${esc(catName)}">`;
+      list.forEach(item => {
+        html += `<option value="${esc(item.name)}">${esc(item.name)}</option>`;
+      });
+      html += `</optgroup>`;
+    }
+    select.innerHTML = html;
+  } else {
+    select.innerHTML = Object.keys(TYPES).map(t => `<option value="${t}">${t}</option>`).join("");
+  }
+}
+
+/* ---------- All Entities Palette Modal Controller ---------- */
+let currentModalCategory = "All";
+let currentModalSearch = "";
+
+function openAllEntitiesModal() {
+  const modal = $("allEntitiesModal");
+  if (!modal) return;
+  modal.classList.remove("hidden");
+  renderAllEntitiesCategoryPills();
+  renderAllEntitiesGrid();
+  const searchInput = $("searchAllEntitiesInput");
+  if (searchInput) {
+    searchInput.value = currentModalSearch;
+    setTimeout(() => searchInput.focus(), 60);
+  }
+}
+
+function closeAllEntitiesModal() {
+  const modal = $("allEntitiesModal");
+  if (!modal) return;
+  modal.classList.add("hidden");
+  modal.classList.remove("pointer-events-none");
+  modal.style.opacity = "";
+}
+
+function renderAllEntitiesCategoryPills() {
+  const bar = $("allEntitiesCategoryBar");
+  if (!bar) return;
+
+  const dataset = window.ALL_ENTITIES_DATA || [];
+  const counts = { "All": dataset.length };
+  dataset.forEach(e => {
+    const c = e.category || "Other";
+    counts[c] = (counts[c] || 0) + 1;
+  });
+
+  const categories = ["All", ...Object.keys(counts).filter(c => c !== "All").sort()];
+
+  bar.innerHTML = categories.map(cat => {
+    const isActive = currentModalCategory === cat;
+    const count = counts[cat] || 0;
+    return `
+      <button type="button" data-cat="${esc(cat)}"
+              class="cat-pill px-3 py-1 rounded-full text-xs transition shrink-0 flex items-center gap-1.5 cursor-pointer ${
+                isActive
+                  ? 'bg-blue-600 text-white font-bold shadow-sm'
+                  : 'bg-white hover:bg-neutral-100 text-black/75 border border-black/15 font-semibold'
+              }">
+        <span>${esc(cat)}</span>
+        <span class="text-[10px] ${isActive ? 'text-white/80' : 'text-black/50'}">(${count})</span>
+      </button>
+    `;
+  }).join("");
+
+  bar.querySelectorAll(".cat-pill").forEach(btn => {
+    btn.onclick = () => {
+      currentModalCategory = btn.dataset.cat;
+      renderAllEntitiesCategoryPills();
+      renderAllEntitiesGrid();
+    };
+  });
+}
+
+function renderAllEntitiesGrid() {
+  const grid = $("allEntitiesGrid");
+  const empty = $("allEntitiesEmptyState");
+  const status = $("allEntitiesStatusText");
+  const badge = $("allEntitiesCountBadge");
+  if (!grid) return;
+
+  const dataset = window.ALL_ENTITIES_DATA || [];
+  const q = currentModalSearch.trim().toLowerCase();
+
+  const filtered = dataset.filter(item => {
+    const matchCat = (currentModalCategory === "All" || item.category === currentModalCategory);
+    if (!matchCat) return false;
+    if (!q) return true;
+    return item.name.toLowerCase().includes(q) || (item.category && item.category.toLowerCase().includes(q));
+  });
+
+  if (badge) badge.textContent = `${dataset.length} entities`;
+  if (status) {
+    if (currentModalCategory === "All" && !q) {
+      status.textContent = `Showing all ${dataset.length} entities`;
+    } else {
+      status.textContent = `Showing ${filtered.length} of ${dataset.length} entities${currentModalCategory !== 'All' ? ' in ' + currentModalCategory : ''}`;
+    }
+  }
+
+  if (filtered.length === 0) {
+    grid.innerHTML = "";
+    grid.classList.add("hidden");
+    if (empty) empty.classList.remove("hidden");
+    return;
+  }
+
+  if (empty) empty.classList.add("hidden");
+  grid.classList.remove("hidden");
+
+  grid.innerHTML = filtered.map(item => `
+    <div draggable="true" data-type="${esc(item.name)}" data-category="${esc(item.category)}" data-icon="${esc(item.icon)}"
+         title="${esc(item.name)} (${esc(item.category)})"
+         class="all-entity-card group flex flex-col items-center justify-center p-2 rounded-xl bg-white border border-black/15 hover:border-blue-600 hover:shadow-md hover:bg-blue-50/20 transition cursor-grab active:cursor-grabbing select-none text-center relative">
+      <div class="w-8 h-8 flex items-center justify-center mb-1 transition-transform group-hover:scale-110 pointer-events-none">
+        <img src="${item.icon}" alt="${esc(item.name)}" loading="lazy" class="w-7 h-7 object-contain pointer-events-none">
+      </div>
+      <span class="text-[10px] font-bold text-black tracking-tight leading-tight line-clamp-2 pointer-events-none w-full">
+        ${esc(item.name)}
+      </span>
+      <span class="text-[9px] text-blue-600 font-semibold tracking-tight leading-none mt-1 line-clamp-1 pointer-events-none">
+        ${esc(item.category)}
+      </span>
+    </div>
+  `).join("");
+
+  grid.querySelectorAll(".all-entity-card").forEach(card => {
+    const typeName = card.dataset.type;
+    const catName = card.dataset.category;
+    const iconPath = card.dataset.icon;
+
+    card.addEventListener("dragstart", ev => {
+      ev.dataTransfer.setData("application/x-blulink-entity", JSON.stringify({
+        type: typeName,
+        category: catName,
+        icon: iconPath
+      }));
+      ev.dataTransfer.setData("text/plain", typeName);
+      ev.dataTransfer.effectAllowed = "copy";
+
+      // During drag, make modal translucent & allow dropping through onto Link Chart
+      const modal = $("allEntitiesModal");
+      if (modal) {
+        modal.classList.add("pointer-events-none");
+        modal.style.opacity = "0.3";
+      }
+    });
+
+    card.addEventListener("dragend", () => {
+      const modal = $("allEntitiesModal");
+      if (modal) {
+        modal.classList.remove("pointer-events-none");
+        modal.style.opacity = "";
+      }
+    });
+
+    card.addEventListener("click", () => {
+      createEntityFromPalette(typeName, null, null, {
+        icon: iconPath,
+        category: catName
+      });
+      setStatus(`Added "${typeName}" to Link Chart`);
+
+      // Visual click feedback pulse
+      card.classList.add("ring-2", "ring-blue-600", "bg-blue-100/50");
+      setTimeout(() => {
+        card.classList.remove("ring-2", "ring-blue-600", "bg-blue-100/50");
+      }, 350);
+    });
+  });
+}
+
+// Bind modal controls
+if ($("btnCloseAllEntitiesModal")) {
+  $("btnCloseAllEntitiesModal").onclick = closeAllEntitiesModal;
+}
+
+if ($("allEntitiesModal")) {
+  $("allEntitiesModal").addEventListener("click", ev => {
+    if (ev.target === $("allEntitiesModal")) {
+      closeAllEntitiesModal();
+    }
+  });
+}
+
+if ($("searchAllEntitiesInput")) {
+  $("searchAllEntitiesInput").addEventListener("input", ev => {
+    currentModalSearch = ev.target.value;
+    const clearBtn = $("btnClearSearchAllEntities");
+    if (clearBtn) {
+      if (currentModalSearch) clearBtn.classList.remove("hidden");
+      else clearBtn.classList.add("hidden");
+    }
+    renderAllEntitiesGrid();
+  });
+}
+
+if ($("btnClearSearchAllEntities")) {
+  $("btnClearSearchAllEntities").onclick = () => {
+    currentModalSearch = "";
+    if ($("searchAllEntitiesInput")) $("searchAllEntitiesInput").value = "";
+    $("btnClearSearchAllEntities").classList.add("hidden");
+    renderAllEntitiesGrid();
+    if ($("searchAllEntitiesInput")) $("searchAllEntitiesInput").focus();
+  };
+}
+
+window.addEventListener("keydown", ev => {
+  if (ev.key === "Escape") {
+    const modal = $("allEntitiesModal");
+    if (modal && !modal.classList.contains("hidden")) {
+      closeAllEntitiesModal();
+    }
+  }
+});
+
 /* ---------- App Launch (Once Authenticated & Verified) ---------- */
 async function openApp() {
   if (particleAnimId) cancelAnimationFrame(particleAnimId);
@@ -1708,9 +2045,8 @@ async function openApp() {
   $("who").textContent = user.email || "Authenticated User";
   $("who").title = user.email || "";
 
-  // Populate Selected Inspector Type Dropdown
-  const typeOpts = Object.keys(TYPES).map(t => `<option value="${t}">${t}</option>`).join("");
-  if ($("sType")) $("sType").innerHTML = typeOpts;
+  // Populate Selected Inspector Type Dropdown with all categories & types
+  populateInspectorTypes();
 
   renderPalette();
   initMap();
@@ -1728,7 +2064,7 @@ async function openApp() {
 /* ---------- Entity Image Helpers ---------- */
 function getEntityIcon(e) {
   if (!e) return ENTITY_ICONS.Male;
-  return e.customImage || ENTITY_ICONS[e.type] || ENTITY_ICONS.Male;
+  return e.customImage || e.icon || ENTITY_ICONS[e.type] || ENTITY_ICONS[e.name] || ENTITY_ICONS.Male;
 }
 
 function processUploadedImage(file, callback) {
@@ -2538,8 +2874,18 @@ function initNet() {
   container.addEventListener("drop", ev => {
     ev.preventDefault();
 
-    const typeKey = ev.dataTransfer.getData("application/x-blulink-entity") || ev.dataTransfer.getData("text/plain");
-    if (!typeKey || !TYPES[typeKey]) return;
+    const raw = ev.dataTransfer.getData("application/x-blulink-entity") || ev.dataTransfer.getData("text/plain");
+    if (!raw) return;
+
+    let dragData = null;
+    try {
+      dragData = JSON.parse(raw);
+    } catch(e) {
+      dragData = { type: raw };
+    }
+
+    const typeKey = dragData.type || raw;
+    if (!typeKey) return;
 
     if (!currentProjectId) {
       showNoProjectError();
@@ -2551,7 +2897,12 @@ function initNet() {
     const domY = ev.clientY - rect.top;
     const canvasPos = net ? net.DOMtoCanvas({ x: domX, y: domY }) : { x: 0, y: 0 };
 
-    createEntityFromPalette(typeKey, Math.round(canvasPos.x), Math.round(canvasPos.y));
+    createEntityFromPalette(typeKey, Math.round(canvasPos.x), Math.round(canvasPos.y), {
+      icon: dragData.icon,
+      category: dragData.category
+    });
+
+    closeAllEntitiesModal();
   });
 }
 
@@ -2904,7 +3255,14 @@ function renderInspector() {
     $("sName").value = e.name != null ? e.name : "";
   }
   if (document.activeElement !== $("sType")) {
-    $("sType").value = e.type || "Male";
+    const curVal = e.type || "Male";
+    if ($("sType") && !$("sType").querySelector(`option[value="${curVal}"]`)) {
+      const opt = document.createElement("option");
+      opt.value = curVal;
+      opt.textContent = curVal;
+      $("sType").appendChild(opt);
+    }
+    if ($("sType")) $("sType").value = curVal;
   }
   if (document.activeElement !== $("sNote")) {
     $("sNote").value = e.note != null ? e.note : "";
@@ -2985,6 +3343,7 @@ function updateSelectedFromForm(isLiveTyping = false) {
 
   e.name = $("sName").value;
   e.type = $("sType").value;
+  if (ENTITY_ICONS[e.type]) e.icon = ENTITY_ICONS[e.type];
   e.note = $("sNote").value;
 
   const mgrsRaw = ($("sMgrs") ? $("sMgrs").value : "").trim();
