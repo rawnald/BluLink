@@ -2044,14 +2044,17 @@ function initNet() {
       borderWidthSelected: 14,
       color: {
         border: "transparent",
-        background: "transparent",
-        highlight: { border: "transparent", background: "transparent" },
-        hover: { border: "transparent", background: "transparent" }
+        background: "#ffffff",
+        highlight: { border: "transparent", background: "#ffffff" },
+        hover: { border: "transparent", background: "#ffffff" }
       },
       font: {
         color: "#000000",
         size: 12,
         face: '"DM Sans", sans-serif',
+        strokeWidth: 4,
+        strokeColor: "#ffffff",
+        background: "#ffffff",
         vadjust: -6
       },
       shapeProperties: {
@@ -2333,8 +2336,8 @@ function initNet() {
     }
   });
 
-  // Real-time Draggable Display Line Rendering (afterDrawing)
-  net.on("afterDrawing", ctx => {
+  // Real-time Draggable Display Line Rendering (beforeDrawing - drawn at the back of icons and text)
+  net.on("beforeDrawing", ctx => {
     if (!isDrawingLiveLine || !liveLineSourceId) return;
 
     const srcPos = net.getPosition(liveLineSourceId);
@@ -2350,7 +2353,7 @@ function initNet() {
     if (dist < 1) return;
 
     const angle = Math.atan2(dy, dx);
-    const nodeMargin = 38; // Spacing margin outside icon so link cannot overlap
+    const nodeMargin = 38;
 
     // Start outside source icon boundary
     const startDist = Math.min(nodeMargin, dist * 0.45);
@@ -2367,7 +2370,7 @@ function initNet() {
 
     ctx.save();
 
-    // 1. Soft glowing background path
+    // 1. Soft glowing background path (at the back of icons and text)
     ctx.strokeStyle = "rgba(37, 99, 235, 0.25)";
     ctx.lineWidth = 6;
     ctx.lineCap = "round";
@@ -2376,7 +2379,7 @@ function initNet() {
     ctx.lineTo(endX, endY);
     ctx.stroke();
 
-    // 2. Main dashed rubberband connection line
+    // 2. Main dashed rubberband connection line (at the back of icons and text)
     ctx.strokeStyle = "#2563eb";
     ctx.lineWidth = 2.5;
     ctx.setLineDash([7, 5]);
@@ -2385,28 +2388,7 @@ function initNet() {
     ctx.lineTo(endX, endY);
     ctx.stroke();
 
-    // 3. Source entity halo
-    ctx.fillStyle = "rgba(37, 99, 235, 0.18)";
-    ctx.strokeStyle = "#2563eb";
-    ctx.lineWidth = 2;
-    ctx.setLineDash([]);
-    ctx.beginPath();
-    ctx.arc(srcPos.x, srcPos.y, 26, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-
-    // 4. Target entity snapping highlight
-    if (liveLineHoverTargetId) {
-      ctx.fillStyle = "rgba(37, 99, 235, 0.25)";
-      ctx.strokeStyle = "#2563eb";
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(targetPos.x, targetPos.y, 28, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-    }
-
-    // 5. Arrowhead pointing towards target
+    // 3. Arrowhead pointing towards target
     if (dist > 20) {
       const arrowLen = 14;
       ctx.fillStyle = "#2563eb";
@@ -2422,6 +2404,43 @@ function initNet() {
       );
       ctx.closePath();
       ctx.fill();
+    }
+
+    ctx.restore();
+  });
+
+  // Source & target highlights during live dragging (afterDrawing)
+  net.on("afterDrawing", ctx => {
+    if (!isDrawingLiveLine || !liveLineSourceId) return;
+
+    const srcPos = net.getPosition(liveLineSourceId);
+    let targetPos = liveLineCurrentCanvasPos;
+    if (liveLineHoverTargetId) {
+      targetPos = net.getPosition(liveLineHoverTargetId);
+    }
+    if (!srcPos || !targetPos) return;
+
+    ctx.save();
+
+    // Source entity halo ring
+    ctx.fillStyle = "rgba(37, 99, 235, 0.15)";
+    ctx.strokeStyle = "#2563eb";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.arc(srcPos.x, srcPos.y, 26, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Target entity snapping highlight ring
+    if (liveLineHoverTargetId) {
+      ctx.fillStyle = "rgba(37, 99, 235, 0.22)";
+      ctx.strokeStyle = "#2563eb";
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(targetPos.x, targetPos.y, 28, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
     }
 
     ctx.restore();
@@ -2568,14 +2587,14 @@ function render(fitAll = false) {
       },
       color: {
         border: "transparent",
-        background: "transparent",
+        background: "#ffffff",
         highlight: {
           border: "transparent",
-          background: "transparent"
+          background: "#ffffff"
         },
         hover: {
           border: "transparent",
-          background: "transparent"
+          background: "#ffffff"
         }
       },
       shadow: isSel
@@ -2585,6 +2604,9 @@ function render(fitAll = false) {
         color: isSel ? "#2563eb" : "#000000",
         size: 12,
         face: '"DM Sans", sans-serif',
+        strokeWidth: 4,
+        strokeColor: "#ffffff",
+        background: "#ffffff",
         vadjust: -6
       }
     };
