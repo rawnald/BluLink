@@ -837,7 +837,7 @@
   <!-- ==================== CENTER PANE: LINK NETWORK CHART ==================== -->
   <section id="netSection" class="relative w-full h-full min-w-0 min-h-0 flex flex-col border-l-2 border-r-2 border-black/20 border-t-2 border-t-blue-600 border-b-2 border-b-black/15 bg-white overflow-hidden shadow-inner">
     <!-- Workspace Boundary Frame: Clearly defines chart area and prevents clipping under sidebar or map -->
-    <div class="absolute inset-0 pointer-events-none border-2 border-blue-600/40 z-10 m-1 rounded-sm shadow-[inset_0_0_8px_rgba(37,99,235,0.08)]"></div>
+    <div class="absolute inset-0 pointer-events-none border-2 border-blue-600/20 z-10 m-1 rounded-sm"></div>
     <!-- Network Header Overlay -->
     <div class="absolute top-3 left-3 z-10 flex items-center gap-2 bg-white/95 backdrop-blur border-2 border-blue-600 rounded-lg px-3 py-1.5 shadow-md">
       <div class="w-2 h-2 rounded-full bg-blue-600"></div>
@@ -2089,7 +2089,7 @@ function initNet() {
       multiselect: false,
       tooltipDelay: 100,
       dragNodes: true,
-      dragView: false
+      dragView: true
     }
   };
 
@@ -2116,7 +2116,7 @@ function initNet() {
     const container = $("net");
     if (!container) return;
 
-    const pad = 42; // Safe padding inside workspace border
+    const pad = 35; // Safe padding inside workspace border
     const minCanvas = net.DOMtoCanvas({ x: pad, y: pad });
     const maxCanvas = net.DOMtoCanvas({ x: container.clientWidth - pad, y: container.clientHeight - pad });
 
@@ -2126,12 +2126,14 @@ function initNet() {
     const maxY = Math.max(minCanvas.y, maxCanvas.y);
 
     const updates = [];
-    nodeIds.forEach(id => {
-      const bodyNode = net.body && net.body.nodes && net.body.nodes[id];
-      if (!bodyNode) return;
+    const positions = net.getPositions(nodeIds);
 
-      let cx = bodyNode.x;
-      let cy = bodyNode.y;
+    nodeIds.forEach(id => {
+      const pos = positions[id];
+      if (!pos) return;
+
+      let cx = pos.x;
+      let cy = pos.y;
       let clamped = false;
 
       if (cx < minX) { cx = minX; clamped = true; }
@@ -2141,8 +2143,6 @@ function initNet() {
       else if (cy > maxY) { cy = maxY; clamped = true; }
 
       if (clamped) {
-        bodyNode.x = cx;
-        bodyNode.y = cy;
         updates.push({ id, x: cx, y: cy });
       }
     });
@@ -2151,30 +2151,6 @@ function initNet() {
       try { nodes.update(updates); } catch (e) {}
     }
   }
-
-  // Real-time clamping on EVERY render frame: Vis.Network cannot draw any node past the workspace boundary
-  net.on("beforeDrawing", ctx => {
-    if (!net || !container) return;
-    const pad = 42;
-    const minCanvas = net.DOMtoCanvas({ x: pad, y: pad });
-    const maxCanvas = net.DOMtoCanvas({ x: container.clientWidth - pad, y: container.clientHeight - pad });
-
-    const minX = Math.min(minCanvas.x, maxCanvas.x);
-    const maxX = Math.max(minCanvas.x, maxCanvas.x);
-    const minY = Math.min(minCanvas.y, maxCanvas.y);
-    const maxY = Math.max(minCanvas.y, maxCanvas.y);
-
-    if (net.body && net.body.nodes) {
-      for (const id in net.body.nodes) {
-        const node = net.body.nodes[id];
-        if (!node || node.x == null || node.y == null) continue;
-        if (node.x < minX) node.x = minX;
-        else if (node.x > maxX) node.x = maxX;
-        if (node.y < minY) node.y = minY;
-        else if (node.y > maxY) node.y = maxY;
-      }
-    }
-  });
 
   // Real-time clamping while dragging nodes
   net.on("dragging", p => {
@@ -2187,44 +2163,28 @@ function initNet() {
   net.on("dragEnd", p => {
     if (p.nodes && p.nodes.length && !isDrawingLiveLine) {
       clampNodesToWorkspace(p.nodes);
-      const pad = 42;
-      const minCanvas = net.DOMtoCanvas({ x: pad, y: pad });
-      const maxCanvas = net.DOMtoCanvas({ x: container.clientWidth - pad, y: container.clientHeight - pad });
-      const minX = Math.min(minCanvas.x, maxCanvas.x);
-      const maxX = Math.max(minCanvas.x, maxCanvas.x);
-      const minY = Math.min(minCanvas.y, maxCanvas.y);
-      const maxY = Math.max(minCanvas.y, maxCanvas.y);
+      const positions = net.getPositions(p.nodes);
+      let linkMoved = false;
 
-      const updates = [];
       p.nodes.forEach(id => {
-        const bodyNode = net.body && net.body.nodes && net.body.nodes[id];
-        if (!bodyNode) return;
-        const clampedX = Math.round(Math.max(minX, Math.min(maxX, bodyNode.x)));
-        const clampedY = Math.round(Math.max(minY, Math.min(maxY, bodyNode.y)));
-        bodyNode.x = clampedX;
-        bodyNode.y = clampedY;
-        updates.push({ id, x: clampedX, y: clampedY });
-
         if (typeof id === "string" && id.startsWith("corner_")) {
           const parts = id.split("_");
           const linkId = parts[1];
           const cornerIdx = parseInt(parts[2]) || 0;
           const l = data.links.find(x => x.id === linkId);
-          if (l && l.corners && l.corners[cornerIdx]) {
-            l.corners[cornerIdx].x = clampedX;
-            l.corners[cornerIdx].y = clampedY;
+          if (l && l.corners && l.corners[cornerIdx] && positions[id]) {
+            l.corners[cornerIdx].x = Math.round(positions[id].x);
+            l.corners[cornerIdx].y = Math.round(positions[id].y);
+            linkMoved = true;
           }
         } else {
           const ent = data.entities.find(x => x.id === id);
-          if (ent) {
-            ent.x = clampedX;
-            ent.y = clampedY;
+          if (ent && positions[id]) {
+            ent.x = Math.round(positions[id].x);
+            ent.y = Math.round(positions[id].y);
           }
         }
       });
-      if (updates.length > 0) {
-        try { nodes.update(updates); } catch (e) {}
-      }
       queueSave();
     }
   });
@@ -2541,7 +2501,7 @@ function initNet() {
     liveLineHoverTargetId = null;
 
     if (net) {
-      net.setOptions({ interaction: { dragNodes: !isLinkMode, dragView: false } });
+      net.setOptions({ interaction: { dragNodes: !isLinkMode, dragView: !isLinkMode } });
       net.redraw();
     }
 
@@ -2630,22 +2590,8 @@ function render(fitAll = false) {
     };
 
     if (e.x != null && e.y != null) {
-      let nx = e.x;
-      let ny = e.y;
-      const netContainer = $("net");
-      if (net && netContainer && netContainer.clientWidth > 100) {
-        const pad = 42;
-        const minCanvas = net.DOMtoCanvas({ x: pad, y: pad });
-        const maxCanvas = net.DOMtoCanvas({ x: netContainer.clientWidth - pad, y: netContainer.clientHeight - pad });
-        const minX = Math.min(minCanvas.x, maxCanvas.x);
-        const maxX = Math.max(minCanvas.x, maxCanvas.x);
-        const minY = Math.min(minCanvas.y, maxCanvas.y);
-        const maxY = Math.max(minCanvas.y, maxCanvas.y);
-        nx = Math.max(minX, Math.min(maxX, nx));
-        ny = Math.max(minY, Math.min(maxY, ny));
-      }
-      n.x = nx;
-      n.y = ny;
+      n.x = e.x;
+      n.y = e.y;
     }
     nodes.add(n);
 
@@ -3283,9 +3229,9 @@ function exitLinkMode() {
   liveLineSourceId = null;
   liveLineHoverTargetId = null;
 
-  // Re-enable normal dragging for regular mode (keep view locked within borders)
+  // Re-enable normal dragging and view panning for regular mode
   if (net) {
-    net.setOptions({ interaction: { dragNodes: true, dragView: false } });
+    net.setOptions({ interaction: { dragNodes: true, dragView: true } });
     net.unselectAll();
     net.redraw();
   }
