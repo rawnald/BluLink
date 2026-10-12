@@ -663,61 +663,27 @@
 
         <hr class="border-black/10">
 
-        <!-- Insert Links: Toolbar matching uploaded image -->
+        <!-- Add Link / Connection Tool -->
         <section class="space-y-2.5">
           <div class="flex items-center justify-between">
             <h2 class="text-xs font-bold uppercase tracking-wider text-black flex items-center gap-2">
               <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
-              Insert Links
+              Add Link
             </h2>
             <span id="linkToolBadge" class="text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-200">Ready</span>
           </div>
 
           <p class="text-[11px] text-black/60 leading-relaxed">
-            Click the <strong>Link</strong> button below, then drag from one entity to another on the chart. Double-click the line to edit.
+            Drag a displayed line from one entity to another on the chart. You can also hold <kbd class="px-1.5 py-0.5 bg-blue-50 border border-blue-200 text-blue-700 font-mono text-[10px] rounded font-bold">Shift</kbd> while dragging any entity. Double-click any line to edit.
           </p>
 
-          <!-- Insert Links Group Box matching i2 Analyst's Notebook screenshot -->
-          <div class="p-2 rounded-xl border border-black/20 bg-slate-50/60">
-            <div class="flex items-center gap-2">
-              <!-- 1. Link Button (matches screenshot) -->
-              <button id="btnLinkTool" type="button" title="Insert Link: Drag from one entity to another"
-                      class="flex flex-col items-center justify-center p-2 rounded-lg border-2 border-black/20 bg-white hover:border-blue-600 hover:bg-blue-50/50 transition cursor-pointer select-none min-w-[70px]">
-                <div class="w-9 h-9 flex items-center justify-center">
-                  <svg viewBox="0 0 36 36" class="w-7 h-7">
-                    <line x1="10" y1="26" x2="26" y2="10" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round"/>
-                    <circle cx="10" cy="26" r="4.5" fill="#ffffff" stroke="#2563eb" stroke-width="2.5"/>
-                    <circle cx="26" cy="10" r="4.5" fill="#ffffff" stroke="#2563eb" stroke-width="2.5"/>
-                  </svg>
-                </div>
-                <div class="flex items-center gap-1 mt-0.5">
-                  <span class="text-xs font-bold text-black">Link</span>
-                  <svg class="w-2.5 h-2.5 text-black/70" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                  </svg>
-                </div>
-              </button>
-
-              <!-- 2. Corner Button (matches screenshot) -->
-              <button id="btnCornerTool" type="button" title="Insert Corner Link: Drag from one entity to another"
-                      class="flex flex-col items-center justify-center p-2 rounded-lg border-2 border-black/15 bg-white hover:border-blue-600 hover:bg-blue-50/50 transition cursor-pointer select-none min-w-[70px]">
-                <div class="w-9 h-9 flex items-center justify-center">
-                  <svg viewBox="0 0 36 36" class="w-7 h-7">
-                    <line x1="12" y1="26" x2="12" y2="10" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round"/>
-                    <line x1="12" y1="10" x2="26" y2="10" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round"/>
-                    <rect x="9.5" y="7.5" width="5" height="5" fill="#2563eb"/>
-                  </svg>
-                </div>
-                <div class="flex items-center gap-1 mt-0.5">
-                  <span class="text-xs font-bold text-black">Corner</span>
-                </div>
-              </button>
+          <button id="btnLinkTool" type="button"
+                  class="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border-2 border-black/20 bg-white hover:border-blue-600 hover:bg-blue-50/50 transition cursor-pointer select-none text-xs font-bold text-black shadow-sm">
+            <div class="w-6 h-6 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center">
+              <i class="fi fi-rr-link-alt text-xs"></i>
             </div>
-
-            <div class="border-t border-black/10 mt-2 pt-1 text-center">
-              <span class="text-[11px] font-bold text-black/70 tracking-tight">Insert Links</span>
-            </div>
-          </div>
+            <span id="btnLinkToolText">Draw Link (Connect Entities)</span>
+          </button>
         </section>
       </div>
 
@@ -860,6 +826,10 @@
 
     <!-- Chart Control Buttons -->
     <div class="absolute top-3 right-3 z-10 flex items-center gap-1.5">
+      <button id="btnLinkModeToggle" title="Draw Relationship Link: Drag from one entity to another (or hold Shift on chart)" class="btn-secondary py-1 px-2.5 text-xs">
+        <i class="fi fi-rr-link-alt text-xs"></i>
+        <span id="btnLinkModeToggleText">Draw Link</span>
+      </button>
       <button id="btnFitNet" title="Fit All Nodes" class="btn-secondary py-1 px-2.5 text-xs">
         <i class="fi fi-rr-expand text-xs"></i>
         <span>Fit View</span>
@@ -946,6 +916,7 @@ let selected = null, picking = false, pickTarget = "new", saveTimer = null, read
 let isSignUpMode = false;
 let pendingEmail = "";
 let map, net, nodes, edges, markerLayer, lineLayer;
+let markersByEntityId = {}, linesByLinkId = {};
 
 /* ---------- Interactive Dot-Network (Constellation) Canvas ---------- */
 let particleAnimId = null;
@@ -1972,18 +1943,6 @@ function initNet() {
 
   const container = $("net");
   const options = {
-    manipulation: {
-      enabled: false,
-      addEdge: function(edgeData, callback) {
-        if (edgeData.from === edgeData.to) {
-          callback(null);
-          return;
-        }
-        createLinkBetween(edgeData.from, edgeData.to);
-        callback(null);
-        exitLinkMode();
-      }
-    },
     nodes: {
       shape: "image",
       size: 26,
@@ -2027,82 +1986,35 @@ function initNet() {
       smooth: false
     },
     physics: {
-      enabled: false,
-      stabilization: { enabled: true, iterations: 120 }
+      enabled: false
     },
     interaction: {
       hover: true,
       multiselect: false,
-      tooltipDelay: 100
+      tooltipDelay: 100,
+      dragNodes: true,
+      dragView: true
     }
   };
 
   net = new vis.Network(container, { nodes, edges }, options);
 
+  // Synchronized node selection on click
   net.on("selectNode", p => {
-    if (!isLinkMode) select(p.nodes[0], "net");
-  });
-
-  // Handle drag-to-connect and click-to-connect from one entity to another
-  net.on("dragStart", params => {
-    if (isLinkMode) {
-      const node = net.getNodeAt(params.pointer.DOM);
-      if (node) {
-        dragConnectingSourceId = node;
-        const a = data.entities.find(x => x.id === node);
-        if ($("linkModeBannerText")) {
-          $("linkModeBannerText").textContent = `Connecting from "${a ? a.name : 'Entity'}" ➔ Release on target entity`;
-        }
-      }
+    if (!isLinkMode && !isDrawingLiveLine) {
+      select(p.nodes[0], "net");
     }
   });
 
-  net.on("dragEnd", params => {
-    if (isLinkMode && dragConnectingSourceId) {
-      const targetNode = net.getNodeAt(params.pointer.DOM);
-      if (targetNode && targetNode !== dragConnectingSourceId) {
-        createLinkBetween(dragConnectingSourceId, targetNode);
-        dragConnectingSourceId = null;
-        exitLinkMode();
-        return;
-      }
-      dragConnectingSourceId = null;
+  net.on("deselectNode", () => {
+    if (!isLinkMode && !isDrawingLiveLine) {
+      select(null, "net");
     }
   });
 
-  net.on("click", params => {
-    if (!isLinkMode) return;
-    const clickedId = net.getNodeAt(params.pointer.DOM);
-    if (!clickedId) return;
-
-    if (!linkingSourceId) {
-      linkingSourceId = clickedId;
-      const a = data.entities.find(x => x.id === clickedId);
-      if ($("linkModeBannerText")) {
-        $("linkModeBannerText").textContent = `Selected 1st: "${a ? a.name : 'Entity'}" ➔ Click 2nd entity`;
-      }
-      net.selectNodes([clickedId]);
-    } else {
-      if (clickedId !== linkingSourceId) {
-        createLinkBetween(linkingSourceId, clickedId);
-      }
-      exitLinkMode();
-    }
-  });
-  net.on("deselectNode", () => select(null, "net"));
-
-  // Double click link to open edit modal
-  net.on("doubleClick", params => {
-    const clickedEdgeId = net.getEdgeAt(params.pointer.DOM);
-    if (clickedEdgeId) {
-      openEditLinkModal(clickedEdgeId);
-    } else if (params.edges && params.edges.length > 0 && (!params.nodes || params.nodes.length === 0)) {
-      openEditLinkModal(params.edges[0]);
-    }
-  });
-
+  // Track entity movement on dragEnd and auto-save
   net.on("dragEnd", p => {
-    if (p.nodes && p.nodes.length) {
+    if (p.nodes && p.nodes.length && !isDrawingLiveLine) {
       const positions = net.getPositions(p.nodes);
       p.nodes.forEach(id => {
         const ent = data.entities.find(x => x.id === id);
@@ -2115,9 +2027,191 @@ function initNet() {
     }
   });
 
-  net.once("stabilizationIterationsDone", () => net.setOptions({ physics: false }));
+  // Double click link to open edit modal
+  net.on("doubleClick", params => {
+    const clickedEdgeId = net.getEdgeAt(params.pointer.DOM);
+    if (clickedEdgeId) {
+      openEditLinkModal(clickedEdgeId);
+    } else if (params.edges && params.edges.length > 0 && (!params.nodes || params.nodes.length === 0)) {
+      openEditLinkModal(params.edges[0]);
+    }
+  });
 
-  // HTML5 Drag & Drop support on Relational Link Chart workspace
+  // Click-to-connect support in Link Mode
+  net.on("click", params => {
+    if (!isLinkMode) return;
+    const clickedId = net.getNodeAt(params.pointer.DOM);
+    if (!clickedId) return;
+
+    if (!linkingSourceId) {
+      linkingSourceId = clickedId;
+      const a = data.entities.find(x => x.id === clickedId);
+      if ($("linkModeBannerText")) {
+        $("linkModeBannerText").textContent = `Selected 1st: "${a ? a.name : 'Entity'}" ➔ Click or drag to 2nd entity`;
+      }
+      net.selectNodes([clickedId]);
+    } else {
+      if (clickedId !== linkingSourceId) {
+        createLinkBetween(linkingSourceId, clickedId);
+      }
+      exitLinkMode();
+    }
+  });
+
+  // Real-time Draggable Display Line Rendering (afterDrawing)
+  net.on("afterDrawing", ctx => {
+    if (!isDrawingLiveLine || !liveLineSourceId) return;
+
+    const srcPos = net.getPosition(liveLineSourceId);
+    let targetPos = liveLineCurrentCanvasPos;
+    if (liveLineHoverTargetId) {
+      targetPos = net.getPosition(liveLineHoverTargetId);
+    }
+    if (!srcPos || !targetPos) return;
+
+    ctx.save();
+
+    // 1. Soft glowing background path
+    ctx.strokeStyle = "rgba(37, 99, 235, 0.25)";
+    ctx.lineWidth = 6;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(srcPos.x, srcPos.y);
+    ctx.lineTo(targetPos.x, targetPos.y);
+    ctx.stroke();
+
+    // 2. Main dashed rubberband connection line
+    ctx.strokeStyle = "#2563eb";
+    ctx.lineWidth = 2.5;
+    ctx.setLineDash([7, 5]);
+    ctx.beginPath();
+    ctx.moveTo(srcPos.x, srcPos.y);
+    ctx.lineTo(targetPos.x, targetPos.y);
+    ctx.stroke();
+
+    // 3. Source entity halo
+    ctx.fillStyle = "rgba(37, 99, 235, 0.18)";
+    ctx.strokeStyle = "#2563eb";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.arc(srcPos.x, srcPos.y, 24, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // 4. Target entity snapping highlight
+    if (liveLineHoverTargetId) {
+      ctx.fillStyle = "rgba(37, 99, 235, 0.25)";
+      ctx.strokeStyle = "#2563eb";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(targetPos.x, targetPos.y, 28, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    // 5. Arrowhead pointing towards target
+    const dx = targetPos.x - srcPos.x;
+    const dy = targetPos.y - srcPos.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist > 15) {
+      const angle = Math.atan2(dy, dx);
+      const tipDist = liveLineHoverTargetId ? Math.max(dist - 20, 5) : dist;
+      const tipX = srcPos.x + Math.cos(angle) * tipDist;
+      const tipY = srcPos.y + Math.sin(angle) * tipDist;
+      const arrowLen = 14;
+
+      ctx.fillStyle = "#2563eb";
+      ctx.beginPath();
+      ctx.moveTo(tipX, tipY);
+      ctx.lineTo(
+        tipX - arrowLen * Math.cos(angle - Math.PI / 6),
+        tipY - arrowLen * Math.sin(angle - Math.PI / 6)
+      );
+      ctx.lineTo(
+        tipX - arrowLen * Math.cos(angle + Math.PI / 6),
+        tipY - arrowLen * Math.sin(angle + Math.PI / 6)
+      );
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    ctx.restore();
+  });
+
+  // Pointer event listeners on canvas container for smooth dragable display line
+  container.addEventListener("pointerdown", ev => {
+    if (ev.button !== 0) return; // Left click only
+
+    if (isLinkMode || ev.shiftKey) {
+      const rect = container.getBoundingClientRect();
+      const domPos = { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
+      const startNode = net.getNodeAt(domPos);
+
+      if (startNode) {
+        if (!currentProjectId) {
+          showNoProjectError();
+          return;
+        }
+        isDrawingLiveLine = true;
+        liveLineSourceId = startNode;
+        liveLineCurrentCanvasPos = net.DOMtoCanvas(domPos);
+        liveLineHoverTargetId = null;
+
+        // Temporarily disable node dragging so dragging draws the link line
+        net.setOptions({ interaction: { dragNodes: false } });
+        net.redraw();
+
+        if ($("linkModeBanner")) {
+          $("linkModeBanner").classList.remove("hidden");
+          const a = data.entities.find(x => x.id === startNode);
+          if ($("linkModeBannerText")) {
+            $("linkModeBannerText").textContent = `Connecting from "${a ? a.name : 'Entity'}" ➔ Release on target entity`;
+          }
+        }
+      }
+    }
+  });
+
+  window.addEventListener("pointermove", ev => {
+    if (!isDrawingLiveLine || !net) return;
+
+    const rect = container.getBoundingClientRect();
+    const domPos = { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
+    liveLineCurrentCanvasPos = net.DOMtoCanvas(domPos);
+
+    const hovered = net.getNodeAt(domPos);
+    liveLineHoverTargetId = (hovered && hovered !== liveLineSourceId) ? hovered : null;
+
+    net.redraw();
+  });
+
+  window.addEventListener("pointerup", ev => {
+    if (!isDrawingLiveLine) return;
+
+    const rect = container.getBoundingClientRect();
+    const domPos = { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
+    const endNode = liveLineHoverTargetId || net.getNodeAt(domPos);
+
+    if (endNode && endNode !== liveLineSourceId) {
+      createLinkBetween(liveLineSourceId, endNode);
+    }
+
+    isDrawingLiveLine = false;
+    liveLineSourceId = null;
+    liveLineHoverTargetId = null;
+
+    if (net) {
+      net.setOptions({ interaction: { dragNodes: true } });
+      net.redraw();
+    }
+
+    if (isLinkMode) {
+      exitLinkMode();
+    }
+  });
+
+  // HTML5 Drag & Drop support on Relational Link Chart workspace from sidebar palette
   container.addEventListener("dragover", ev => {
     ev.preventDefault();
     ev.dataTransfer.dropEffect = "copy";
@@ -2125,21 +2219,6 @@ function initNet() {
 
   container.addEventListener("drop", ev => {
     ev.preventDefault();
-
-    // Check if dragging Link Tool
-    const toolType = ev.dataTransfer.getData("application/x-blulink-tool");
-    if (toolType === "link") {
-      if (!currentProjectId) {
-        showNoProjectError();
-        return;
-      }
-      const rect = container.getBoundingClientRect();
-      const domX = ev.clientX - rect.left;
-      const domY = ev.clientY - rect.top;
-      const droppedOnNodeId = net ? net.getNodeAt({ x: domX, y: domY }) : null;
-      enterLinkMode(droppedOnNodeId);
-      return;
-    }
 
     const typeKey = ev.dataTransfer.getData("application/x-blulink-entity") || ev.dataTransfer.getData("text/plain");
     if (!typeKey || !TYPES[typeKey]) return;
@@ -2164,6 +2243,8 @@ function render(fitAll = false) {
   edges.clear();
   markerLayer.clearLayers();
   lineLayer.clearLayers();
+  markersByEntityId = {};
+  linesByLinkId = {};
 
   const byId = {};
   let mappedCount = 0;
@@ -2227,6 +2308,7 @@ function render(fitAll = false) {
       });
 
       const marker = L.marker([e.lat, e.lng], { icon, title: e.name }).addTo(markerLayer);
+      markersByEntityId[e.id] = marker;
       marker.bindPopup(`
         <div class="p-1 min-w-[150px]">
           <div class="flex items-center gap-2 font-bold text-sm text-black mb-1">
@@ -2284,6 +2366,7 @@ function render(fitAll = false) {
         opacity: 0.9,
         dashArray: isUnconfirmed ? "6, 6" : undefined
       }).addTo(lineLayer);
+      linesByLinkId[l.id] = poly;
 
       poly.bindTooltip(`${esc(a.name)} → [${esc(l.label || "linked")}] → ${esc(b.name)}`, {
         sticky: true
@@ -2318,19 +2401,77 @@ function render(fitAll = false) {
   }
 }
 
-/* ---------- Synchronized Selection Engine ---------- */
+/* ---------- Synchronized Selection Engine (Non-Destructive for Smooth Dragging) ---------- */
+function updateMapSelection() {
+  if (!markerLayer) return;
+  data.entities.forEach(e => {
+    const m = markersByEntityId[e.id];
+    if (m) {
+      const el = m.getElement();
+      if (el) {
+        const pin = el.querySelector(".custom-map-pin");
+        if (pin) {
+          if (e.id === selected) pin.classList.add("is-selected");
+          else pin.classList.remove("is-selected");
+        }
+      }
+    }
+  });
+
+  data.links.forEach(l => {
+    const poly = linesByLinkId[l.id];
+    if (poly) {
+      const isConnected = selected && (l.from === selected || l.to === selected);
+      const linkColor = l.color || "#000000";
+      const linkWidth = parseInt(l.width) || 1;
+      poly.setStyle({
+        color: isConnected ? "#2563eb" : linkColor,
+        weight: isConnected ? Math.max(linkWidth + 1, 3) : linkWidth
+      });
+    }
+  });
+}
+
 function select(id, fromSource) {
   selected = id;
-  render(false);
 
+  // Sync Vis.Network selection without destroying nodes
   if (id && fromSource !== "net" && net) {
     net.selectNodes([id]);
+  } else if (!id && fromSource !== "net" && net) {
+    net.unselectAll();
   }
+
+  // Update link highlight colors on net without clearing nodes
+  if (edges && data.links) {
+    const edgeUpdates = [];
+    data.links.forEach(l => {
+      const isConnectedToSel = selected && (l.from === selected || l.to === selected);
+      const linkColor = l.color || "#000000";
+      const linkWidth = parseInt(l.width) || 1;
+      edgeUpdates.push({
+        id: l.id,
+        color: {
+          color: isConnectedToSel ? "#2563eb" : linkColor,
+          highlight: "#2563eb",
+          hover: "#2563eb",
+          inherit: false
+        },
+        width: isConnectedToSel ? Math.max(linkWidth + 1, 2) : linkWidth
+      });
+    });
+    try { edges.update(edgeUpdates); } catch (e) {}
+  }
+
+  // Update map selection styles
+  updateMapSelection();
 
   const ent = data.entities.find(x => x.id === id);
   if (ent && ent.lat != null && ent.lng != null && fromSource !== "map" && map) {
     map.flyTo([ent.lat, ent.lng], Math.max(map.getZoom(), 8), { duration: 0.8 });
   }
+
+  renderInspector();
 
   if (id) {
     switchTab("inspect");
@@ -2663,10 +2804,13 @@ $("tabBtnCreate").onclick = () => switchTab("create");
 $("tabBtnInspect").onclick = () => switchTab("inspect");
 $("tabBtnList").onclick = () => switchTab("list");
 
-/* ---------- Insert Links Toolbar & Drag-to-Connect System ---------- */
+/* ---------- Interactive Live Drag-to-Connect Link System ---------- */
 let isLinkMode = false;
 let linkingSourceId = null;
-let dragConnectingSourceId = null;
+let isDrawingLiveLine = false;
+let liveLineSourceId = null;
+let liveLineHoverTargetId = null;
+let liveLineCurrentCanvasPos = { x: 0, y: 0 };
 
 function enterLinkMode(fromNodeId = null) {
   if (!currentProjectId) {
@@ -2680,11 +2824,16 @@ function enterLinkMode(fromNodeId = null) {
 
   isLinkMode = true;
   linkingSourceId = fromNodeId || null;
-  dragConnectingSourceId = null;
 
   const btn = $("btnLinkTool");
   if (btn) {
-    btn.className = "flex flex-col items-center justify-center p-2 rounded-lg border-2 border-blue-600 bg-blue-100 text-blue-900 shadow-sm transition cursor-pointer select-none min-w-[70px] ring-2 ring-blue-400";
+    btn.className = "w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border-2 border-blue-600 bg-blue-100 text-blue-900 shadow-sm transition cursor-pointer select-none text-xs font-bold ring-2 ring-blue-400";
+    if ($("btnLinkToolText")) $("btnLinkToolText").textContent = "Link Mode Active (Drag line)";
+  }
+  const topBtn = $("btnLinkModeToggle");
+  if (topBtn) {
+    topBtn.className = "btn-secondary py-1 px-2.5 text-xs bg-blue-600 text-white border-blue-600 hover:bg-blue-700 shadow-sm";
+    if ($("btnLinkModeToggleText")) $("btnLinkModeToggleText").textContent = "Cancel Link";
   }
   if ($("linkToolBadge")) {
     $("linkToolBadge").className = "text-[10px] text-white font-bold bg-blue-600 px-2 py-0.5 rounded border border-blue-600";
@@ -2693,36 +2842,39 @@ function enterLinkMode(fromNodeId = null) {
   if ($("linkModeBanner")) {
     $("linkModeBanner").classList.remove("hidden");
     if ($("linkModeBannerText")) {
-      $("linkModeBannerText").textContent = "Drag from one entity to another to connect (Esc to cancel)";
+      $("linkModeBannerText").textContent = "Drag a line from one entity to another (Esc to cancel)";
     }
   }
 
-  if (net) {
-    // Disable dragNodes so dragging an entity draws a link directly to the target entity
-    net.setOptions({ interaction: { dragNodes: false } });
-    try { net.addEdgeMode(); } catch(e) {}
-  }
+  const container = $("net");
+  if (container) container.style.cursor = "crosshair";
 }
 
 function exitLinkMode() {
   isLinkMode = false;
   linkingSourceId = null;
-  dragConnectingSourceId = null;
+  isDrawingLiveLine = false;
+  liveLineSourceId = null;
+  liveLineHoverTargetId = null;
 
   if (net) {
-    try { net.disableEditMode(); } catch(e) {}
-    // Re-enable dragNodes for normal entity positioning
     net.setOptions({ interaction: { dragNodes: true } });
     net.unselectAll();
+    net.redraw();
   }
+
+  const container = $("net");
+  if (container) container.style.cursor = "default";
 
   const btn = $("btnLinkTool");
   if (btn) {
-    btn.className = "flex flex-col items-center justify-center p-2 rounded-lg border-2 border-black/20 bg-white hover:border-blue-600 hover:bg-blue-50/50 transition cursor-pointer select-none min-w-[70px]";
+    btn.className = "w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border-2 border-black/20 bg-white hover:border-blue-600 hover:bg-blue-50/50 transition cursor-pointer select-none text-xs font-bold text-black shadow-sm";
+    if ($("btnLinkToolText")) $("btnLinkToolText").textContent = "Draw Link (Connect Entities)";
   }
-  const cornerBtn = $("btnCornerTool");
-  if (cornerBtn) {
-    cornerBtn.className = "flex flex-col items-center justify-center p-2 rounded-lg border-2 border-black/15 bg-white hover:border-blue-600 hover:bg-blue-50/50 transition cursor-pointer select-none min-w-[70px]";
+  const topBtn = $("btnLinkModeToggle");
+  if (topBtn) {
+    topBtn.className = "btn-secondary py-1 px-2.5 text-xs";
+    if ($("btnLinkModeToggleText")) $("btnLinkModeToggleText").textContent = "Draw Link";
   }
   if ($("linkToolBadge")) {
     $("linkToolBadge").className = "text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-200";
@@ -2738,6 +2890,12 @@ function toggleLinkMode() {
 
 function createLinkBetween(fromId, toId) {
   if (!fromId || !toId || fromId === toId) return;
+  // If identical link already exists, open it for editing
+  const existing = data.links.find(l => (l.from === fromId && l.to === toId) || (l.from === toId && l.to === fromId));
+  if (existing) {
+    openEditLinkModal(existing.id);
+    return;
+  }
   const newLink = {
     id: uid(),
     from: fromId,
@@ -2753,12 +2911,12 @@ function createLinkBetween(fromId, toId) {
   queueSave();
 }
 
-// Sidebar Insert Links Button events
+// Link Tool Button events
 if ($("btnLinkTool")) {
   $("btnLinkTool").onclick = toggleLinkMode;
 }
-if ($("btnCornerTool")) {
-  $("btnCornerTool").onclick = toggleLinkMode;
+if ($("btnLinkModeToggle")) {
+  $("btnLinkModeToggle").onclick = toggleLinkMode;
 }
 
 // Cancel link mode button & Esc key
