@@ -693,20 +693,26 @@
             <span id="btnLinkToolText">Draw Link (Connect Entities)</span>
           </button>
 
-          <!-- Corner to a Link Button -->
-          <button id="btnCornerTool" type="button" title="Customize the shape of the link to improve chart appearance"
-                  class="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl border-2 border-black/20 bg-white hover:border-blue-600 hover:bg-blue-50/50 transition cursor-pointer select-none text-xs font-bold text-black shadow-sm mt-1.5">
-            <div class="w-6 h-6 rounded-md bg-slate-100 text-black flex items-center justify-center">
+          <!-- Corner Shape Controls (Add Corner & Delete Corner) -->
+          <div class="grid grid-cols-2 gap-1.5 mt-1.5">
+            <button id="btnCornerTool" type="button" title="Add Corner: Click button then click any link on chart"
+                    class="flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl border-2 border-black/20 bg-white hover:border-blue-600 hover:bg-blue-50/50 transition cursor-pointer select-none text-[11px] font-bold text-black shadow-sm">
               <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
                 <line x1="2" y1="12" x2="8.5" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
                 <polygon points="12,7 16,12 12,17 8,12" fill="currentColor"/>
                 <line x1="15.5" y1="12" x2="22" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
               </svg>
-            </div>
-            <span id="btnCornerToolText">Corner to a Link</span>
-          </button>
+              <span id="btnCornerToolText">Add Corner</span>
+            </button>
+
+            <button id="btnDeleteCornerTool" type="button" title="Delete Corner: Click button then click any diamond handle on chart"
+                    class="flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl border-2 border-black/20 bg-white hover:border-red-600 hover:bg-red-50/50 hover:text-red-600 transition cursor-pointer select-none text-[11px] font-bold text-black shadow-sm">
+              <i class="fi fi-rr-trash text-xs"></i>
+              <span id="btnDeleteCornerToolText">Delete Corner</span>
+            </button>
+          </div>
           <p class="text-[10px] text-black/50 leading-tight">
-            Customize the shape of the link to improve the appearance of the chart. Click button, click any link, then drag the diamond handle.
+            Click <strong>Add Corner</strong> to shape link. To delete: click <strong>Delete Corner</strong>, or <strong>right-click / press Delete</strong> on any diamond handle.
           </p>
         </section>
       </div>
@@ -2193,9 +2199,43 @@ function initNet() {
     return closestId;
   }
 
-  // Click handler: supports Corner Mode & Link Mode
+  let selectedCornerNodeId = null;
+
+  // Track clicked corner for Delete key
+  net.on("selectNode", p => {
+    const nid = p.nodes[0];
+    if (typeof nid === "string" && nid.startsWith("corner_")) {
+      selectedCornerNodeId = nid;
+    } else {
+      selectedCornerNodeId = null;
+    }
+  });
+
+  // Right-click directly on diamond handle deletes the corner immediately!
+  net.on("oncontext", params => {
+    const clickedNodeId = net.getNodeAt(params.pointer.DOM);
+    if (clickedNodeId && typeof clickedNodeId === "string" && clickedNodeId.startsWith("corner_")) {
+      params.event.preventDefault();
+      const parts = clickedNodeId.split("_");
+      deleteCorner(parts[1], parseInt(parts[2]) || 0);
+    }
+  });
+
+  // Click handler: supports Corner Mode, Delete Corner Mode & Link Mode
   net.on("click", params => {
-    // 1. Handle Corner Mode: click link to add a diamond corner handle
+    // 1. Handle Delete Corner Mode: click diamond handle to delete it
+    if (isDeleteCornerMode) {
+      const clickedId = net.getNodeAt(params.pointer.DOM);
+      if (clickedId && typeof clickedId === "string" && clickedId.startsWith("corner_")) {
+        const parts = clickedId.split("_");
+        deleteCorner(parts[1], parseInt(parts[2]) || 0);
+        exitDeleteCornerMode();
+        return;
+      }
+      return;
+    }
+
+    // 2. Handle Corner Mode: click link to add a diamond corner handle
     if (isCornerMode) {
       const linkId = findLinkNear(params.pointer.DOM);
       if (linkId) {
@@ -2218,7 +2258,7 @@ function initNet() {
       return;
     }
 
-    // 2. Handle Link Mode: click 1st entity then 2nd entity
+    // 3. Handle Link Mode: click 1st entity then 2nd entity
     if (!isLinkMode) return;
     const clickedId = net.getNodeAt(params.pointer.DOM);
     if (!clickedId) return;
@@ -2575,7 +2615,7 @@ function render(fitAll = false) {
           y: c.y,
           physics: false,
           fixed: false,
-          title: "Link Corner Handle: Drag diamond to shape link"
+          title: "Corner Handle: Drag to shape | Right-click or press Delete to remove"
         });
       });
 
@@ -3220,8 +3260,22 @@ if ($("btnLinkModeToggle")) {
 // Cancel link mode button & Esc key
 if ($("cancelLinkModeBtn")) $("cancelLinkModeBtn").onclick = exitLinkMode;
 
-/* ---------- Corner to a Link Feature ---------- */
+/* ---------- Corner to a Link (Add & Delete) Feature ---------- */
 let isCornerMode = false;
+let isDeleteCornerMode = false;
+
+function deleteCorner(linkId, cornerIdx = null) {
+  const l = data.links.find(x => x.id === linkId);
+  if (!l || !l.corners || l.corners.length === 0) return;
+
+  if (cornerIdx != null && cornerIdx >= 0 && cornerIdx < l.corners.length) {
+    l.corners.splice(cornerIdx, 1);
+  } else {
+    l.corners = [];
+  }
+  render(false);
+  queueSave();
+}
 
 function enterCornerMode() {
   if (!currentProjectId) {
@@ -3234,12 +3288,13 @@ function enterCornerMode() {
   }
 
   if (isLinkMode) exitLinkMode();
+  if (isDeleteCornerMode) exitDeleteCornerMode();
   isCornerMode = true;
 
   const btn = $("btnCornerTool");
   if (btn) {
-    btn.className = "w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl border-2 border-blue-600 bg-blue-100 text-blue-900 shadow-sm transition cursor-pointer select-none text-xs font-bold ring-2 ring-blue-400 mt-1.5";
-    if ($("btnCornerToolText")) $("btnCornerToolText").textContent = "Corner Mode Active (Click Link)";
+    btn.className = "flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl border-2 border-blue-600 bg-blue-100 text-blue-900 shadow-sm transition cursor-pointer select-none text-[11px] font-bold ring-2 ring-blue-400";
+    if ($("btnCornerToolText")) $("btnCornerToolText").textContent = "Active";
   }
   const topBtn = $("btnCornerModeToggle");
   if (topBtn) {
@@ -3248,7 +3303,7 @@ function enterCornerMode() {
   }
   if ($("linkToolBadge")) {
     $("linkToolBadge").className = "text-[10px] text-white font-bold bg-blue-600 px-2 py-0.5 rounded border border-blue-600";
-    $("linkToolBadge").textContent = "Corner Mode";
+    $("linkToolBadge").textContent = "Add Corner";
   }
   if ($("linkModeBanner")) {
     $("linkModeBanner").classList.remove("hidden");
@@ -3266,8 +3321,8 @@ function exitCornerMode() {
 
   const btn = $("btnCornerTool");
   if (btn) {
-    btn.className = "w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl border-2 border-black/20 bg-white hover:border-blue-600 hover:bg-blue-50/50 transition cursor-pointer select-none text-xs font-bold text-black shadow-sm mt-1.5";
-    if ($("btnCornerToolText")) $("btnCornerToolText").textContent = "Corner to a Link";
+    btn.className = "flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl border-2 border-black/20 bg-white hover:border-blue-600 hover:bg-blue-50/50 transition cursor-pointer select-none text-[11px] font-bold text-black shadow-sm";
+    if ($("btnCornerToolText")) $("btnCornerToolText").textContent = "Add Corner";
   }
   const topBtn = $("btnCornerModeToggle");
   if (topBtn) {
@@ -3289,9 +3344,68 @@ function toggleCornerMode() {
   else enterCornerMode();
 }
 
+function enterDeleteCornerMode() {
+  if (!currentProjectId) {
+    showNoProjectError();
+    return;
+  }
+  const hasCorners = data.links.some(l => l.corners && l.corners.length > 0);
+  if (!hasCorners) {
+    alert("There are no corner handles on any links in this chart to delete.");
+    return;
+  }
+
+  if (isLinkMode) exitLinkMode();
+  if (isCornerMode) exitCornerMode();
+  isDeleteCornerMode = true;
+
+  const btn = $("btnDeleteCornerTool");
+  if (btn) {
+    btn.className = "flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl border-2 border-red-600 bg-red-100 text-red-900 shadow-sm transition cursor-pointer select-none text-[11px] font-bold ring-2 ring-red-400";
+    if ($("btnDeleteCornerToolText")) $("btnDeleteCornerToolText").textContent = "Active";
+  }
+  if ($("linkToolBadge")) {
+    $("linkToolBadge").className = "text-[10px] text-white font-bold bg-red-600 px-2 py-0.5 rounded border border-red-600";
+    $("linkToolBadge").textContent = "Delete Corner";
+  }
+  if ($("linkModeBanner")) {
+    $("linkModeBanner").classList.remove("hidden");
+    if ($("linkModeBannerText")) {
+      $("linkModeBannerText").textContent = "Click any diamond corner handle on the chart to delete it (Esc to cancel)";
+    }
+  }
+
+  const container = $("net");
+  if (container) container.style.cursor = "pointer";
+}
+
+function exitDeleteCornerMode() {
+  isDeleteCornerMode = false;
+
+  const btn = $("btnDeleteCornerTool");
+  if (btn) {
+    btn.className = "flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl border-2 border-black/20 bg-white hover:border-red-600 hover:bg-red-50/50 hover:text-red-600 transition cursor-pointer select-none text-[11px] font-bold text-black shadow-sm";
+    if ($("btnDeleteCornerToolText")) $("btnDeleteCornerToolText").textContent = "Delete Corner";
+  }
+  if ($("linkToolBadge")) {
+    $("linkToolBadge").className = "text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-200";
+    $("linkToolBadge").textContent = "Ready";
+  }
+  if ($("linkModeBanner")) $("linkModeBanner").classList.add("hidden");
+
+  const container = $("net");
+  if (container) container.style.cursor = "default";
+}
+
+function toggleDeleteCornerMode() {
+  if (isDeleteCornerMode) exitDeleteCornerMode();
+  else enterDeleteCornerMode();
+}
+
 // Corner Mode button bindings
 if ($("btnCornerTool")) $("btnCornerTool").onclick = toggleCornerMode;
 if ($("btnCornerModeToggle")) $("btnCornerModeToggle").onclick = toggleCornerMode;
+if ($("btnDeleteCornerTool")) $("btnDeleteCornerTool").onclick = toggleDeleteCornerMode;
 
 window.addEventListener("keydown", e => {
   if (e.key === "Escape") {
@@ -3305,6 +3419,22 @@ window.addEventListener("keydown", e => {
     }
     if (isLinkMode) exitLinkMode();
     if (isCornerMode) exitCornerMode();
+    if (isDeleteCornerMode) exitDeleteCornerMode();
+    return;
+  }
+
+  // Delete or Backspace key deletes selected diamond corner handle
+  if (e.key === "Delete" || e.key === "Backspace") {
+    // Only if not currently typing in an input or textarea
+    const activeEl = document.activeElement;
+    if (activeEl && (activeEl.tagName === "INPUT" || activeEl.tagName === "TEXTAREA")) return;
+
+    if (selectedCornerNodeId && typeof selectedCornerNodeId === "string" && selectedCornerNodeId.startsWith("corner_")) {
+      e.preventDefault();
+      const parts = selectedCornerNodeId.split("_");
+      deleteCorner(parts[1], parseInt(parts[2]) || 0);
+      selectedCornerNodeId = null;
+    }
   }
 });
 
