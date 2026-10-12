@@ -371,6 +371,36 @@
   </div>
 </div>
 
+<!-- ==================== NO PROJECT ERROR MODAL ==================== -->
+<div id="noProjectModal" class="hidden fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+  <div class="w-full max-w-sm bg-white border-2 border-black rounded-2xl p-6 shadow-2xl space-y-4 relative z-10 text-center">
+    <div class="w-14 h-14 mx-auto rounded-full bg-blue-50 border-2 border-blue-600 flex items-center justify-center text-blue-600 text-2xl">
+      <i class="fi fi-rr-exclamation text-xl"></i>
+    </div>
+
+    <div class="space-y-1.5">
+      <h3 class="text-sm font-bold text-black uppercase tracking-wider">No Active Project</h3>
+      <p class="text-xs text-black/75 leading-relaxed">
+        Cannot add entities without a project. Please create or open a project before dropping entities onto the workspace.
+      </p>
+    </div>
+
+    <div class="p-2.5 rounded-lg bg-blue-50/60 border border-blue-200 text-[11px] text-black">
+      <span class="font-bold text-blue-600">Tip:</span> Projects store your link charts and geospatial intelligence data safely in <strong>Cloudflare R2</strong>.
+    </div>
+
+    <div class="flex items-center gap-2 pt-2">
+      <button id="btnNoProjectCreate" class="flex-1 btn-primary py-2 text-xs">
+        <i class="fi fi-rr-plus text-xs"></i>
+        <span>Create New Project</span>
+      </button>
+      <button id="btnNoProjectDismiss" class="btn-secondary py-2 text-xs">
+        <span>Dismiss</span>
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- ==================== NEW PROJECT MODAL ==================== -->
 <div id="newProjectModal" class="hidden fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
   <div class="w-full max-w-sm bg-white border-2 border-black rounded-2xl p-6 shadow-2xl space-y-4 relative z-10">
@@ -1336,6 +1366,38 @@ function setStatus(text, isError = false) {
   }
 }
 
+/* ---------- No Active Project Error Notification ---------- */
+function showNoProjectError() {
+  const modal = $("noProjectModal");
+  if (modal) {
+    modal.classList.remove("hidden");
+  } else {
+    alert("Please create or select a project before adding entities.");
+  }
+
+  // Highlight the New Project button with a pulse effect
+  const initialBtn = $("btnInitialNewProject");
+  if (initialBtn && !initialBtn.classList.contains("hidden")) {
+    initialBtn.classList.add("ring-4", "ring-blue-500", "scale-105");
+    setTimeout(() => {
+      initialBtn.classList.remove("ring-4", "ring-blue-500", "scale-105");
+    }, 1500);
+  }
+}
+
+// Modal buttons for No Project Error
+if ($("btnNoProjectCreate")) {
+  $("btnNoProjectCreate").onclick = () => {
+    $("noProjectModal").classList.add("hidden");
+    openNewProjectModal();
+  };
+}
+if ($("btnNoProjectDismiss")) {
+  $("btnNoProjectDismiss").onclick = () => {
+    $("noProjectModal").classList.add("hidden");
+  };
+}
+
 /* ---------- Entity Palette & Drag-and-Drop Creation ---------- */
 function renderPalette() {
   const container = $("entityPalette");
@@ -1379,8 +1441,12 @@ function renderPalette() {
 }
 
 function createEntityFromPalette(typeKey, x = null, y = null) {
-  if (!ready || !currentProjectId) {
-    alert("Please wait for workspace to finish loading, or select/create a project.");
+  if (!currentProjectId) {
+    showNoProjectError();
+    return;
+  }
+  if (!ready) {
+    setStatus("Please wait for workspace to finish loading…", true);
     return;
   }
 
@@ -1637,6 +1703,11 @@ function initNet() {
     ev.preventDefault();
     const typeKey = ev.dataTransfer.getData("application/x-blulink-entity") || ev.dataTransfer.getData("text/plain");
     if (!typeKey || !TYPES[typeKey]) return;
+
+    if (!currentProjectId) {
+      showNoProjectError();
+      return;
+    }
 
     const rect = container.getBoundingClientRect();
     const domX = ev.clientX - rect.left;
@@ -2037,6 +2108,10 @@ $("tabBtnList").onclick = () => switchTab("list");
 
 /* ---------- Actions: Adding Links ---------- */
 $("addL").onclick = () => {
+  if (!currentProjectId) {
+    showNoProjectError();
+    return;
+  }
   const from = $("lFrom").value;
   const to = $("lTo").value;
   if (!from || !to || from === to) {
