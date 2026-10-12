@@ -475,17 +475,22 @@
       </div>
 
       <!-- Action Buttons -->
-      <div class="flex items-center gap-2 pt-2 border-t border-black/15">
-        <button id="btnSaveEditLink" type="button" class="flex-1 btn-primary py-2 text-xs">
-          <i class="fi fi-rr-check text-xs"></i>
-          <span>Save Changes</span>
-        </button>
-        <button id="btnDeleteEditLink" type="button" class="btn-secondary py-2 text-xs text-red-600 border-red-300 hover:border-red-600 hover:bg-red-50">
-          <i class="fi fi-rr-trash text-xs"></i>
-          <span>Delete Link</span>
-        </button>
-        <button id="btnCancelEditLink" type="button" class="btn-secondary py-2 text-xs">
-          <span>Cancel</span>
+      <div class="space-y-2 pt-2 border-t border-black/15">
+        <div class="flex items-center gap-2">
+          <button id="btnSaveEditLink" type="button" class="flex-1 btn-primary py-2 text-xs">
+            <i class="fi fi-rr-check text-xs"></i>
+            <span>Save Changes</span>
+          </button>
+          <button id="btnDeleteEditLink" type="button" class="btn-secondary py-2 text-xs text-red-600 border-red-300 hover:border-red-600 hover:bg-red-50">
+            <i class="fi fi-rr-trash text-xs"></i>
+            <span>Delete Link</span>
+          </button>
+          <button id="btnCancelEditLink" type="button" class="btn-secondary py-2 text-xs">
+            <span>Cancel</span>
+          </button>
+        </div>
+        <button id="btnResetCorners" type="button" class="hidden w-full btn-secondary py-1.5 text-xs text-blue-600 border-blue-200 hover:bg-blue-50">
+          <span>Straighten Link (Remove Corner Handles)</span>
         </button>
       </div>
     </div>
@@ -684,6 +689,22 @@
             </div>
             <span id="btnLinkToolText">Draw Link (Connect Entities)</span>
           </button>
+
+          <!-- Corner to a Link Button -->
+          <button id="btnCornerTool" type="button" title="Customize the shape of the link to improve chart appearance"
+                  class="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl border-2 border-black/20 bg-white hover:border-blue-600 hover:bg-blue-50/50 transition cursor-pointer select-none text-xs font-bold text-black shadow-sm mt-1.5">
+            <div class="w-6 h-6 rounded-md bg-slate-100 text-black flex items-center justify-center">
+              <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
+                <line x1="2" y1="12" x2="8.5" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                <polygon points="12,7 16,12 12,17 8,12" fill="currentColor"/>
+                <line x1="15.5" y1="12" x2="22" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <span id="btnCornerToolText">Corner to a Link</span>
+          </button>
+          <p class="text-[10px] text-black/50 leading-tight">
+            Customize the shape of the link to improve the appearance of the chart. Click button, click any link, then drag the diamond handle.
+          </p>
         </section>
       </div>
 
@@ -829,6 +850,14 @@
       <button id="btnLinkModeToggle" title="Draw Relationship Link: Drag from one entity to another (or hold Shift on chart)" class="btn-secondary py-1 px-2.5 text-xs">
         <i class="fi fi-rr-link-alt text-xs"></i>
         <span id="btnLinkModeToggleText">Draw Link</span>
+      </button>
+      <button id="btnCornerModeToggle" title="Add Corner to Link: Click any link to insert a draggable diamond handle" class="btn-secondary py-1 px-2.5 text-xs">
+        <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
+          <line x1="2" y1="12" x2="8.5" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+          <polygon points="12,7 16,12 12,17 8,12" fill="currentColor"/>
+          <line x1="15.5" y1="12" x2="22" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+        <span id="btnCornerModeToggleText">Add Corner</span>
       </button>
       <button id="btnFitNet" title="Fit All Nodes" class="btn-secondary py-1 px-2.5 text-xs">
         <i class="fi fi-rr-expand text-xs"></i>
@@ -1864,6 +1893,20 @@ function openEditLinkModal(linkId) {
   $("editLinkArrows").value = curArrows;
   updateArrowVisualSelection(curArrows);
 
+  if ($("btnResetCorners")) {
+    if (l.corners && l.corners.length > 0) {
+      $("btnResetCorners").classList.remove("hidden");
+      $("btnResetCorners").onclick = () => {
+        l.corners = [];
+        closeEditLinkModal();
+        render(false);
+        queueSave();
+      };
+    } else {
+      $("btnResetCorners").classList.add("hidden");
+    }
+  }
+
   $("editLinkModal").classList.remove("hidden");
   $("editLinkLabel").focus();
 }
@@ -2001,47 +2044,142 @@ function initNet() {
 
   // Synchronized node selection on click
   net.on("selectNode", p => {
-    if (!isLinkMode && !isDrawingLiveLine) {
-      select(p.nodes[0], "net");
+    if (!isLinkMode && !isDrawingLiveLine && !isCornerMode) {
+      const nid = p.nodes[0];
+      if (typeof nid === "string" && nid.startsWith("corner_")) return;
+      select(nid, "net");
     }
   });
 
   net.on("deselectNode", () => {
-    if (!isLinkMode && !isDrawingLiveLine) {
+    if (!isLinkMode && !isDrawingLiveLine && !isCornerMode) {
       select(null, "net");
     }
   });
 
-  // Track entity movement on dragEnd and auto-save
+  // Track entity and corner handle movement on dragEnd and auto-save
   net.on("dragEnd", p => {
     if (p.nodes && p.nodes.length && !isDrawingLiveLine) {
       const positions = net.getPositions(p.nodes);
+      let linkMoved = false;
+
       p.nodes.forEach(id => {
-        const ent = data.entities.find(x => x.id === id);
-        if (ent && positions[id]) {
-          ent.x = Math.round(positions[id].x);
-          ent.y = Math.round(positions[id].y);
+        if (typeof id === "string" && id.startsWith("corner_")) {
+          const parts = id.split("_");
+          const linkId = parts[1];
+          const cornerIdx = parseInt(parts[2]) || 0;
+          const l = data.links.find(x => x.id === linkId);
+          if (l && l.corners && l.corners[cornerIdx] && positions[id]) {
+            l.corners[cornerIdx].x = Math.round(positions[id].x);
+            l.corners[cornerIdx].y = Math.round(positions[id].y);
+            linkMoved = true;
+          }
+        } else {
+          const ent = data.entities.find(x => x.id === id);
+          if (ent && positions[id]) {
+            ent.x = Math.round(positions[id].x);
+            ent.y = Math.round(positions[id].y);
+          }
         }
       });
       queueSave();
     }
   });
 
-  // Double click link to open edit modal
+  // Double click link or diamond handle to open edit modal
   net.on("doubleClick", params => {
+    const clickedNodeId = net.getNodeAt(params.pointer.DOM);
+    if (clickedNodeId && typeof clickedNodeId === "string" && clickedNodeId.startsWith("corner_")) {
+      const parts = clickedNodeId.split("_");
+      openEditLinkModal(parts[1]);
+      return;
+    }
+
     const clickedEdgeId = net.getEdgeAt(params.pointer.DOM);
     if (clickedEdgeId) {
-      openEditLinkModal(clickedEdgeId);
+      const realId = clickedEdgeId.includes("_seg") ? clickedEdgeId.split("_seg")[0] : clickedEdgeId;
+      openEditLinkModal(realId);
     } else if (params.edges && params.edges.length > 0 && (!params.nodes || params.nodes.length === 0)) {
-      openEditLinkModal(params.edges[0]);
+      const realId = params.edges[0].includes("_seg") ? params.edges[0].split("_seg")[0] : params.edges[0];
+      openEditLinkModal(realId);
     }
   });
 
-  // Click-to-connect support in Link Mode
+  // Helper function to find link at or near DOM position
+  function findLinkNear(domPos) {
+    let edgeId = net.getEdgeAt(domPos);
+    if (edgeId) {
+      return edgeId.includes("_seg") ? edgeId.split("_seg")[0] : edgeId;
+    }
+
+    // Proximity fallback (25 canvas units)
+    const cPos = net.DOMtoCanvas(domPos);
+    let closestId = null;
+    let minDist = 30;
+
+    data.links.forEach(l => {
+      const a = data.entities.find(x => x.id === l.from);
+      const b = data.entities.find(x => x.id === l.to);
+      if (!a || !b) return;
+
+      const chain = [{ x: a.x, y: a.y }];
+      if (l.corners) {
+        l.corners.forEach(c => chain.push({ x: c.x, y: c.y }));
+      }
+      chain.push({ x: b.x, y: b.y });
+
+      for (let i = 0; i < chain.length - 1; i++) {
+        const p1 = chain[i];
+        const p2 = chain[i + 1];
+        if (p1.x == null || p1.y == null || p2.x == null || p2.y == null) continue;
+        const l2 = (p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2;
+        let d = 0;
+        if (l2 === 0) {
+          d = Math.hypot(cPos.x - p1.x, cPos.y - p1.y);
+        } else {
+          let t = Math.max(0, Math.min(1, ((cPos.x - p1.x) * (p2.x - p1.x) + (cPos.y - p1.y) * (p2.y - p1.y)) / l2));
+          d = Math.hypot(cPos.x - (p1.x + t * (p2.x - p1.x)), cPos.y - (p1.y + t * (p2.y - p1.y)));
+        }
+        if (d < minDist) {
+          minDist = d;
+          closestId = l.id;
+        }
+      }
+    });
+
+    return closestId;
+  }
+
+  // Click handler: supports Corner Mode & Link Mode
   net.on("click", params => {
+    // 1. Handle Corner Mode: click link to add a diamond corner handle
+    if (isCornerMode) {
+      const linkId = findLinkNear(params.pointer.DOM);
+      if (linkId) {
+        const l = data.links.find(x => x.id === linkId);
+        if (l) {
+          const canvasPos = net.DOMtoCanvas(params.pointer.DOM);
+          if (!l.corners) l.corners = [];
+          l.corners.push({
+            id: uid(),
+            x: Math.round(canvasPos.x),
+            y: Math.round(canvasPos.y)
+          });
+
+          exitCornerMode();
+          render(false);
+          queueSave();
+          return;
+        }
+      }
+      return;
+    }
+
+    // 2. Handle Link Mode: click 1st entity then 2nd entity
     if (!isLinkMode) return;
     const clickedId = net.getNodeAt(params.pointer.DOM);
     if (!clickedId) return;
+    if (typeof clickedId === "string" && clickedId.startsWith("corner_")) return;
 
     if (!linkingSourceId) {
       linkingSourceId = clickedId;
@@ -2351,24 +2489,83 @@ function render(fitAll = false) {
       from: { enabled: arrowsConfig === "from" || arrowsConfig === "both", scaleFactor: 0.8 }
     };
 
-    edges.add({
-      id: l.id,
-      from: l.from,
-      to: l.to,
-      label: l.label != null && l.label !== "" ? l.label : "link",
-      smooth: false,
-      dashes: isUnconfirmed ? [6, 6] : false,
-      width: isConnectedToSel ? Math.max(linkWidth + 1, 2) : linkWidth,
-      hoverWidth: Math.max(linkWidth + 1, 2),
-      selectionWidth: Math.max(linkWidth + 1, 2),
-      arrows: arrowsOpt,
-      color: {
-        color: isConnectedToSel ? "#2563eb" : linkColor,
-        highlight: "#2563eb",
-        hover: "#2563eb",
-        inherit: false
+    const hasCorners = l.corners && l.corners.length > 0;
+
+    if (!hasCorners) {
+      // Direct straight line
+      edges.add({
+        id: l.id,
+        from: l.from,
+        to: l.to,
+        label: l.label != null && l.label !== "" ? l.label : "link",
+        smooth: false,
+        dashes: isUnconfirmed ? [6, 6] : false,
+        width: isConnectedToSel ? Math.max(linkWidth + 1, 2) : linkWidth,
+        hoverWidth: Math.max(linkWidth + 1, 2),
+        selectionWidth: Math.max(linkWidth + 1, 2),
+        arrows: arrowsOpt,
+        color: {
+          color: isConnectedToSel ? "#2563eb" : linkColor,
+          highlight: "#2563eb",
+          hover: "#2563eb",
+          inherit: false
+        }
+      });
+    } else {
+      // Multi-segment link with solid black diamond corner handles
+      const cornerNodeIds = [];
+      l.corners.forEach((c, idx) => {
+        const cNodeId = `corner_${l.id}_${idx}`;
+        cornerNodeIds.push(cNodeId);
+        nodes.add({
+          id: cNodeId,
+          shape: "diamond",
+          size: 7,
+          borderWidth: 1,
+          color: {
+            background: "#000000",
+            border: "#000000",
+            highlight: { background: "#2563eb", border: "#2563eb" },
+            hover: { background: "#2563eb", border: "#2563eb" }
+          },
+          x: c.x,
+          y: c.y,
+          physics: false,
+          fixed: false,
+          title: "Link Corner Handle: Drag diamond to shape link"
+        });
+      });
+
+      const chain = [l.from, ...cornerNodeIds, l.to];
+      for (let i = 0; i < chain.length - 1; i++) {
+        const fromNode = chain[i];
+        const toNode = chain[i + 1];
+        const isFirst = i === 0;
+        const isLast = i === chain.length - 2;
+
+        edges.add({
+          id: `${l.id}_seg${i}`,
+          from: fromNode,
+          to: toNode,
+          label: isLast ? (l.label != null && l.label !== "" ? l.label : "link") : "",
+          smooth: false,
+          dashes: isUnconfirmed ? [6, 6] : false,
+          width: isConnectedToSel ? Math.max(linkWidth + 1, 2) : linkWidth,
+          hoverWidth: Math.max(linkWidth + 1, 2),
+          selectionWidth: Math.max(linkWidth + 1, 2),
+          arrows: {
+            to: { enabled: isLast && (arrowsConfig === "to" || arrowsConfig === "both"), scaleFactor: 0.8 },
+            from: { enabled: isFirst && (arrowsConfig === "from" || arrowsConfig === "both"), scaleFactor: 0.8 }
+          },
+          color: {
+            color: isConnectedToSel ? "#2563eb" : linkColor,
+            highlight: "#2563eb",
+            hover: "#2563eb",
+            inherit: false
+          }
+        });
       }
-    });
+    }
 
     if (a.lat != null && a.lng != null && b.lat != null && b.lng != null) {
       const poly = L.polyline([[a.lat, a.lng], [b.lat, b.lng]], {
@@ -2460,16 +2657,21 @@ function select(id, fromSource) {
       const isConnectedToSel = selected && (l.from === selected || l.to === selected);
       const linkColor = l.color || "#000000";
       const linkWidth = parseInt(l.width) || 1;
-      edgeUpdates.push({
-        id: l.id,
-        color: {
-          color: isConnectedToSel ? "#2563eb" : linkColor,
-          highlight: "#2563eb",
-          hover: "#2563eb",
-          inherit: false
-        },
-        width: isConnectedToSel ? Math.max(linkWidth + 1, 2) : linkWidth
-      });
+      const col = {
+        color: isConnectedToSel ? "#2563eb" : linkColor,
+        highlight: "#2563eb",
+        hover: "#2563eb",
+        inherit: false
+      };
+      const w = isConnectedToSel ? Math.max(linkWidth + 1, 2) : linkWidth;
+
+      if (l.corners && l.corners.length > 0) {
+        for (let i = 0; i <= l.corners.length; i++) {
+          edgeUpdates.push({ id: `${l.id}_seg${i}`, color: col, width: w });
+        }
+      } else {
+        edgeUpdates.push({ id: l.id, color: col, width: w });
+      }
     });
     try { edges.update(edgeUpdates); } catch (e) {}
   }
@@ -2975,9 +3177,83 @@ if ($("btnLinkModeToggle")) {
 // Cancel link mode button & Esc key
 if ($("cancelLinkModeBtn")) $("cancelLinkModeBtn").onclick = exitLinkMode;
 
+/* ---------- Corner to a Link Feature ---------- */
+let isCornerMode = false;
+
+function enterCornerMode() {
+  if (!currentProjectId) {
+    showNoProjectError();
+    return;
+  }
+  if (data.links.length === 0) {
+    alert("Please add at least 1 relationship link to the chart before adding a corner.");
+    return;
+  }
+
+  if (isLinkMode) exitLinkMode();
+  isCornerMode = true;
+
+  const btn = $("btnCornerTool");
+  if (btn) {
+    btn.className = "w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl border-2 border-blue-600 bg-blue-100 text-blue-900 shadow-sm transition cursor-pointer select-none text-xs font-bold ring-2 ring-blue-400 mt-1.5";
+    if ($("btnCornerToolText")) $("btnCornerToolText").textContent = "Corner Mode Active (Click Link)";
+  }
+  const topBtn = $("btnCornerModeToggle");
+  if (topBtn) {
+    topBtn.className = "btn-secondary py-1 px-2.5 text-xs bg-blue-600 text-white border-blue-600 hover:bg-blue-700 shadow-sm";
+    if ($("btnCornerModeToggleText")) $("btnCornerModeToggleText").textContent = "Cancel Corner";
+  }
+  if ($("linkToolBadge")) {
+    $("linkToolBadge").className = "text-[10px] text-white font-bold bg-blue-600 px-2 py-0.5 rounded border border-blue-600";
+    $("linkToolBadge").textContent = "Corner Mode";
+  }
+  if ($("linkModeBanner")) {
+    $("linkModeBanner").classList.remove("hidden");
+    if ($("linkModeBannerText")) {
+      $("linkModeBannerText").textContent = "Click any link on the chart to add a corner handle (Esc to cancel)";
+    }
+  }
+
+  const container = $("net");
+  if (container) container.style.cursor = "copy";
+}
+
+function exitCornerMode() {
+  isCornerMode = false;
+
+  const btn = $("btnCornerTool");
+  if (btn) {
+    btn.className = "w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl border-2 border-black/20 bg-white hover:border-blue-600 hover:bg-blue-50/50 transition cursor-pointer select-none text-xs font-bold text-black shadow-sm mt-1.5";
+    if ($("btnCornerToolText")) $("btnCornerToolText").textContent = "Corner to a Link";
+  }
+  const topBtn = $("btnCornerModeToggle");
+  if (topBtn) {
+    topBtn.className = "btn-secondary py-1 px-2.5 text-xs";
+    if ($("btnCornerModeToggleText")) $("btnCornerModeToggleText").textContent = "Add Corner";
+  }
+  if ($("linkToolBadge")) {
+    $("linkToolBadge").className = "text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-200";
+    $("linkToolBadge").textContent = "Ready";
+  }
+  if ($("linkModeBanner")) $("linkModeBanner").classList.add("hidden");
+
+  const container = $("net");
+  if (container) container.style.cursor = "default";
+}
+
+function toggleCornerMode() {
+  if (isCornerMode) exitCornerMode();
+  else enterCornerMode();
+}
+
+// Corner Mode button bindings
+if ($("btnCornerTool")) $("btnCornerTool").onclick = toggleCornerMode;
+if ($("btnCornerModeToggle")) $("btnCornerModeToggle").onclick = toggleCornerMode;
+
 window.addEventListener("keydown", e => {
-  if (e.key === "Escape" && isLinkMode) {
-    exitLinkMode();
+  if (e.key === "Escape") {
+    if (isLinkMode) exitLinkMode();
+    if (isCornerMode) exitCornerMode();
   }
 });
 
