@@ -2139,7 +2139,7 @@ function initNet() {
     ctx.restore();
   });
 
-  // Pointer event listeners on canvas container for smooth dragable display line
+  // Pointer event listeners on canvas container: CAPTURE phase prevents Vis.Network from panning/moving entities while drawing a link
   container.addEventListener("pointerdown", ev => {
     if (ev.button !== 0) return; // Left click only
 
@@ -2149,6 +2149,10 @@ function initNet() {
       const startNode = net.getNodeAt(domPos);
 
       if (startNode) {
+        // Prevent Vis.Network from initiating dragView (panning) or dragNodes
+        ev.stopPropagation();
+        ev.preventDefault();
+
         if (!currentProjectId) {
           showNoProjectError();
           return;
@@ -2158,8 +2162,8 @@ function initNet() {
         liveLineCurrentCanvasPos = net.DOMtoCanvas(domPos);
         liveLineHoverTargetId = null;
 
-        // Temporarily disable node dragging so dragging draws the link line
-        net.setOptions({ interaction: { dragNodes: false } });
+        // Freeze all entities and view in place
+        net.setOptions({ interaction: { dragNodes: false, dragView: false } });
         net.redraw();
 
         if ($("linkModeBanner")) {
@@ -2171,10 +2175,14 @@ function initNet() {
         }
       }
     }
-  });
+  }, true);
 
   window.addEventListener("pointermove", ev => {
     if (!isDrawingLiveLine || !net) return;
+
+    // Prevent Vis.Network from panning canvas while drawing the link line
+    ev.stopPropagation();
+    ev.preventDefault();
 
     const rect = container.getBoundingClientRect();
     const domPos = { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
@@ -2184,10 +2192,13 @@ function initNet() {
     liveLineHoverTargetId = (hovered && hovered !== liveLineSourceId) ? hovered : null;
 
     net.redraw();
-  });
+  }, true);
 
   window.addEventListener("pointerup", ev => {
     if (!isDrawingLiveLine) return;
+
+    ev.stopPropagation();
+    ev.preventDefault();
 
     const rect = container.getBoundingClientRect();
     const domPos = { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
@@ -2202,14 +2213,14 @@ function initNet() {
     liveLineHoverTargetId = null;
 
     if (net) {
-      net.setOptions({ interaction: { dragNodes: true } });
+      net.setOptions({ interaction: { dragNodes: !isLinkMode, dragView: !isLinkMode } });
       net.redraw();
     }
 
     if (isLinkMode) {
       exitLinkMode();
     }
-  });
+  }, true);
 
   // HTML5 Drag & Drop support on Relational Link Chart workspace from sidebar palette
   container.addEventListener("dragover", ev => {
@@ -2825,6 +2836,11 @@ function enterLinkMode(fromNodeId = null) {
   isLinkMode = true;
   linkingSourceId = fromNodeId || null;
 
+  // In Link Mode, freeze both node dragging and view panning so entities never move while linking
+  if (net) {
+    net.setOptions({ interaction: { dragNodes: false, dragView: false } });
+  }
+
   const btn = $("btnLinkTool");
   if (btn) {
     btn.className = "w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border-2 border-blue-600 bg-blue-100 text-blue-900 shadow-sm transition cursor-pointer select-none text-xs font-bold ring-2 ring-blue-400";
@@ -2857,8 +2873,9 @@ function exitLinkMode() {
   liveLineSourceId = null;
   liveLineHoverTargetId = null;
 
+  // Re-enable normal dragging and view panning for regular mode
   if (net) {
-    net.setOptions({ interaction: { dragNodes: true } });
+    net.setOptions({ interaction: { dragNodes: true, dragView: true } });
     net.unselectAll();
     net.redraw();
   }
@@ -2907,7 +2924,43 @@ function createLinkBetween(fromId, toId) {
     arrows: "to"
   };
   data.links.push(newLink);
-  render(false);
+
+  // Add edge directly to Vis.Network DataSet without clearing or moving any nodes!
+  if (edges) {
+    edges.add({
+      id: newLink.id,
+      from: newLink.from,
+      to: newLink.to,
+      label: "",
+      smooth: false,
+      dashes: false,
+      width: 1,
+      hoverWidth: 2,
+      selectionWidth: 2,
+      arrows: { to: { enabled: true, scaleFactor: 0.8 }, from: { enabled: false } },
+      color: {
+        color: "#000000",
+        highlight: "#2563eb",
+        hover: "#2563eb",
+        inherit: false
+      }
+    });
+  }
+
+  // Update geospatial map line
+  const a = data.entities.find(x => x.id === fromId);
+  const b = data.entities.find(x => x.id === toId);
+  if (a && b && a.lat != null && a.lng != null && b.lat != null && b.lng != null && lineLayer) {
+    const poly = L.polyline([[a.lat, a.lng], [b.lat, b.lng]], {
+      color: "#000000",
+      weight: 1,
+      opacity: 0.9
+    }).addTo(lineLayer);
+    linesByLinkId[newLink.id] = poly;
+    poly.bindTooltip(`${esc(a.name)} → [linked] → ${esc(b.name)}`, { sticky: true });
+  }
+
+  if ($("statLinks")) $("statLinks").textContent = data.links.length;
   queueSave();
 }
 
