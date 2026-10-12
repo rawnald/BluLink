@@ -6418,5 +6418,125 @@
     "name": "User",
     "category": "People",
     "icon": "assets/all_icons/People_User.png"
+  },
+  {
+    "id": "Weapons_Air_Rifle",
+    "name": "Air Rifle",
+    "category": "Weapons",
+    "icon": "assets/all_icons/Weapons_Air_Rifle.png"
+  },
+  {
+    "id": "Weapons_Assault_Weapon",
+    "name": "Assault Weapon",
+    "category": "Weapons",
+    "icon": "assets/all_icons/Weapons_Assault_Weapon.png"
+  },
+  {
+    "id": "Weapons_Baseball_Bat",
+    "name": "Baseball Bat",
+    "category": "Weapons",
+    "icon": "assets/all_icons/Weapons_Baseball_Bat.png"
+  },
+  {
+    "id": "Weapons_Bomb",
+    "name": "Bomb",
+    "category": "Weapons",
+    "icon": "assets/all_icons/Weapons_Bomb.png"
+  },
+  {
+    "id": "Weapons_Bottle",
+    "name": "Bottle",
+    "category": "Weapons",
+    "icon": "assets/all_icons/Weapons_Bottle.png"
+  },
+  {
+    "id": "Weapons_Bullet",
+    "name": "Bullet",
+    "category": "Weapons",
+    "icon": "assets/all_icons/Weapons_Bullet.png"
+  },
+  {
+    "id": "Weapons_Bullet_Case",
+    "name": "Bullet Case",
+    "category": "Weapons",
+    "icon": "assets/all_icons/Weapons_Bullet_Case.png"
+  },
+  {
+    "id": "Weapons_Bullet_Cases",
+    "name": "Bullet Cases",
+    "category": "Weapons",
+    "icon": "assets/all_icons/Weapons_Bullet_Cases.png"
+  },
+  {
+    "id": "Weapons_Crowbar",
+    "name": "Crowbar",
+    "category": "Weapons",
+    "icon": "assets/all_icons/Weapons_Crowbar.png"
+  },
+  {
+    "id": "Weapons_Hammer",
+    "name": "Hammer",
+    "category": "Weapons",
+    "icon": "assets/all_icons/Weapons_Hammer.png"
+  },
+  {
+    "id": "Weapons_Iron_Bar",
+    "name": "Iron Bar",
+    "category": "Weapons",
+    "icon": "assets/all_icons/Weapons_Iron_Bar.png"
+  },
+  {
+    "id": "Weapons_Knife",
+    "name": "Knife",
+    "category": "Weapons",
+    "icon": "assets/all_icons/Weapons_Knife.png"
+  },
+  {
+    "id": "Weapons_Machine_Gun",
+    "name": "Machine Gun",
+    "category": "Weapons",
+    "icon": "assets/all_icons/Weapons_Machine_Gun.png"
+  },
+  {
+    "id": "Weapons_Pepper_Spray",
+    "name": "Pepper Spray",
+    "category": "Weapons",
+    "icon": "assets/all_icons/Weapons_Pepper_Spray.png"
+  },
+  {
+    "id": "Weapons_Pistol",
+    "name": "Pistol",
+    "category": "Weapons",
+    "icon": "assets/all_icons/Weapons_Pistol.png"
+  },
+  {
+    "id": "Weapons_Revolver",
+    "name": "Revolver",
+    "category": "Weapons",
+    "icon": "assets/all_icons/Weapons_Revolver.png"
+  },
+  {
+    "id": "Weapons_Rifle",
+    "name": "Rifle",
+    "category": "Weapons",
+    "icon": "assets/all_icons/Weapons_Rifle.png"
+  },
+  {
+    "id": "Weapons_Rope",
+    "name": "Rope",
+    "category": "Weapons",
+    "icon": "assets/all_icons/Weapons_Rope.png"
+  },
+  {
+    "id": "Weapons_Shotgun",
+    "name": "Shotgun",
+    "category": "Weapons",
+    "icon": "assets/all_icons/Weapons_Shotgun.png"
+  },
+  {
+    "id": "Weapons_Taser",
+    "name": "Taser",
+    "category": "Weapons",
+    "icon": "assets/all_icons/Weapons_Taser.png"
   }
 ]
