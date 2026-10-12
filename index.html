@@ -663,28 +663,60 @@
 
         <hr class="border-black/10">
 
-        <!-- Add Link: Drag & Drop Link Tool Section -->
-        <section class="space-y-3">
+        <!-- Insert Links: Toolbar matching uploaded image -->
+        <section class="space-y-2.5">
           <div class="flex items-center justify-between">
             <h2 class="text-xs font-bold uppercase tracking-wider text-black flex items-center gap-2">
               <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
-              Add Link
+              Insert Links
             </h2>
-            <span id="linkToolBadge" class="text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-200">Drag & Drop</span>
+            <span id="linkToolBadge" class="text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-200">Ready</span>
           </div>
 
           <p class="text-[11px] text-black/60 leading-relaxed">
-            Click the link icon below, then drag or click from the <strong>first entity</strong> to the <strong>second entity</strong> on the chart.
+            Click the <strong>Link</strong> button below, then drag from one entity to another on the chart. Double-click the line to edit.
           </p>
 
-          <!-- Link Icon Tool Card -->
-          <div id="linkToolCard" draggable="true"
-               class="group flex flex-col items-center justify-center p-3.5 rounded-xl bg-white border-2 border-black/20 hover:border-blue-600 hover:shadow-md transition cursor-grab active:cursor-grabbing select-none text-center">
-            <div class="w-12 h-12 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 mb-2 transition-transform group-hover:scale-110 shadow-sm pointer-events-none">
-              <i class="fi fi-rr-link-alt text-lg"></i>
+          <!-- Insert Links Group Box matching i2 Analyst's Notebook screenshot -->
+          <div class="p-2 rounded-xl border border-black/20 bg-slate-50/60">
+            <div class="flex items-center gap-2">
+              <!-- 1. Link Button (matches screenshot) -->
+              <button id="btnLinkTool" type="button" title="Insert Link: Drag from one entity to another"
+                      class="flex flex-col items-center justify-center p-2 rounded-lg border-2 border-black/20 bg-white hover:border-blue-600 hover:bg-blue-50/50 transition cursor-pointer select-none min-w-[70px]">
+                <div class="w-9 h-9 flex items-center justify-center">
+                  <svg viewBox="0 0 36 36" class="w-7 h-7">
+                    <line x1="10" y1="26" x2="26" y2="10" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round"/>
+                    <circle cx="10" cy="26" r="4.5" fill="#ffffff" stroke="#2563eb" stroke-width="2.5"/>
+                    <circle cx="26" cy="10" r="4.5" fill="#ffffff" stroke="#2563eb" stroke-width="2.5"/>
+                  </svg>
+                </div>
+                <div class="flex items-center gap-1 mt-0.5">
+                  <span class="text-xs font-bold text-black">Link</span>
+                  <svg class="w-2.5 h-2.5 text-black/70" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                  </svg>
+                </div>
+              </button>
+
+              <!-- 2. Corner Button (matches screenshot) -->
+              <button id="btnCornerTool" type="button" title="Insert Corner Link: Drag from one entity to another"
+                      class="flex flex-col items-center justify-center p-2 rounded-lg border-2 border-black/15 bg-white hover:border-blue-600 hover:bg-blue-50/50 transition cursor-pointer select-none min-w-[70px]">
+                <div class="w-9 h-9 flex items-center justify-center">
+                  <svg viewBox="0 0 36 36" class="w-7 h-7">
+                    <line x1="12" y1="26" x2="12" y2="10" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round"/>
+                    <line x1="12" y1="10" x2="26" y2="10" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round"/>
+                    <rect x="9.5" y="7.5" width="5" height="5" fill="#2563eb"/>
+                  </svg>
+                </div>
+                <div class="flex items-center gap-1 mt-0.5">
+                  <span class="text-xs font-bold text-black">Corner</span>
+                </div>
+              </button>
             </div>
-            <span class="text-xs font-bold text-black tracking-tight pointer-events-none">Relationship Link</span>
-            <span class="text-[10px] text-black/50 mt-0.5 pointer-events-none">Drag or click to connect</span>
+
+            <div class="border-t border-black/10 mt-2 pt-1 text-center">
+              <span class="text-[11px] font-bold text-black/70 tracking-tight">Insert Links</span>
+            </div>
           </div>
         </section>
       </div>
@@ -2011,14 +2043,39 @@ function initNet() {
     if (!isLinkMode) select(p.nodes[0], "net");
   });
 
-  // Handle click-based entity-to-entity linking
+  // Handle drag-to-connect and click-to-connect from one entity to another
+  net.on("dragStart", params => {
+    if (isLinkMode) {
+      const node = net.getNodeAt(params.pointer.DOM);
+      if (node) {
+        dragConnectingSourceId = node;
+        const a = data.entities.find(x => x.id === node);
+        if ($("linkModeBannerText")) {
+          $("linkModeBannerText").textContent = `Connecting from "${a ? a.name : 'Entity'}" ➔ Release on target entity`;
+        }
+      }
+    }
+  });
+
+  net.on("dragEnd", params => {
+    if (isLinkMode && dragConnectingSourceId) {
+      const targetNode = net.getNodeAt(params.pointer.DOM);
+      if (targetNode && targetNode !== dragConnectingSourceId) {
+        createLinkBetween(dragConnectingSourceId, targetNode);
+        dragConnectingSourceId = null;
+        exitLinkMode();
+        return;
+      }
+      dragConnectingSourceId = null;
+    }
+  });
+
   net.on("click", params => {
     if (!isLinkMode) return;
     const clickedId = net.getNodeAt(params.pointer.DOM);
     if (!clickedId) return;
 
     if (!linkingSourceId) {
-      // Step 1: Picked first entity
       linkingSourceId = clickedId;
       const a = data.entities.find(x => x.id === clickedId);
       if ($("linkModeBannerText")) {
@@ -2026,7 +2083,6 @@ function initNet() {
       }
       net.selectNodes([clickedId]);
     } else {
-      // Step 2: Picked second entity
       if (clickedId !== linkingSourceId) {
         createLinkBetween(linkingSourceId, clickedId);
       }
@@ -2607,9 +2663,10 @@ $("tabBtnCreate").onclick = () => switchTab("create");
 $("tabBtnInspect").onclick = () => switchTab("inspect");
 $("tabBtnList").onclick = () => switchTab("list");
 
-/* ---------- Interactive Drag & Drop Link Mode ---------- */
+/* ---------- Insert Links Toolbar & Drag-to-Connect System ---------- */
 let isLinkMode = false;
 let linkingSourceId = null;
+let dragConnectingSourceId = null;
 
 function enterLinkMode(fromNodeId = null) {
   if (!currentProjectId) {
@@ -2623,9 +2680,11 @@ function enterLinkMode(fromNodeId = null) {
 
   isLinkMode = true;
   linkingSourceId = fromNodeId || null;
+  dragConnectingSourceId = null;
 
-  if ($("linkToolCard")) {
-    $("linkToolCard").className = "group flex flex-col items-center justify-center p-3.5 rounded-xl bg-blue-50 border-2 border-blue-600 ring-2 ring-blue-500 shadow-md transition cursor-pointer select-none text-center";
+  const btn = $("btnLinkTool");
+  if (btn) {
+    btn.className = "flex flex-col items-center justify-center p-2 rounded-lg border-2 border-blue-600 bg-blue-100 text-blue-900 shadow-sm transition cursor-pointer select-none min-w-[70px] ring-2 ring-blue-400";
   }
   if ($("linkToolBadge")) {
     $("linkToolBadge").className = "text-[10px] text-white font-bold bg-blue-600 px-2 py-0.5 rounded border border-blue-600";
@@ -2633,21 +2692,14 @@ function enterLinkMode(fromNodeId = null) {
   }
   if ($("linkModeBanner")) {
     $("linkModeBanner").classList.remove("hidden");
-  }
-
-  if (linkingSourceId) {
-    const a = data.entities.find(x => x.id === linkingSourceId);
     if ($("linkModeBannerText")) {
-      $("linkModeBannerText").textContent = `Selected 1st: "${a ? a.name : 'Entity'}" ➔ Click or drag to 2nd entity`;
-    }
-    if (net) net.selectNodes([linkingSourceId]);
-  } else {
-    if ($("linkModeBannerText")) {
-      $("linkModeBannerText").textContent = "Click or drag from the first entity to the second entity";
+      $("linkModeBannerText").textContent = "Drag from one entity to another to connect (Esc to cancel)";
     }
   }
 
   if (net) {
+    // Disable dragNodes so dragging an entity draws a link directly to the target entity
+    net.setOptions({ interaction: { dragNodes: false } });
     try { net.addEdgeMode(); } catch(e) {}
   }
 }
@@ -2655,18 +2707,28 @@ function enterLinkMode(fromNodeId = null) {
 function exitLinkMode() {
   isLinkMode = false;
   linkingSourceId = null;
+  dragConnectingSourceId = null;
+
   if (net) {
     try { net.disableEditMode(); } catch(e) {}
+    // Re-enable dragNodes for normal entity positioning
+    net.setOptions({ interaction: { dragNodes: true } });
     net.unselectAll();
   }
-  if ($("linkModeBanner")) $("linkModeBanner").classList.add("hidden");
-  if ($("linkToolCard")) {
-    $("linkToolCard").className = "group flex flex-col items-center justify-center p-3.5 rounded-xl bg-white border-2 border-black/20 hover:border-blue-600 hover:shadow-md transition cursor-grab active:cursor-grabbing select-none text-center";
+
+  const btn = $("btnLinkTool");
+  if (btn) {
+    btn.className = "flex flex-col items-center justify-center p-2 rounded-lg border-2 border-black/20 bg-white hover:border-blue-600 hover:bg-blue-50/50 transition cursor-pointer select-none min-w-[70px]";
+  }
+  const cornerBtn = $("btnCornerTool");
+  if (cornerBtn) {
+    cornerBtn.className = "flex flex-col items-center justify-center p-2 rounded-lg border-2 border-black/15 bg-white hover:border-blue-600 hover:bg-blue-50/50 transition cursor-pointer select-none min-w-[70px]";
   }
   if ($("linkToolBadge")) {
     $("linkToolBadge").className = "text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-200";
-    $("linkToolBadge").textContent = "Drag & Drop";
+    $("linkToolBadge").textContent = "Ready";
   }
+  if ($("linkModeBanner")) $("linkModeBanner").classList.add("hidden");
 }
 
 function toggleLinkMode() {
@@ -2689,18 +2751,14 @@ function createLinkBetween(fromId, toId) {
   data.links.push(newLink);
   render(false);
   queueSave();
-  openEditLinkModal(newLink.id);
 }
 
-// Sidebar Link Tool Card events
-const linkCard = $("linkToolCard");
-if (linkCard) {
-  linkCard.onclick = () => toggleLinkMode();
-  linkCard.ondragstart = ev => {
-    ev.dataTransfer.setData("application/x-blulink-tool", "link");
-    ev.dataTransfer.setData("text/plain", "link");
-    ev.dataTransfer.effectAllowed = "copy";
-  };
+// Sidebar Insert Links Button events
+if ($("btnLinkTool")) {
+  $("btnLinkTool").onclick = toggleLinkMode;
+}
+if ($("btnCornerTool")) {
+  $("btnCornerTool").onclick = toggleLinkMode;
 }
 
 // Cancel link mode button & Esc key
