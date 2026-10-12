@@ -370,6 +370,128 @@
   </div>
 </div>
 
+<!-- ==================== EDIT LINK MODAL (ON DOUBLE CLICK) ==================== -->
+<div id="editLinkModal" class="hidden fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+  <div class="w-full max-w-md bg-white border-2 border-black rounded-2xl p-6 shadow-2xl space-y-4 relative z-10 select-none">
+    <div class="flex items-center justify-between border-b border-black/15 pb-3">
+      <h3 class="text-sm font-bold text-black flex items-center gap-2">
+        <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+        <span>Edit Relationship Link</span>
+      </h3>
+      <button id="btnCloseEditLinkModal" type="button" class="text-black/60 hover:text-black font-bold text-sm">✕</button>
+    </div>
+
+    <!-- Connected Entities Endpoints Display -->
+    <div id="editLinkEndpoints" class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-black/15 text-xs font-bold text-black">
+      <div id="editLinkFromDisplay" class="flex items-center gap-1.5 truncate"></div>
+      <span class="text-blue-600 px-2 font-mono">───►</span>
+      <div id="editLinkToDisplay" class="flex items-center gap-1.5 truncate"></div>
+    </div>
+
+    <div class="space-y-3.5">
+      <!-- Relationship Label -->
+      <div>
+        <label for="editLinkLabel" class="block text-xs font-bold text-black uppercase tracking-wider mb-1">Relationship Label</label>
+        <input id="editLinkLabel" placeholder="e.g. employed by, communicated with, associate"
+          class="w-full px-3 py-2 rounded-lg bg-white border-2 border-black/30 text-black text-xs font-semibold focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition">
+      </div>
+
+      <!-- Line Color & Line Strength (Grid) -->
+      <div class="grid grid-cols-2 gap-3">
+        <!-- Line Color -->
+        <div>
+          <label for="editLinkColor" class="block text-xs font-bold text-black uppercase tracking-wider mb-1">Line Color</label>
+          <div class="flex items-center gap-2">
+            <input id="editLinkColor" type="color" value="#000000"
+              class="w-10 h-9 p-0.5 rounded-lg border-2 border-black/30 bg-white cursor-pointer shrink-0">
+            <input id="editLinkColorText" type="text" value="#000000" maxlength="7"
+              class="flex-1 min-w-0 px-2.5 py-2 rounded-lg bg-white border-2 border-black/30 text-black text-xs font-mono font-bold uppercase focus:outline-none focus:border-blue-600">
+          </div>
+        </div>
+
+        <!-- Line Strength (Confirmed vs Unconfirmed) -->
+        <div>
+          <label for="editLinkStrength" class="block text-xs font-bold text-black uppercase tracking-wider mb-1">Line Strength</label>
+          <select id="editLinkStrength" class="w-full px-2.5 py-2 rounded-lg bg-white border-2 border-black/30 text-black text-xs font-bold focus:outline-none focus:border-blue-600 cursor-pointer">
+            <option value="Confirmed">Confirmed (Straight Line)</option>
+            <option value="Unconfirmed">Unconfirmed (Broken Line)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Line Width & Arrows Connection (Grid) -->
+      <div class="grid grid-cols-2 gap-3">
+        <!-- Line Width Dropdown (1 to 32 pixels) -->
+        <div>
+          <label for="editLinkWidth" class="block text-xs font-bold text-black uppercase tracking-wider mb-1">Line Width</label>
+          <select id="editLinkWidth" class="w-full px-2.5 py-2 rounded-lg bg-white border-2 border-black/30 text-black text-xs font-bold focus:outline-none focus:border-blue-600 cursor-pointer">
+            <!-- Populated dynamically with 1px to 32px -->
+          </select>
+        </div>
+
+        <!-- Arrows Connection Dropdown -->
+        <div>
+          <label for="editLinkArrows" class="block text-xs font-bold text-black uppercase tracking-wider mb-1">Arrows</label>
+          <select id="editLinkArrows" class="w-full px-2.5 py-2 rounded-lg bg-white border-2 border-black/30 text-black text-xs font-bold focus:outline-none focus:border-blue-600 cursor-pointer">
+            <option value="none">─────── (None)</option>
+            <option value="to">──────► (Forward)</option>
+            <option value="from">◄────── (Backward)</option>
+            <option value="both">◄─────► (Both)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Visual Arrows Box (Matching Reference Picture) -->
+      <div>
+        <label class="block text-xs font-bold text-black uppercase tracking-wider mb-1">Arrows:</label>
+        <div id="arrowVisualBox" class="border-2 border-black/30 rounded-lg p-1.5 bg-white space-y-1">
+          <!-- 1. Undirected / None -->
+          <div data-val="none" class="arrow-choice flex items-center justify-center h-7 px-3 rounded cursor-pointer transition hover:bg-slate-100">
+            <div class="w-full h-0.5 bg-current rounded-full"></div>
+          </div>
+          <!-- 2. Forward / to -->
+          <div data-val="to" class="arrow-choice flex items-center justify-center h-7 px-3 rounded cursor-pointer transition hover:bg-slate-100">
+            <div class="w-full flex items-center justify-end">
+              <div class="flex-1 h-0.5 bg-current"></div>
+              <div class="w-0 h-0 border-t-[5px] border-t-transparent border-b-[5px] border-b-transparent border-l-[8px] border-l-current"></div>
+            </div>
+          </div>
+          <!-- 3. Backward / from -->
+          <div data-val="from" class="arrow-choice flex items-center justify-center h-7 px-3 rounded cursor-pointer transition hover:bg-slate-100">
+            <div class="w-full flex items-center justify-start">
+              <div class="w-0 h-0 border-t-[5px] border-t-transparent border-b-[5px] border-b-transparent border-r-[8px] border-r-current"></div>
+              <div class="flex-1 h-0.5 bg-current"></div>
+            </div>
+          </div>
+          <!-- 4. Bidirectional / both -->
+          <div data-val="both" class="arrow-choice flex items-center justify-center h-7 px-3 rounded cursor-pointer transition hover:bg-slate-100">
+            <div class="w-full flex items-center justify-between">
+              <div class="w-0 h-0 border-t-[5px] border-t-transparent border-b-[5px] border-b-transparent border-r-[8px] border-r-current"></div>
+              <div class="flex-1 h-0.5 bg-current"></div>
+              <div class="w-0 h-0 border-t-[5px] border-t-transparent border-b-[5px] border-b-transparent border-l-[8px] border-l-current"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-2 pt-2 border-t border-black/15">
+        <button id="btnSaveEditLink" type="button" class="flex-1 btn-primary py-2 text-xs">
+          <i class="fi fi-rr-check text-xs"></i>
+          <span>Save Changes</span>
+        </button>
+        <button id="btnDeleteEditLink" type="button" class="btn-secondary py-2 text-xs text-red-600 border-red-300 hover:border-red-600 hover:bg-red-50">
+          <i class="fi fi-rr-trash text-xs"></i>
+          <span>Delete Link</span>
+        </button>
+        <button id="btnCancelEditLink" type="button" class="btn-secondary py-2 text-xs">
+          <span>Cancel</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ==================== NO PROJECT ERROR MODAL ==================== -->
 <div id="noProjectModal" class="hidden fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
   <div class="w-full max-w-sm bg-white border-2 border-black rounded-2xl p-6 shadow-2xl space-y-4 relative z-10 text-center">
@@ -1684,6 +1806,134 @@ function initMap() {
   });
 }
 
+/* ---------- Link Edit Modal (Double Click to Edit) ---------- */
+let editingLinkId = null;
+
+function initLinkWidthOptions() {
+  const sel = $("editLinkWidth");
+  if (!sel || sel.children.length > 0) return;
+  let html = "";
+  for (let i = 1; i <= 32; i++) {
+    html += `<option value="${i}">${i} px${i === 1 ? ' (Default)' : ''}</option>`;
+  }
+  sel.innerHTML = html;
+}
+
+function updateArrowVisualSelection(val) {
+  const choices = document.querySelectorAll("#arrowVisualBox .arrow-choice");
+  choices.forEach(el => {
+    if (el.dataset.val === val) {
+      el.className = "arrow-choice flex items-center justify-center h-7 px-3 rounded cursor-pointer transition bg-blue-600 text-white shadow-sm font-bold";
+    } else {
+      el.className = "arrow-choice flex items-center justify-center h-7 px-3 rounded cursor-pointer transition hover:bg-slate-100 text-black";
+    }
+  });
+}
+
+function openEditLinkModal(linkId) {
+  if (!linkId) return;
+  const l = data.links.find(x => x.id === linkId);
+  if (!l) return;
+
+  editingLinkId = linkId;
+  initLinkWidthOptions();
+
+  const a = data.entities.find(x => x.id === l.from);
+  const b = data.entities.find(x => x.id === l.to);
+
+  if ($("editLinkFromDisplay")) {
+    const aIcon = getEntityIcon(a);
+    $("editLinkFromDisplay").innerHTML = `<img src="${aIcon}" class="w-4 h-4 object-contain inline-block mr-1"><span>${esc(a ? a.name : 'Unknown')}</span>`;
+  }
+  if ($("editLinkToDisplay")) {
+    const bIcon = getEntityIcon(b);
+    $("editLinkToDisplay").innerHTML = `<img src="${bIcon}" class="w-4 h-4 object-contain inline-block mr-1"><span>${esc(b ? b.name : 'Unknown')}</span>`;
+  }
+
+  $("editLinkLabel").value = l.label || "";
+  const curColor = l.color || "#000000";
+  $("editLinkColor").value = curColor;
+  $("editLinkColorText").value = curColor;
+
+  $("editLinkStrength").value = l.strength || "Confirmed";
+  $("editLinkWidth").value = String(l.width || 1);
+
+  const curArrows = l.arrows || "to";
+  $("editLinkArrows").value = curArrows;
+  updateArrowVisualSelection(curArrows);
+
+  $("editLinkModal").classList.remove("hidden");
+  $("editLinkLabel").focus();
+}
+
+function closeEditLinkModal() {
+  $("editLinkModal").classList.add("hidden");
+  editingLinkId = null;
+}
+
+// Modal event listeners
+if ($("btnCloseEditLinkModal")) $("btnCloseEditLinkModal").onclick = closeEditLinkModal;
+if ($("btnCancelEditLink")) $("btnCancelEditLink").onclick = closeEditLinkModal;
+
+// Color pickers sync
+if ($("editLinkColor") && $("editLinkColorText")) {
+  $("editLinkColor").oninput = e => {
+    $("editLinkColorText").value = e.target.value.toUpperCase();
+  };
+  $("editLinkColorText").oninput = e => {
+    const val = e.target.value.trim();
+    if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+      $("editLinkColor").value = val;
+    }
+  };
+}
+
+// Arrows sync between dropdown and visual preview box
+if ($("editLinkArrows")) {
+  $("editLinkArrows").onchange = e => {
+    updateArrowVisualSelection(e.target.value);
+  };
+}
+
+document.querySelectorAll("#arrowVisualBox .arrow-choice").forEach(el => {
+  el.onclick = () => {
+    const val = el.dataset.val;
+    if ($("editLinkArrows")) $("editLinkArrows").value = val;
+    updateArrowVisualSelection(val);
+  };
+});
+
+// Save link changes
+if ($("btnSaveEditLink")) {
+  $("btnSaveEditLink").onclick = () => {
+    if (!editingLinkId) return;
+    const l = data.links.find(x => x.id === editingLinkId);
+    if (!l) return;
+
+    l.label = $("editLinkLabel").value.trim();
+    l.color = $("editLinkColor").value || "#000000";
+    l.strength = $("editLinkStrength").value || "Confirmed";
+    l.width = parseInt($("editLinkWidth").value) || 1;
+    l.arrows = $("editLinkArrows").value || "to";
+
+    closeEditLinkModal();
+    render(false);
+    queueSave();
+  };
+}
+
+// Delete link
+if ($("btnDeleteEditLink")) {
+  $("btnDeleteEditLink").onclick = () => {
+    if (!editingLinkId) return;
+    if (!confirm("Are you sure you want to delete this relationship link?")) return;
+    data.links = data.links.filter(x => x.id !== editingLinkId);
+    closeEditLinkModal();
+    render(false);
+    queueSave();
+  };
+}
+
 /* ---------- Link Chart Setup (vis.Network) ---------- */
 function initNet() {
   nodes = new vis.DataSet();
@@ -1748,6 +1998,16 @@ function initNet() {
 
   net.on("selectNode", p => select(p.nodes[0], "net"));
   net.on("deselectNode", () => select(null, "net"));
+
+  // Double click link to open edit modal
+  net.on("doubleClick", params => {
+    const clickedEdgeId = net.getEdgeAt(params.pointer.DOM);
+    if (clickedEdgeId) {
+      openEditLinkModal(clickedEdgeId);
+    } else if (params.edges && params.edges.length > 0 && (!params.nodes || params.nodes.length === 0)) {
+      openEditLinkModal(params.edges[0]);
+    }
+  });
 
   net.on("dragEnd", p => {
     if (p.nodes && p.nodes.length) {
@@ -1880,6 +2140,15 @@ function render(fitAll = false) {
     if (!a || !b) return;
 
     const isConnectedToSel = selected && (l.from === selected || l.to === selected);
+    const linkColor = l.color || "#000000";
+    const linkWidth = parseInt(l.width) || 1;
+    const isUnconfirmed = l.strength === "Unconfirmed";
+    const arrowsConfig = l.arrows || "to";
+
+    const arrowsOpt = {
+      to: { enabled: arrowsConfig === "to" || arrowsConfig === "both", scaleFactor: 0.8 },
+      from: { enabled: arrowsConfig === "from" || arrowsConfig === "both", scaleFactor: 0.8 }
+    };
 
     edges.add({
       id: l.id,
@@ -1887,11 +2156,13 @@ function render(fitAll = false) {
       to: l.to,
       label: l.label || "",
       smooth: false,
-      width: isConnectedToSel ? 2 : 1,
-      hoverWidth: 2,
-      selectionWidth: 2,
+      dashes: isUnconfirmed ? [6, 6] : false,
+      width: isConnectedToSel ? Math.max(linkWidth + 1, 2) : linkWidth,
+      hoverWidth: Math.max(linkWidth + 1, 2),
+      selectionWidth: Math.max(linkWidth + 1, 2),
+      arrows: arrowsOpt,
       color: {
-        color: isConnectedToSel ? "#2563eb" : "#000000",
+        color: isConnectedToSel ? "#2563eb" : linkColor,
         highlight: "#2563eb",
         hover: "#2563eb",
         inherit: false
@@ -1900,10 +2171,10 @@ function render(fitAll = false) {
 
     if (a.lat != null && a.lng != null && b.lat != null && b.lng != null) {
       const poly = L.polyline([[a.lat, a.lng], [b.lat, b.lng]], {
-        color: isConnectedToSel ? "#2563eb" : "#000000",
-        weight: isConnectedToSel ? 3 : 1.5,
+        color: isConnectedToSel ? "#2563eb" : linkColor,
+        weight: isConnectedToSel ? Math.max(linkWidth + 1, 3) : linkWidth,
         opacity: 0.9,
-        dashArray: "6, 6"
+        dashArray: isUnconfirmed ? "6, 6" : undefined
       }).addTo(lineLayer);
 
       poly.bindTooltip(`${esc(a.name)} → [${esc(l.label || "linked")}] → ${esc(b.name)}`, {
@@ -2033,15 +2304,29 @@ function renderInspector() {
             <img src="${otherIcon}" class="w-3.5 h-3.5 object-contain" alt="">
             <span class="text-black font-bold">${esc(otherName)}</span>
           </div>
-          <button data-del-link="${l.id}" title="Remove link"
-            class="btn-secondary py-0.5 px-2 text-[10px] border-black/20 hover:border-red-500 hover:text-red-600 shrink-0">
-            <i class="fi fi-rr-cross-small text-[10px]"></i>
-            <span>Remove</span>
-          </button>
+          <div class="flex items-center gap-1 shrink-0">
+            <button data-edit-link="${l.id}" title="Edit link settings" type="button"
+              class="btn-secondary py-0.5 px-2 text-[10px] border-black/20 hover:border-blue-600 hover:text-blue-600">
+              <i class="fi fi-rr-edit text-[10px]"></i>
+              <span>Edit</span>
+            </button>
+            <button data-del-link="${l.id}" title="Remove link" type="button"
+              class="btn-secondary py-0.5 px-2 text-[10px] border-black/20 hover:border-red-500 hover:text-red-600">
+              <i class="fi fi-rr-cross-small text-[10px]"></i>
+              <span>Remove</span>
+            </button>
+          </div>
         </div>
       `;
     }).join("");
   }
+
+  $("sLinksList").querySelectorAll("[data-edit-link]").forEach(btn => {
+    btn.onclick = ev => {
+      ev.stopPropagation();
+      openEditLinkModal(btn.dataset.editLink);
+    };
+  });
 
   $("sLinksList").querySelectorAll("[data-del-link]").forEach(btn => {
     btn.onclick = ev => {
