@@ -611,6 +611,36 @@
             <select id="sType" class="w-full px-2.5 py-2 rounded-lg bg-white border border-black/30 text-black text-xs focus:outline-none focus:border-blue-600"></select>
           </div>
 
+          <!-- Entity Custom Image Upload (Optional) -->
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-[11px] font-bold text-black uppercase tracking-wide">Image (Optional)</label>
+              <span id="sImgStatus" class="text-[10px] text-black/50 font-medium">Default Icon</span>
+            </div>
+            <div class="flex items-center gap-3 p-2.5 rounded-lg border border-black/20 bg-slate-50 hover:border-blue-500 transition">
+              <!-- Preview thumbnail -->
+              <div class="w-12 h-12 rounded-lg bg-white border border-black/15 shadow-sm flex items-center justify-center overflow-hidden shrink-0">
+                <img id="sImgPreview" src="" alt="Entity preview" class="w-9 h-9 object-contain">
+              </div>
+
+              <!-- Upload & Remove controls -->
+              <div class="flex-1 min-w-0 space-y-1">
+                <input id="sImgFileInput" type="file" accept="image/*" class="hidden">
+                <div class="flex items-center gap-1.5">
+                  <button id="sBtnUploadImg" type="button" class="btn-secondary py-1 px-2.5 text-[11px] font-bold">
+                    <i class="fi fi-rr-picture text-xs"></i>
+                    <span>Upload Image</span>
+                  </button>
+                  <button id="sBtnRemoveImg" type="button" title="Revert to default icon"
+                    class="hidden btn-secondary py-1 px-2 text-[11px] text-black/70 hover:text-red-600 hover:border-red-400">
+                    <i class="fi fi-rr-trash text-xs"></i>
+                  </button>
+                </div>
+                <p class="text-[10px] text-black/60 truncate">Replaces the default icon on chart & map</p>
+              </div>
+            </div>
+          </div>
+
           <div>
             <label class="block text-[11px] font-bold text-black uppercase tracking-wide mb-1">Information</label>
             <textarea id="sNote" rows="3" class="w-full px-3 py-2 rounded-lg bg-white border border-black/30 text-black text-xs focus:outline-none focus:border-blue-600 resize-none"></textarea>
@@ -1511,6 +1541,46 @@ async function openApp() {
   }, 250);
 }
 
+/* ---------- Entity Image Helpers ---------- */
+function getEntityIcon(e) {
+  if (!e) return ENTITY_ICONS.Male;
+  return e.customImage || ENTITY_ICONS[e.type] || ENTITY_ICONS.Male;
+}
+
+function processUploadedImage(file, callback) {
+  if (!file || !file.type.startsWith("image/")) {
+    alert("Please select a valid image file.");
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      const maxDim = 160;
+      let w = img.width;
+      let h = img.height;
+      if (w > maxDim || h > maxDim) {
+        if (w > h) {
+          h = Math.round((h * maxDim) / w);
+          w = maxDim;
+        } else {
+          w = Math.round((w * maxDim) / h);
+          h = maxDim;
+        }
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, w, h);
+      const dataUri = canvas.toDataURL("image/png", 0.9);
+      callback(dataUri);
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
 /* ---------- MGRS Coordinate Helpers ---------- */
 function toMgrs(lat, lng) {
   if (lat == null || lng == null || isNaN(lat) || isNaN(lng)) return "";
@@ -1730,7 +1800,7 @@ function render(fitAll = false) {
   data.entities.forEach(e => {
     byId[e.id] = e;
     const isSel = e.id === selected;
-    const iconUri = ENTITY_ICONS[e.type] || ENTITY_ICONS.Male;
+    const iconUri = getEntityIcon(e);
 
     const n = {
       id: e.id,
@@ -1884,11 +1954,25 @@ function renderInspector() {
   $("selEmpty").classList.add("hidden");
   $("selForm").classList.remove("hidden");
 
-  const iconUri = ENTITY_ICONS[e.type] || ENTITY_ICONS.Male;
+  const iconUri = getEntityIcon(e);
   $("sBadgeType").innerHTML = `
     <img src="${iconUri}" class="w-4 h-4 object-contain inline-block mr-1" alt="">
     <span>${esc(e.type)}</span>
   `;
+  if ($("sImgPreview")) $("sImgPreview").src = iconUri;
+  if ($("sImgStatus")) {
+    if (e.customImage) {
+      $("sImgStatus").textContent = "Custom Image";
+      $("sImgStatus").className = "text-[10px] text-blue-600 font-bold";
+    } else {
+      $("sImgStatus").textContent = "Default Icon";
+      $("sImgStatus").className = "text-[10px] text-black/50 font-medium";
+    }
+  }
+  if ($("sBtnRemoveImg")) {
+    if (e.customImage) $("sBtnRemoveImg").classList.remove("hidden");
+    else $("sBtnRemoveImg").classList.add("hidden");
+  }
 
   // Protect inputs: Never overwrite the input element the user is actively focused on!
   if (document.activeElement !== $("sName")) {
@@ -1926,7 +2010,7 @@ function renderInspector() {
       const otherId = isOutgoing ? l.to : l.from;
       const other = data.entities.find(x => x.id === otherId);
       const otherName = other ? other.name : "Unknown";
-      const otherIcon = other ? (ENTITY_ICONS[other.type] || ENTITY_ICONS.Male) : ENTITY_ICONS.Male;
+      const otherIcon = getEntityIcon(other);
       return `
         <div class="flex items-center justify-between p-2 rounded bg-white border border-black/20 hover:border-blue-600 transition text-xs">
           <div class="truncate mr-2 flex items-center gap-1.5">
@@ -2002,13 +2086,14 @@ function updateSelectedFromForm(isLiveTyping = false) {
       });
     }
     // Update badge icon/type
-    const iconUri = ENTITY_ICONS[e.type] || ENTITY_ICONS.Male;
+    const iconUri = getEntityIcon(e);
     if ($("sBadgeType")) {
       $("sBadgeType").innerHTML = `
         <img src="${iconUri}" class="w-4 h-4 object-contain inline-block mr-1" alt="">
         <span>${esc(e.type)}</span>
       `;
     }
+    if ($("sImgPreview")) $("sImgPreview").src = iconUri;
     renderList();
   } else {
     // On blur or change event, perform clean full synchronized render
@@ -2061,6 +2146,33 @@ let inputDebounceTimer = null;
   }
 });
 
+// Custom Image Upload and Remove Handlers
+if ($("sBtnUploadImg") && $("sImgFileInput")) {
+  $("sBtnUploadImg").onclick = () => $("sImgFileInput").click();
+  $("sImgFileInput").onchange = ev => {
+    const file = ev.target.files && ev.target.files[0];
+    if (!file) return;
+    const e = data.entities.find(x => x.id === selected);
+    if (!e) return;
+    processUploadedImage(file, dataUri => {
+      e.customImage = dataUri;
+      render(false);
+      queueSave();
+    });
+    ev.target.value = "";
+  };
+}
+
+if ($("sBtnRemoveImg")) {
+  $("sBtnRemoveImg").onclick = () => {
+    const e = data.entities.find(x => x.id === selected);
+    if (!e) return;
+    delete e.customImage;
+    render(false);
+    queueSave();
+  };
+}
+
 $("sBtnDeselect").onclick = () => select(null);
 
 $("delE").onclick = () => {
@@ -2097,7 +2209,7 @@ function renderList() {
   $("list").innerHTML = filtered.map(e => {
     const isSel = e.id === selected;
     const isMapped = e.lat != null && e.lng != null;
-    const iconUri = ENTITY_ICONS[e.type] || ENTITY_ICONS.Male;
+    const iconUri = getEntityIcon(e);
     return `
       <div data-id="${e.id}" class="flex items-center gap-2.5 p-2 rounded-lg cursor-pointer transition border ${isSel ? 'bg-blue-50 border-blue-600 shadow-sm' : 'bg-white border-black/15 hover:border-blue-500 hover:bg-blue-50/50'}">
         <div class="w-6 h-6 flex items-center justify-center shrink-0">
