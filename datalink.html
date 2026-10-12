@@ -2052,7 +2052,7 @@ function initNet() {
         color: "#000000",
         size: 12,
         face: '"DM Sans", sans-serif',
-        vadjust: 6
+        vadjust: -6
       },
       shapeProperties: {
         useImageSize: false,
@@ -2582,11 +2582,10 @@ function render(fitAll = false) {
         ? { enabled: true, color: "rgba(37, 99, 235, 0.65)", size: 16, x: 0, y: 0 }
         : false,
       font: {
-        color: "#000000",
+        color: isSel ? "#2563eb" : "#000000",
         size: 12,
         face: '"DM Sans", sans-serif',
-        vadjust: 6,
-        background: isSel ? "rgba(219, 234, 254, 0.85)" : undefined
+        vadjust: -6
       }
     };
 
