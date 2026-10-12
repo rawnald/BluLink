@@ -2039,12 +2039,14 @@ function initNet() {
   const options = {
     nodes: {
       shape: "image",
-      size: 26,
-      borderWidth: 0,
+      size: 24,
+      borderWidth: 14,
+      borderWidthSelected: 14,
       color: {
         border: "transparent",
         background: "transparent",
-        highlight: { border: "transparent", background: "transparent" }
+        highlight: { border: "transparent", background: "transparent" },
+        hover: { border: "transparent", background: "transparent" }
       },
       font: {
         color: "#000000",
@@ -2054,7 +2056,7 @@ function initNet() {
       },
       shapeProperties: {
         useImageSize: false,
-        useBorderWithImage: false,
+        useBorderWithImage: true,
         interpolation: true
       }
     },
@@ -2342,6 +2344,27 @@ function initNet() {
     }
     if (!srcPos || !targetPos) return;
 
+    const dx = targetPos.x - srcPos.x;
+    const dy = targetPos.y - srcPos.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist < 1) return;
+
+    const angle = Math.atan2(dy, dx);
+    const nodeMargin = 38; // Spacing margin outside icon so link cannot overlap
+
+    // Start outside source icon boundary
+    const startDist = Math.min(nodeMargin, dist * 0.45);
+    const startX = srcPos.x + Math.cos(angle) * startDist;
+    const startY = srcPos.y + Math.sin(angle) * startDist;
+
+    // End outside target icon if snapped to an entity, or at cursor
+    let endX = targetPos.x;
+    let endY = targetPos.y;
+    if (liveLineHoverTargetId && dist > nodeMargin * 1.5) {
+      endX = targetPos.x - Math.cos(angle) * nodeMargin;
+      endY = targetPos.y - Math.sin(angle) * nodeMargin;
+    }
+
     ctx.save();
 
     // 1. Soft glowing background path
@@ -2349,8 +2372,8 @@ function initNet() {
     ctx.lineWidth = 6;
     ctx.lineCap = "round";
     ctx.beginPath();
-    ctx.moveTo(srcPos.x, srcPos.y);
-    ctx.lineTo(targetPos.x, targetPos.y);
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(endX, endY);
     ctx.stroke();
 
     // 2. Main dashed rubberband connection line
@@ -2358,8 +2381,8 @@ function initNet() {
     ctx.lineWidth = 2.5;
     ctx.setLineDash([7, 5]);
     ctx.beginPath();
-    ctx.moveTo(srcPos.x, srcPos.y);
-    ctx.lineTo(targetPos.x, targetPos.y);
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(endX, endY);
     ctx.stroke();
 
     // 3. Source entity halo
@@ -2368,7 +2391,7 @@ function initNet() {
     ctx.lineWidth = 2;
     ctx.setLineDash([]);
     ctx.beginPath();
-    ctx.arc(srcPos.x, srcPos.y, 24, 0, Math.PI * 2);
+    ctx.arc(srcPos.x, srcPos.y, 26, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
 
@@ -2384,26 +2407,18 @@ function initNet() {
     }
 
     // 5. Arrowhead pointing towards target
-    const dx = targetPos.x - srcPos.x;
-    const dy = targetPos.y - srcPos.y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist > 15) {
-      const angle = Math.atan2(dy, dx);
-      const tipDist = liveLineHoverTargetId ? Math.max(dist - 20, 5) : dist;
-      const tipX = srcPos.x + Math.cos(angle) * tipDist;
-      const tipY = srcPos.y + Math.sin(angle) * tipDist;
+    if (dist > 20) {
       const arrowLen = 14;
-
       ctx.fillStyle = "#2563eb";
       ctx.beginPath();
-      ctx.moveTo(tipX, tipY);
+      ctx.moveTo(endX, endY);
       ctx.lineTo(
-        tipX - arrowLen * Math.cos(angle - Math.PI / 6),
-        tipY - arrowLen * Math.sin(angle - Math.PI / 6)
+        endX - arrowLen * Math.cos(angle - Math.PI / 6),
+        endY - arrowLen * Math.sin(angle - Math.PI / 6)
       );
       ctx.lineTo(
-        tipX - arrowLen * Math.cos(angle + Math.PI / 6),
-        tipY - arrowLen * Math.sin(angle + Math.PI / 6)
+        endX - arrowLen * Math.cos(angle + Math.PI / 6),
+        endY - arrowLen * Math.sin(angle + Math.PI / 6)
       );
       ctx.closePath();
       ctx.fill();
@@ -2543,17 +2558,22 @@ function render(fitAll = false) {
       shape: "image",
       image: iconUri,
       label: esc(e.name),
-      size: 26,
+      size: 24,
+      borderWidth: 14,
+      borderWidthSelected: 14,
       shapeProperties: {
         useImageSize: false,
-        useBorderWithImage: false,
+        useBorderWithImage: true,
         interpolation: true
       },
-      borderWidth: 0,
       color: {
         border: "transparent",
         background: "transparent",
         highlight: {
+          border: "transparent",
+          background: "transparent"
+        },
+        hover: {
           border: "transparent",
           background: "transparent"
         }
