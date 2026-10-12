@@ -1322,16 +1322,18 @@ async function saveWorkspace() {
 function setStatus(text, isError = false) {
   const st = $("status");
   const dot = $("statusDot");
-  st.textContent = text;
-  if (isError) {
-    dot.className = "w-2 h-2 rounded-full bg-black animate-ping";
-    st.className = "text-black font-bold";
-  } else if (text.includes("Saving")) {
-    dot.className = "w-2 h-2 rounded-full bg-blue-600 animate-spin";
-    st.className = "text-blue-600 font-semibold";
-  } else {
-    dot.className = "w-2 h-2 rounded-full bg-blue-600";
-    st.className = "text-black font-semibold";
+  if (st) st.textContent = text;
+  if (dot) {
+    if (isError) {
+      dot.className = "w-2 h-2 rounded-full bg-black animate-ping";
+      if (st) st.className = "text-black font-bold";
+    } else if (text && text.includes("Saving")) {
+      dot.className = "w-2 h-2 rounded-full bg-blue-600 animate-spin";
+      if (st) st.className = "text-blue-600 font-semibold";
+    } else {
+      dot.className = "w-2 h-2 rounded-full bg-blue-600";
+      if (st) st.className = "text-black font-semibold";
+    }
   }
 }
 
@@ -1588,10 +1590,10 @@ function render(fitAll = false) {
   if (byId[currFrom]) $("lFrom").value = currFrom;
   if (byId[currTo]) $("lTo").value = currTo;
 
-  $("statEntities").textContent = data.entities.length;
-  $("statLinks").textContent = data.links.length;
-  $("statMapped").textContent = mappedCount;
-  $("tabCount").textContent = data.entities.length;
+  if ($("statEntities")) $("statEntities").textContent = data.entities.length;
+  if ($("statLinks")) $("statLinks").textContent = data.links.length;
+  if ($("statMapped")) $("statMapped").textContent = mappedCount;
+  if ($("tabCount")) $("tabCount").textContent = data.entities.length;
 
   renderList();
   renderInspector();
