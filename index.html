@@ -1889,18 +1889,28 @@ function renderInspector() {
     <img src="${iconUri}" class="w-4 h-4 object-contain inline-block mr-1" alt="">
     <span>${esc(e.type)}</span>
   `;
-  $("sName").value = e.name || "";
-  $("sType").value = e.type || "Male";
-  $("sNote").value = e.note || "";
-  const mgrsVal = e.mgrs || toMgrs(e.lat, e.lng);
-  if ($("sMgrs")) $("sMgrs").value = mgrsVal || "";
-  if ($("sMgrsStatus")) {
-    if (mgrsVal) {
-      $("sMgrsStatus").textContent = "Valid MGRS";
-      $("sMgrsStatus").className = "text-[10px] text-blue-600 font-bold font-mono";
-    } else {
-      $("sMgrsStatus").textContent = "Military Grid (10-Digit)";
-      $("sMgrsStatus").className = "text-[10px] text-black/50 font-mono";
+
+  // Protect inputs: Never overwrite the input element the user is actively focused on!
+  if (document.activeElement !== $("sName")) {
+    $("sName").value = e.name != null ? e.name : "";
+  }
+  if (document.activeElement !== $("sType")) {
+    $("sType").value = e.type || "Male";
+  }
+  if (document.activeElement !== $("sNote")) {
+    $("sNote").value = e.note != null ? e.note : "";
+  }
+  if (document.activeElement !== $("sMgrs")) {
+    const mgrsVal = e.mgrs || toMgrs(e.lat, e.lng);
+    if ($("sMgrs")) $("sMgrs").value = mgrsVal || "";
+    if ($("sMgrsStatus")) {
+      if (mgrsVal) {
+        $("sMgrsStatus").textContent = "Valid MGRS";
+        $("sMgrsStatus").className = "text-[10px] text-blue-600 font-bold font-mono";
+      } else {
+        $("sMgrsStatus").textContent = "Military Grid (10-Digit)";
+        $("sMgrsStatus").className = "text-[10px] text-black/50 font-mono";
+      }
     }
   }
   updateMgrsClearBtn();
@@ -1946,12 +1956,13 @@ function renderInspector() {
   });
 }
 
-function updateSelectedFromForm() {
+function updateSelectedFromForm(isLiveTyping = false) {
   const e = data.entities.find(x => x.id === selected);
   if (!e) return;
-  e.name = $("sName").value.trim() || e.name;
+
+  e.name = $("sName").value;
   e.type = $("sType").value;
-  e.note = $("sNote").value.trim();
+  e.note = $("sNote").value;
 
   const mgrsRaw = ($("sMgrs") ? $("sMgrs").value : "").trim();
   if (mgrsRaw) {
@@ -1965,9 +1976,10 @@ function updateSelectedFromForm() {
         $("sMgrsStatus").className = "text-[10px] text-blue-600 font-bold font-mono";
       }
     } else {
+      e.mgrs = mgrsRaw.toUpperCase();
       if ($("sMgrsStatus")) {
-        $("sMgrsStatus").textContent = "Invalid / Incomplete";
-        $("sMgrsStatus").className = "text-[10px] text-red-500 font-bold font-mono";
+        $("sMgrsStatus").textContent = "Typing MGRS…";
+        $("sMgrsStatus").className = "text-[10px] text-amber-500 font-bold font-mono";
       }
     }
   } else {
@@ -1981,7 +1993,28 @@ function updateSelectedFromForm() {
   }
   updateMgrsClearBtn();
 
-  render(false);
+  if (isLiveTyping) {
+    // When typing live, update the network node label and list dynamically without rebuilding entire DOM
+    if (nodes && nodes.get(e.id)) {
+      nodes.update({
+        id: e.id,
+        label: esc(e.name || e.type)
+      });
+    }
+    // Update badge icon/type
+    const iconUri = ENTITY_ICONS[e.type] || ENTITY_ICONS.Male;
+    if ($("sBadgeType")) {
+      $("sBadgeType").innerHTML = `
+        <img src="${iconUri}" class="w-4 h-4 object-contain inline-block mr-1" alt="">
+        <span>${esc(e.type)}</span>
+      `;
+    }
+    renderList();
+  } else {
+    // On blur or change event, perform clean full synchronized render
+    render(false);
+  }
+
   queueSave();
 }
 
@@ -2015,12 +2048,15 @@ if ($("sBtnClearCoords")) {
   };
 }
 
+let inputDebounceTimer = null;
 ["sName", "sType", "sNote", "sMgrs"].forEach(id => {
-  if ($(id)) {
-    $(id).onchange = updateSelectedFromForm;
-    $(id).oninput = () => {
-      clearTimeout(saveTimer);
-      saveTimer = setTimeout(updateSelectedFromForm, 400);
+  const el = $(id);
+  if (el) {
+    el.onchange = () => updateSelectedFromForm(false);
+    el.onblur = () => updateSelectedFromForm(false);
+    el.oninput = () => {
+      clearTimeout(inputDebounceTimer);
+      inputDebounceTimer = setTimeout(() => updateSelectedFromForm(true), 150);
     };
   }
 });
