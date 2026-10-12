@@ -668,22 +668,8 @@
     </div>
   </aside>
 
-  <!-- ==================== CENTER PANE: GEOSPATIAL MAP ==================== -->
+  <!-- ==================== CENTER PANE: LINK NETWORK CHART ==================== -->
   <section class="relative w-full h-full min-w-0 min-h-0 flex flex-col border-r-2 border-black/10 bg-white">
-    <!-- Active Pick Banner -->
-    <div id="mapPickBanner" class="hidden absolute top-14 left-1/2 -translate-x-1/2 z-[400] bg-blue-600 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg flex items-center gap-3">
-      <span>Click any location on the map to set coordinates</span>
-      <button id="cancelPickBtn" class="btn-secondary py-0.5 px-2.5 text-[11px] bg-white text-black border-white hover:border-blue-300">
-        <span>Cancel</span>
-      </button>
-    </div>
-
-    <!-- Map Leaflet Container -->
-    <div id="map" class="flex-1 w-full h-full"></div>
-  </section>
-
-  <!-- ==================== RIGHT PANE: LINK NETWORK CHART ==================== -->
-  <section class="relative w-full h-full min-w-0 min-h-0 flex flex-col bg-white">
     <!-- Network Header Overlay -->
     <div class="absolute top-3 left-3 z-10 flex items-center gap-2 bg-white/95 backdrop-blur border-2 border-black rounded-lg px-3 py-1.5 shadow-md">
       <div class="w-2 h-2 rounded-full bg-blue-600"></div>
@@ -705,6 +691,20 @@
 
     <!-- Vis.Network Container (Pure White) -->
     <div id="net" class="flex-1 w-full h-full bg-white"></div>
+  </section>
+
+  <!-- ==================== RIGHT PANE: GEOSPATIAL MAP ==================== -->
+  <section class="relative w-full h-full min-w-0 min-h-0 flex flex-col bg-white">
+    <!-- Active Pick Banner -->
+    <div id="mapPickBanner" class="hidden absolute top-14 left-1/2 -translate-x-1/2 z-[400] bg-blue-600 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg flex items-center gap-3">
+      <span>Click any location on the map to set coordinates</span>
+      <button id="cancelPickBtn" class="btn-secondary py-0.5 px-2.5 text-[11px] bg-white text-black border-white hover:border-blue-300">
+        <span>Cancel</span>
+      </button>
+    </div>
+
+    <!-- Map Leaflet Container -->
+    <div id="map" class="flex-1 w-full h-full"></div>
   </section>
 
 </div>
