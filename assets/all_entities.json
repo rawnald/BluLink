@@ -6166,5 +6166,257 @@
     "icon": "assets/all_icons/Military_-_APP6_Ho-Surface_To_Air_Missile.png",
     "flaticon": "rocket",
     "unicode": "ed1f"
+  },
+  {
+    "id": "People_Administrator",
+    "name": "Administrator",
+    "category": "People",
+    "icon": "assets/all_icons/People_Administrator.png"
+  },
+  {
+    "id": "People_Adult",
+    "name": "Adult",
+    "category": "People",
+    "icon": "assets/all_icons/People_Adult.png"
+  },
+  {
+    "id": "People_Alias",
+    "name": "Alias",
+    "category": "People",
+    "icon": "assets/all_icons/People_Alias.png"
+  },
+  {
+    "id": "People_Anonymous",
+    "name": "Anonymous",
+    "category": "People",
+    "icon": "assets/all_icons/People_Anonymous.png"
+  },
+  {
+    "id": "People_Body",
+    "name": "Body",
+    "category": "People",
+    "icon": "assets/all_icons/People_Body.png"
+  },
+  {
+    "id": "People_Boy",
+    "name": "Boy",
+    "category": "People",
+    "icon": "assets/all_icons/People_Boy.png"
+  },
+  {
+    "id": "People_Child",
+    "name": "Child",
+    "category": "People",
+    "icon": "assets/all_icons/People_Child.png"
+  },
+  {
+    "id": "People_Clan",
+    "name": "Clan",
+    "category": "People",
+    "icon": "assets/all_icons/People_Clan.png"
+  },
+  {
+    "id": "People_Dealer",
+    "name": "Dealer",
+    "category": "People",
+    "icon": "assets/all_icons/People_Dealer.png"
+  },
+  {
+    "id": "People_Deceased_Female",
+    "name": "Deceased Female",
+    "category": "People",
+    "icon": "assets/all_icons/People_Deceased_Female.png"
+  },
+  {
+    "id": "People_Deceased_Male",
+    "name": "Deceased Male",
+    "category": "People",
+    "icon": "assets/all_icons/People_Deceased_Male.png"
+  },
+  {
+    "id": "People_Doctor",
+    "name": "Doctor",
+    "category": "People",
+    "icon": "assets/all_icons/People_Doctor.png"
+  },
+  {
+    "id": "People_Emergency_Responder",
+    "name": "Emergency Responder",
+    "category": "People",
+    "icon": "assets/all_icons/People_Emergency_Responder.png"
+  },
+  {
+    "id": "People_Family",
+    "name": "Family",
+    "category": "People",
+    "icon": "assets/all_icons/People_Family.png"
+  },
+  {
+    "id": "People_Female",
+    "name": "Female",
+    "category": "People",
+    "icon": "assets/all_icons/People_Female.png"
+  },
+  {
+    "id": "People_Female_Figure",
+    "name": "Female Figure",
+    "category": "People",
+    "icon": "assets/all_icons/People_Female_Figure.png"
+  },
+  {
+    "id": "People_Female_Lawyer",
+    "name": "Female Lawyer",
+    "category": "People",
+    "icon": "assets/all_icons/People_Female_Lawyer.png"
+  },
+  {
+    "id": "People_Female_Police_Officer",
+    "name": "Female Police Officer",
+    "category": "People",
+    "icon": "assets/all_icons/People_Female_Police_Officer.png"
+  },
+  {
+    "id": "People_Female_Prison_Officer",
+    "name": "Female Prison Officer",
+    "category": "People",
+    "icon": "assets/all_icons/People_Female_Prison_Officer.png"
+  },
+  {
+    "id": "People_Female_Prisoner",
+    "name": "Female Prisoner",
+    "category": "People",
+    "icon": "assets/all_icons/People_Female_Prisoner.png"
+  },
+  {
+    "id": "People_Firefighter",
+    "name": "Firefighter",
+    "category": "People",
+    "icon": "assets/all_icons/People_Firefighter.png"
+  },
+  {
+    "id": "People_Fugitive",
+    "name": "Fugitive",
+    "category": "People",
+    "icon": "assets/all_icons/People_Fugitive.png"
+  },
+  {
+    "id": "People_Girl",
+    "name": "Girl",
+    "category": "People",
+    "icon": "assets/all_icons/People_Girl.png"
+  },
+  {
+    "id": "People_Group_of_People",
+    "name": "Group of People",
+    "category": "People",
+    "icon": "assets/all_icons/People_Group_of_People.png"
+  },
+  {
+    "id": "People_Handler_of_Stolen_Goods",
+    "name": "Handler of Stolen Goods",
+    "category": "People",
+    "icon": "assets/all_icons/People_Handler_of_Stolen_Goods.png"
+  },
+  {
+    "id": "People_Inmate",
+    "name": "Inmate",
+    "category": "People",
+    "icon": "assets/all_icons/People_Inmate.png"
+  },
+  {
+    "id": "People_Male",
+    "name": "Male",
+    "category": "People",
+    "icon": "assets/all_icons/People_Male.png"
+  },
+  {
+    "id": "People_Male_Figure",
+    "name": "Male Figure",
+    "category": "People",
+    "icon": "assets/all_icons/People_Male_Figure.png"
+  },
+  {
+    "id": "People_Male_Lawyer",
+    "name": "Male Lawyer",
+    "category": "People",
+    "icon": "assets/all_icons/People_Male_Lawyer.png"
+  },
+  {
+    "id": "People_Male_Police_Officer",
+    "name": "Male Police Officer",
+    "category": "People",
+    "icon": "assets/all_icons/People_Male_Police_Officer.png"
+  },
+  {
+    "id": "People_Offender",
+    "name": "Offender",
+    "category": "People",
+    "icon": "assets/all_icons/People_Offender.png"
+  },
+  {
+    "id": "People_Patient",
+    "name": "Patient",
+    "category": "People",
+    "icon": "assets/all_icons/People_Patient.png"
+  },
+  {
+    "id": "People_Person_Generic_",
+    "name": "Person (Generic)",
+    "category": "People",
+    "icon": "assets/all_icons/People_Person_Generic_.png"
+  },
+  {
+    "id": "People_Person_Shaded_Shirt_",
+    "name": "Person (Shaded Shirt)",
+    "category": "People",
+    "icon": "assets/all_icons/People_Person_Shaded_Shirt_.png"
+  },
+  {
+    "id": "People_Prison_Officer",
+    "name": "Prison Officer",
+    "category": "People",
+    "icon": "assets/all_icons/People_Prison_Officer.png"
+  },
+  {
+    "id": "People_Prisoner",
+    "name": "Prisoner",
+    "category": "People",
+    "icon": "assets/all_icons/People_Prisoner.png"
+  },
+  {
+    "id": "People_Professional_Female",
+    "name": "Professional Female",
+    "category": "People",
+    "icon": "assets/all_icons/People_Professional_Female.png"
+  },
+  {
+    "id": "People_Professional_Male",
+    "name": "Professional Male",
+    "category": "People",
+    "icon": "assets/all_icons/People_Professional_Male.png"
+  },
+  {
+    "id": "People_Screen_Name",
+    "name": "Screen Name",
+    "category": "People",
+    "icon": "assets/all_icons/People_Screen_Name.png"
+  },
+  {
+    "id": "People_Spy",
+    "name": "Spy",
+    "category": "People",
+    "icon": "assets/all_icons/People_Spy.png"
+  },
+  {
+    "id": "People_Subscriber",
+    "name": "Subscriber",
+    "category": "People",
+    "icon": "assets/all_icons/People_Subscriber.png"
+  },
+  {
+    "id": "People_User",
+    "name": "User",
+    "category": "People",
+    "icon": "assets/all_icons/People_User.png"
   }
 ]
