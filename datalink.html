@@ -572,7 +572,7 @@
 </div>
 
 <!-- ==================== HEADER ==================== -->
-<header class="h-14 shrink-0 bg-white border-b-2 border-black/10 px-4 flex items-center justify-between z-30">
+<header id="headerApp" class="h-14 shrink-0 bg-white border-b-2 border-black/10 px-4 flex items-center justify-between z-30">
   <div class="flex items-center gap-4">
     <!-- Brand (Uploaded Full Logo) -->
     <div class="flex items-center gap-2">
@@ -627,7 +627,7 @@
 <div id="app" class="flex-1 min-h-0 hidden flex-col lg:grid lg:grid-cols-[330px_1fr_1fr] overflow-hidden bg-white">
 
   <!-- ==================== SIDEBAR / CONTROL PANEL ==================== -->
-  <aside class="w-full h-full border-r-2 border-black/10 bg-white flex flex-col min-h-0 overflow-hidden">
+  <aside id="sidebarApp" class="w-full h-full border-r-2 border-black/10 bg-white flex flex-col min-h-0 overflow-hidden">
     <!-- Sidebar Navigation Tabs -->
     <div class="shrink-0 flex border-b-2 border-black/10 bg-slate-50 p-1.5 gap-1.5">
       <button id="tabBtnCreate" class="flex-1 btn-primary py-1.5 px-2 text-xs font-bold rounded-md">
@@ -835,7 +835,9 @@
   </aside>
 
   <!-- ==================== CENTER PANE: LINK NETWORK CHART ==================== -->
-  <section id="netSection" class="relative w-full h-full min-w-0 min-h-0 flex flex-col border-r-2 border-black/10 border-t-2 border-t-blue-600 bg-white">
+  <section id="netSection" class="relative w-full h-full min-w-0 min-h-0 flex flex-col border-l-2 border-r-2 border-black/20 border-t-2 border-t-blue-600 border-b-2 border-b-black/15 bg-white overflow-hidden shadow-inner">
+    <!-- Workspace Boundary Frame: Clearly defines chart area and prevents clipping under sidebar or map -->
+    <div class="absolute inset-0 pointer-events-none border-2 border-blue-600/20 z-10 m-1 rounded-sm"></div>
     <!-- Network Header Overlay -->
     <div class="absolute top-3 left-3 z-10 flex items-center gap-2 bg-white/95 backdrop-blur border-2 border-blue-600 rounded-lg px-3 py-1.5 shadow-md">
       <div class="w-2 h-2 rounded-full bg-blue-600"></div>
@@ -2106,9 +2108,59 @@ function initNet() {
     }
   });
 
-  // Track entity and corner handle movement on dragEnd and auto-save
+  // Boundary clamping helper: stops nodes from exceeding the visible workspace borders (cannot hide under sidebar or map)
+  function clampNodesToWorkspace(nodeIds) {
+    if (!net || !nodeIds || !nodeIds.length) return;
+    const container = $("net");
+    if (!container) return;
+
+    const pad = 35; // Safe padding inside workspace border
+    const minCanvas = net.DOMtoCanvas({ x: pad, y: pad });
+    const maxCanvas = net.DOMtoCanvas({ x: container.clientWidth - pad, y: container.clientHeight - pad });
+
+    const minX = Math.min(minCanvas.x, maxCanvas.x);
+    const maxX = Math.max(minCanvas.x, maxCanvas.x);
+    const minY = Math.min(minCanvas.y, maxCanvas.y);
+    const maxY = Math.max(minCanvas.y, maxCanvas.y);
+
+    const updates = [];
+    const positions = net.getPositions(nodeIds);
+
+    nodeIds.forEach(id => {
+      const pos = positions[id];
+      if (!pos) return;
+
+      let cx = pos.x;
+      let cy = pos.y;
+      let clamped = false;
+
+      if (cx < minX) { cx = minX; clamped = true; }
+      else if (cx > maxX) { cx = maxX; clamped = true; }
+
+      if (cy < minY) { cy = minY; clamped = true; }
+      else if (cy > maxY) { cy = maxY; clamped = true; }
+
+      if (clamped) {
+        updates.push({ id, x: cx, y: cy });
+      }
+    });
+
+    if (updates.length > 0) {
+      try { nodes.update(updates); } catch (e) {}
+    }
+  }
+
+  // Real-time clamping while dragging nodes
+  net.on("dragging", p => {
+    if (p.nodes && p.nodes.length && !isDrawingLiveLine) {
+      clampNodesToWorkspace(p.nodes);
+    }
+  });
+
+  // Track entity and corner handle movement on dragEnd, clamp within workspace borders, and auto-save
   net.on("dragEnd", p => {
     if (p.nodes && p.nodes.length && !isDrawingLiveLine) {
+      clampNodesToWorkspace(p.nodes);
       const positions = net.getPositions(p.nodes);
       let linkMoved = false;
 
@@ -3468,10 +3520,28 @@ let isFullscreenMap = false;
 
 function enterFullscreenNet() {
   isFullscreenNet = true;
-  const sec = $("netSection");
-  if (!sec) return;
+  if (isFullscreenMap) exitFullscreenMap();
 
-  sec.classList.add("fixed", "inset-0", "z-[9990]", "w-screen", "h-screen");
+  const app = $("app");
+  const header = $("headerApp") || document.querySelector("header");
+  const sidebar = $("sidebarApp") || document.querySelector("aside");
+  const netSec = $("netSection");
+  const mapSec = $("mapSection");
+
+  // Completely hide header, sidebar, and map so link chart occupies 100% full screen
+  if (header) header.classList.add("hidden");
+  if (sidebar) sidebar.classList.add("hidden");
+  if (mapSec) mapSec.classList.add("hidden");
+
+  if (app) {
+    app.classList.remove("lg:grid", "lg:grid-cols-[330px_1fr_1fr]");
+    app.classList.add("flex", "w-screen", "h-screen", "fixed", "inset-0", "z-[9990]");
+  }
+  if (netSec) {
+    netSec.classList.remove("border-l-2", "border-r-2");
+    netSec.classList.add("w-full", "h-full", "flex-1");
+  }
+
   if ($("btnExitFullscreenNet")) $("btnExitFullscreenNet").classList.remove("hidden");
   if ($("btnFullscreenNetText")) $("btnFullscreenNetText").textContent = "Exit Full Screen";
   if ($("iconEnterFullscreenNet")) $("iconEnterFullscreenNet").classList.add("hidden");
@@ -3482,15 +3552,32 @@ function enterFullscreenNet() {
       net.redraw();
       net.fit({ animation: { duration: 400, easingFunction: "easeInOutQuad" } });
     }
-  }, 60);
+  }, 80);
 }
 
 function exitFullscreenNet() {
   isFullscreenNet = false;
-  const sec = $("netSection");
-  if (!sec) return;
 
-  sec.classList.remove("fixed", "inset-0", "z-[9990]", "w-screen", "h-screen");
+  const app = $("app");
+  const header = $("headerApp") || document.querySelector("header");
+  const sidebar = $("sidebarApp") || document.querySelector("aside");
+  const netSec = $("netSection");
+  const mapSec = $("mapSection");
+
+  // Restore header, sidebar, and map
+  if (header) header.classList.remove("hidden");
+  if (sidebar) sidebar.classList.remove("hidden");
+  if (mapSec) mapSec.classList.remove("hidden");
+
+  if (app) {
+    app.classList.remove("flex", "w-screen", "h-screen", "fixed", "inset-0", "z-[9990]");
+    app.classList.add("lg:grid", "lg:grid-cols-[330px_1fr_1fr]");
+  }
+  if (netSec) {
+    netSec.classList.remove("w-full", "h-full", "flex-1");
+    netSec.classList.add("border-l-2", "border-r-2");
+  }
+
   if ($("btnExitFullscreenNet")) $("btnExitFullscreenNet").classList.add("hidden");
   if ($("btnFullscreenNetText")) $("btnFullscreenNetText").textContent = "Full Screen";
   if ($("iconEnterFullscreenNet")) $("iconEnterFullscreenNet").classList.remove("hidden");
@@ -3499,8 +3586,9 @@ function exitFullscreenNet() {
   setTimeout(() => {
     if (net) {
       net.redraw();
+      net.fit({ animation: { duration: 300, easingFunction: "easeInOutQuad" } });
     }
-  }, 60);
+  }, 80);
 }
 
 function toggleFullscreenNet() {
@@ -3510,32 +3598,65 @@ function toggleFullscreenNet() {
 
 function enterFullscreenMap() {
   isFullscreenMap = true;
-  const sec = $("mapSection");
-  if (!sec) return;
+  if (isFullscreenNet) exitFullscreenNet();
 
-  sec.classList.add("fixed", "inset-0", "z-[9990]", "w-screen", "h-screen");
+  const app = $("app");
+  const header = $("headerApp") || document.querySelector("header");
+  const sidebar = $("sidebarApp") || document.querySelector("aside");
+  const netSec = $("netSection");
+  const mapSec = $("mapSection");
+
+  // Completely hide header, sidebar, and link chart so map occupies 100% full screen
+  if (header) header.classList.add("hidden");
+  if (sidebar) sidebar.classList.add("hidden");
+  if (netSec) netSec.classList.add("hidden");
+
+  if (app) {
+    app.classList.remove("lg:grid", "lg:grid-cols-[330px_1fr_1fr]");
+    app.classList.add("flex", "w-screen", "h-screen", "fixed", "inset-0", "z-[9990]");
+  }
+  if (mapSec) {
+    mapSec.classList.add("w-full", "h-full", "flex-1");
+  }
+
   if ($("btnExitFullscreenMap")) $("btnExitFullscreenMap").classList.remove("hidden");
 
   setTimeout(() => {
     if (map) {
       map.invalidateSize();
     }
-  }, 60);
+  }, 80);
 }
 
 function exitFullscreenMap() {
   isFullscreenMap = false;
-  const sec = $("mapSection");
-  if (!sec) return;
 
-  sec.classList.remove("fixed", "inset-0", "z-[9990]", "w-screen", "h-screen");
+  const app = $("app");
+  const header = $("headerApp") || document.querySelector("header");
+  const sidebar = $("sidebarApp") || document.querySelector("aside");
+  const netSec = $("netSection");
+  const mapSec = $("mapSection");
+
+  // Restore header, sidebar, and link chart
+  if (header) header.classList.remove("hidden");
+  if (sidebar) sidebar.classList.remove("hidden");
+  if (netSec) netSec.classList.remove("hidden");
+
+  if (app) {
+    app.classList.remove("flex", "w-screen", "h-screen", "fixed", "inset-0", "z-[9990]");
+    app.classList.add("lg:grid", "lg:grid-cols-[330px_1fr_1fr]");
+  }
+  if (mapSec) {
+    mapSec.classList.remove("w-full", "h-full", "flex-1");
+  }
+
   if ($("btnExitFullscreenMap")) $("btnExitFullscreenMap").classList.add("hidden");
 
   setTimeout(() => {
     if (map) {
       map.invalidateSize();
     }
-  }, 60);
+  }, 80);
 }
 
 function toggleFullscreenMap() {
