@@ -1852,7 +1852,7 @@ function openEditLinkModal(linkId) {
     $("editLinkToDisplay").innerHTML = `<img src="${bIcon}" class="w-4 h-4 object-contain inline-block mr-1"><span>${esc(b ? b.name : 'Unknown')}</span>`;
   }
 
-  $("editLinkLabel").value = l.label || "";
+  $("editLinkLabel").value = l.label != null && l.label !== "" ? l.label : "link";
   const curColor = l.color || "#000000";
   $("editLinkColor").value = curColor;
   $("editLinkColorText").value = curColor;
@@ -1860,7 +1860,7 @@ function openEditLinkModal(linkId) {
   $("editLinkStrength").value = l.strength || "Confirmed";
   $("editLinkWidth").value = String(l.width || 1);
 
-  const curArrows = l.arrows || "to";
+  const curArrows = l.arrows || "none";
   $("editLinkArrows").value = curArrows;
   updateArrowVisualSelection(curArrows);
 
@@ -1916,7 +1916,7 @@ if ($("btnSaveEditLink")) {
     l.color = $("editLinkColor").value || "#000000";
     l.strength = $("editLinkStrength").value || "Confirmed";
     l.width = parseInt($("editLinkWidth").value) || 1;
-    l.arrows = $("editLinkArrows").value || "to";
+    l.arrows = $("editLinkArrows").value || "none";
 
     closeEditLinkModal();
     render(false);
@@ -1965,7 +1965,7 @@ function initNet() {
       }
     },
     edges: {
-      arrows: { to: { enabled: true, scaleFactor: 0.7 } },
+      arrows: { to: { enabled: false }, from: { enabled: false } },
       color: {
         color: "#000000",
         highlight: "#2563eb",
@@ -2344,7 +2344,7 @@ function render(fitAll = false) {
     const linkColor = l.color || "#000000";
     const linkWidth = parseInt(l.width) || 1;
     const isUnconfirmed = l.strength === "Unconfirmed";
-    const arrowsConfig = l.arrows || "to";
+    const arrowsConfig = l.arrows || "none";
 
     const arrowsOpt = {
       to: { enabled: arrowsConfig === "to" || arrowsConfig === "both", scaleFactor: 0.8 },
@@ -2355,7 +2355,7 @@ function render(fitAll = false) {
       id: l.id,
       from: l.from,
       to: l.to,
-      label: l.label || "",
+      label: l.label != null && l.label !== "" ? l.label : "link",
       smooth: false,
       dashes: isUnconfirmed ? [6, 6] : false,
       width: isConnectedToSel ? Math.max(linkWidth + 1, 2) : linkWidth,
@@ -2917,11 +2917,11 @@ function createLinkBetween(fromId, toId) {
     id: uid(),
     from: fromId,
     to: toId,
-    label: "",
+    label: "link",
     color: "#000000",
     strength: "Confirmed",
     width: 1,
-    arrows: "to"
+    arrows: "none"
   };
   data.links.push(newLink);
 
@@ -2931,13 +2931,13 @@ function createLinkBetween(fromId, toId) {
       id: newLink.id,
       from: newLink.from,
       to: newLink.to,
-      label: "",
+      label: "link",
       smooth: false,
       dashes: false,
       width: 1,
       hoverWidth: 2,
       selectionWidth: 2,
-      arrows: { to: { enabled: true, scaleFactor: 0.8 }, from: { enabled: false } },
+      arrows: { to: { enabled: false }, from: { enabled: false } },
       color: {
         color: "#000000",
         highlight: "#2563eb",
