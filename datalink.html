@@ -1713,13 +1713,16 @@ function initNet() {
       }
     },
     edges: {
-      arrows: { to: { enabled: true, scaleFactor: 0.8 } },
+      arrows: { to: { enabled: true, scaleFactor: 0.7 } },
       color: {
-        color: "#2563eb",
-        highlight: "#000000",
-        hover: "#1d4ed8"
+        color: "#000000",
+        highlight: "#2563eb",
+        hover: "#2563eb",
+        inherit: false
       },
-      width: 2,
+      width: 1,
+      hoverWidth: 1.5,
+      selectionWidth: 2,
       font: {
         color: "#000000",
         size: 11,
@@ -1728,7 +1731,7 @@ function initNet() {
         strokeColor: "#ffffff",
         align: "middle"
       },
-      smooth: { type: "cubicBezier", forceDirection: "none", roundness: 0.15 }
+      smooth: false
     },
     physics: {
       enabled: false,
@@ -1876,18 +1879,29 @@ function render(fitAll = false) {
     const b = byId[l.to];
     if (!a || !b) return;
 
+    const isConnectedToSel = selected && (l.from === selected || l.to === selected);
+
     edges.add({
       id: l.id,
       from: l.from,
       to: l.to,
-      label: l.label || ""
+      label: l.label || "",
+      smooth: false,
+      width: isConnectedToSel ? 2 : 1,
+      hoverWidth: 2,
+      selectionWidth: 2,
+      color: {
+        color: isConnectedToSel ? "#2563eb" : "#000000",
+        highlight: "#2563eb",
+        hover: "#2563eb",
+        inherit: false
+      }
     });
 
     if (a.lat != null && a.lng != null && b.lat != null && b.lng != null) {
-      const isConnectedToSel = selected && (a.id === selected || b.id === selected);
       const poly = L.polyline([[a.lat, a.lng], [b.lat, b.lng]], {
-        color: isConnectedToSel ? "#000000" : "#2563eb",
-        weight: isConnectedToSel ? 3.5 : 2.5,
+        color: isConnectedToSel ? "#2563eb" : "#000000",
+        weight: isConnectedToSel ? 3 : 1.5,
         opacity: 0.9,
         dashArray: "6, 6"
       }).addTo(lineLayer);
