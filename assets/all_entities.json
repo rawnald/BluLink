@@ -6538,5 +6538,317 @@
     "name": "Taser",
     "category": "Weapons",
     "icon": "assets/all_icons/Weapons_Taser.png"
+  },
+  {
+    "id": "Vehicles_4x4",
+    "name": "4x4",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_4x4.png"
+  },
+  {
+    "id": "Vehicles_Aeroplane",
+    "name": "Aeroplane",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Aeroplane.png"
+  },
+  {
+    "id": "Vehicles_Ambulance",
+    "name": "Ambulance",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Ambulance.png"
+  },
+  {
+    "id": "Vehicles_Articulated_Tractor",
+    "name": "Articulated Tractor",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Articulated_Tractor.png"
+  },
+  {
+    "id": "Vehicles_Articulated_Trailer",
+    "name": "Articulated Trailer",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Articulated_Trailer.png"
+  },
+  {
+    "id": "Vehicles_Bicycle",
+    "name": "Bicycle",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Bicycle.png"
+  },
+  {
+    "id": "Vehicles_Boat",
+    "name": "Boat",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Boat.png"
+  },
+  {
+    "id": "Vehicles_Box_Van",
+    "name": "Box Van",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Box_Van.png"
+  },
+  {
+    "id": "Vehicles_Bulldozer",
+    "name": "Bulldozer",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Bulldozer.png"
+  },
+  {
+    "id": "Vehicles_Car",
+    "name": "Car",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Car.png"
+  },
+  {
+    "id": "Vehicles_Car_Crashed",
+    "name": "Car (Crashed)",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Car_Crashed.png"
+  },
+  {
+    "id": "Vehicles_Car_Damaged",
+    "name": "Car (Damaged)",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Car_Damaged.png"
+  },
+  {
+    "id": "Vehicles_Car_Rental",
+    "name": "Car (Rental)",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Car_Rental.png"
+  },
+  {
+    "id": "Vehicles_Caravan",
+    "name": "Caravan",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Caravan.png"
+  },
+  {
+    "id": "Vehicles_Cargo_Plane_Fixed_Wing",
+    "name": "Cargo Plane (Fixed Wing)",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Cargo_Plane_Fixed_Wing.png"
+  },
+  {
+    "id": "Vehicles_Cargo_Plane_Rotary_Wing",
+    "name": "Cargo Plane (Rotary Wing)",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Cargo_Plane_Rotary_Wing.png"
+  },
+  {
+    "id": "Vehicles_Coach",
+    "name": "Coach",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Coach.png"
+  },
+  {
+    "id": "Vehicles_Compact_Car",
+    "name": "Compact Car",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Compact_Car.png"
+  },
+  {
+    "id": "Vehicles_Container",
+    "name": "Container",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Container.png"
+  },
+  {
+    "id": "Vehicles_Container_Ship",
+    "name": "Container Ship",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Container_Ship.png"
+  },
+  {
+    "id": "Vehicles_Cruiser",
+    "name": "Cruiser",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Cruiser.png"
+  },
+  {
+    "id": "Vehicles_Digger",
+    "name": "Digger",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Digger.png"
+  },
+  {
+    "id": "Vehicles_Dumper_Truck",
+    "name": "Dumper Truck",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Dumper_Truck.png"
+  },
+  {
+    "id": "Vehicles_Ferry",
+    "name": "Ferry",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Ferry.png"
+  },
+  {
+    "id": "Vehicles_Fire_Engine",
+    "name": "Fire Engine",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Fire_Engine.png"
+  },
+  {
+    "id": "Vehicles_Flatbed",
+    "name": "Flatbed",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Flatbed.png"
+  },
+  {
+    "id": "Vehicles_Freighter",
+    "name": "Freighter",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Freighter.png"
+  },
+  {
+    "id": "Vehicles_Hatchback",
+    "name": "Hatchback",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Hatchback.png"
+  },
+  {
+    "id": "Vehicles_Helicopter",
+    "name": "Helicopter",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Helicopter.png"
+  },
+  {
+    "id": "Vehicles_HGV_Box",
+    "name": "HGV - Box",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_HGV_Box.png"
+  },
+  {
+    "id": "Vehicles_HGV_Flatbed",
+    "name": "HGV - Flatbed",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_HGV_Flatbed.png"
+  },
+  {
+    "id": "Vehicles_Hovercraft",
+    "name": "Hovercraft",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Hovercraft.png"
+  },
+  {
+    "id": "Vehicles_Lear_Jet",
+    "name": "Lear Jet",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Lear_Jet.png"
+  },
+  {
+    "id": "Vehicles_Limousine",
+    "name": "Limousine",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Limousine.png"
+  },
+  {
+    "id": "Vehicles_Lorry",
+    "name": "Lorry",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Lorry.png"
+  },
+  {
+    "id": "Vehicles_Minibus",
+    "name": "Minibus",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Minibus.png"
+  },
+  {
+    "id": "Vehicles_Mobile_Crane",
+    "name": "Mobile Crane",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Mobile_Crane.png"
+  },
+  {
+    "id": "Vehicles_Motorcycle",
+    "name": "Motorcycle",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Motorcycle.png"
+  },
+  {
+    "id": "Vehicles_Motorhome",
+    "name": "Motorhome",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Motorhome.png"
+  },
+  {
+    "id": "Vehicles_Number_Plate",
+    "name": "Number Plate",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Number_Plate.png"
+  },
+  {
+    "id": "Vehicles_Pickup_Truck",
+    "name": "Pickup Truck",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Pickup_Truck.png"
+  },
+  {
+    "id": "Vehicles_Pickup_Van",
+    "name": "Pickup Van",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Pickup_Van.png"
+  },
+  {
+    "id": "Vehicles_Police_Car",
+    "name": "Police Car",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Police_Car.png"
+  },
+  {
+    "id": "Vehicles_Security_Van",
+    "name": "Security Van",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Security_Van.png"
+  },
+  {
+    "id": "Vehicles_Ship",
+    "name": "Ship",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Ship.png"
+  },
+  {
+    "id": "Vehicles_Speedboat",
+    "name": "Speedboat",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Speedboat.png"
+  },
+  {
+    "id": "Vehicles_Sports_Car",
+    "name": "Sports Car",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Sports_Car.png"
+  },
+  {
+    "id": "Vehicles_Taxi",
+    "name": "Taxi",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Taxi.png"
+  },
+  {
+    "id": "Vehicles_Train",
+    "name": "Train",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Train.png"
+  },
+  {
+    "id": "Vehicles_Trawler",
+    "name": "Trawler",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Trawler.png"
+  },
+  {
+    "id": "Vehicles_Van",
+    "name": "Van",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Van.png"
+  },
+  {
+    "id": "Vehicles_Yacht",
+    "name": "Yacht",
+    "category": "Vehicles",
+    "icon": "assets/all_icons/Vehicles_Yacht.png"
   }
 ]
