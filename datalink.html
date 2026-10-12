@@ -635,10 +635,10 @@
           <span id="allEntitiesStatusText">Showing 771 entities</span>
         </div>
         <!-- Selected entity preview indicator -->
-        <div id="modalSelectedIndicator" class="hidden items-center gap-1.5 px-2.5 py-1 bg-blue-50 border border-blue-200 rounded-lg text-xs">
-          <i id="modalSelectedIcon" class="fi fi-rr-apps text-blue-600 text-sm"></i>
+        <div id="modalSelectedIndicator" class="hidden items-center gap-2 px-2.5 py-1 bg-blue-50 border border-blue-200 rounded-lg text-xs">
+          <img id="modalSelectedImg" src="" alt="" class="w-6 h-6 object-contain shrink-0">
           <span id="modalSelectedName" class="font-bold text-black truncate max-w-[150px]">None</span>
-          <span id="modalSelectedCat" class="text-[10px] text-blue-600/70 font-semibold truncate max-w-[100px]"></span>
+          <span id="modalSelectedCat" class="text-[10px] text-blue-600 font-semibold truncate max-w-[100px]"></span>
         </div>
       </div>
 
@@ -1850,42 +1850,6 @@ function populateInspectorTypes() {
 let currentModalCategory = "All";
 let currentModalSearch = "";
 let selectedModalEntity = null;
-const flaticonDataUriCache = {};
-
-function getFlaticonDataUri(flaticonName, unicodeHex = null, color = "#2563eb", size = 64) {
-  if (!flaticonName) return null;
-  const cacheKey = `${flaticonName}_${color}_${size}`;
-  if (flaticonDataUriCache[cacheKey]) return flaticonDataUriCache[cacheKey];
-
-  if (!unicodeHex && window.ALL_ENTITIES_DATA) {
-    const item = window.ALL_ENTITIES_DATA.find(e => e.flaticon === flaticonName);
-    if (item && item.unicode) unicodeHex = item.unicode;
-  }
-  if (!unicodeHex) return null;
-
-  try {
-    const canvas = document.createElement("canvas");
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return null;
-
-    ctx.clearRect(0, 0, size, size);
-    ctx.fillStyle = color;
-    ctx.font = `${Math.round(size * 0.72)}px "uicons-regular-rounded"`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-
-    const char = String.fromCharCode(parseInt(unicodeHex, 16));
-    ctx.fillText(char, size / 2, size / 2);
-
-    const dataUri = canvas.toDataURL("image/png");
-    flaticonDataUriCache[cacheKey] = dataUri;
-    return dataUri;
-  } catch(err) {
-    return null;
-  }
-}
 
 function openAllEntitiesModal() {
   const modal = $("allEntitiesModal");
@@ -1912,7 +1876,7 @@ function closeAllEntitiesModal() {
 
 function updateModalSelectedState() {
   const indicator = $("modalSelectedIndicator");
-  const iconEl = $("modalSelectedIcon");
+  const imgEl = $("modalSelectedImg");
   const nameEl = $("modalSelectedName");
   const catEl = $("modalSelectedCat");
   const addBtn = $("btnAddSelectedEntity");
@@ -1936,7 +1900,7 @@ function updateModalSelectedState() {
       indicator.classList.remove("hidden");
       indicator.classList.add("flex");
     }
-    if (iconEl) iconEl.className = `fi fi-rr-${selectedModalEntity.flaticon || 'apps'} text-blue-600 text-sm`;
+    if (imgEl) imgEl.src = selectedModalEntity.icon || "assets/icons/document.png";
     if (nameEl) nameEl.textContent = selectedModalEntity.name;
     if (catEl) catEl.textContent = `(${selectedModalEntity.category})`;
 
@@ -1964,12 +1928,9 @@ function addSelectedEntityToChart() {
   if (!selectedModalEntity) return;
 
   const item = selectedModalEntity;
-  const iconUri = getFlaticonDataUri(item.flaticon, item.unicode) || item.icon;
 
   createEntityFromPalette(item.name, null, null, {
-    icon: iconUri,
-    flaticon: item.flaticon,
-    unicode: item.unicode,
+    icon: item.icon,
     category: item.category
   });
 
@@ -2055,15 +2016,15 @@ function renderAllEntitiesGrid() {
   grid.innerHTML = filtered.map(item => {
     const isSelected = selectedModalEntity && selectedModalEntity.id === item.id;
     return `
-      <div draggable="true" data-id="${esc(item.id)}" data-type="${esc(item.name)}" data-category="${esc(item.category)}" data-icon="${esc(item.icon)}" data-flaticon="${esc(item.flaticon || 'apps')}" data-unicode="${esc(item.unicode || '')}"
+      <div draggable="true" data-id="${esc(item.id)}" data-type="${esc(item.name)}" data-category="${esc(item.category)}" data-icon="${esc(item.icon)}"
            title="${esc(item.name)} (${esc(item.category)})"
            class="all-entity-card group flex flex-col items-center justify-center p-2.5 rounded-xl border transition cursor-pointer select-none text-center relative ${
              isSelected
                ? 'bg-blue-50/90 border-blue-600 ring-2 ring-blue-600/40 shadow-md'
                : 'bg-white border-black/15 hover:border-blue-600 hover:shadow-md hover:bg-blue-50/20'
            }">
-        <div class="w-9 h-9 flex items-center justify-center mb-1 text-blue-600 transition-transform group-hover:scale-110 pointer-events-none">
-          <i class="fi fi-rr-${esc(item.flaticon || 'apps')} text-2xl"></i>
+        <div class="w-9 h-9 flex items-center justify-center mb-1 pointer-events-none transition-transform group-hover:scale-110">
+          <img src="${item.icon}" alt="${esc(item.name)}" loading="lazy" class="w-8 h-8 object-contain pointer-events-none" onerror="this.onerror=null; this.src='assets/icons/document.png';">
         </div>
         <span class="text-[10px] font-bold text-black tracking-tight leading-tight line-clamp-2 pointer-events-none w-full">
           ${esc(item.name)}
@@ -2100,8 +2061,6 @@ function renderAllEntitiesGrid() {
       ev.dataTransfer.setData("application/x-blulink-entity", JSON.stringify({
         type: item.name,
         category: item.category,
-        flaticon: item.flaticon,
-        unicode: item.unicode,
         icon: item.icon
       }));
       ev.dataTransfer.setData("text/plain", item.name);
@@ -2206,12 +2165,7 @@ async function openApp() {
 /* ---------- Entity Image Helpers ---------- */
 function getEntityIcon(e) {
   if (!e) return ENTITY_ICONS.Male;
-  if (e.customImage) return e.customImage;
-  if (e.flaticon) {
-    const dataUri = getFlaticonDataUri(e.flaticon, e.unicode);
-    if (dataUri) return dataUri;
-  }
-  return e.icon || ENTITY_ICONS[e.type] || ENTITY_ICONS[e.name] || ENTITY_ICONS.Male;
+  return e.customImage || e.icon || ENTITY_ICONS[e.type] || ENTITY_ICONS[e.name] || ENTITY_ICONS.Male;
 }
 
 function processUploadedImage(file, callback) {

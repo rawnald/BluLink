@@ -571,7 +571,7 @@
     "id": "Common_Account",
     "name": "Account",
     "category": "Common",
-    "icon": "assets/all_icons/Common_Account.png",
+    "icon": "assets/icons/account.png",
     "flaticon": "user-check",
     "unicode": "f0ab"
   },
@@ -579,7 +579,7 @@
     "id": "Common_Anonymous",
     "name": "Anonymous",
     "category": "Common",
-    "icon": "assets/all_icons/Common_Anonymous.png",
+    "icon": "assets/icons/anonymous.png",
     "flaticon": "incognito",
     "unicode": "e8c5"
   },
@@ -587,7 +587,7 @@
     "id": "Common_Building",
     "name": "Building",
     "category": "Common",
-    "icon": "assets/all_icons/Common_Building.png",
+    "icon": "assets/icons/building.png",
     "flaticon": "building",
     "unicode": "e27c"
   },
@@ -595,7 +595,7 @@
     "id": "Common_Car",
     "name": "Car",
     "category": "Common",
-    "icon": "assets/all_icons/Common_Car.png",
+    "icon": "assets/icons/car.png",
     "flaticon": "car",
     "unicode": "e2df"
   },
@@ -603,7 +603,7 @@
     "id": "Common_Cash",
     "name": "Cash",
     "category": "Common",
-    "icon": "assets/all_icons/Common_Cash.png",
+    "icon": "assets/icons/cash.png",
     "flaticon": "money-bill-wave",
     "unicode": "ea84"
   },
@@ -611,7 +611,7 @@
     "id": "Common_Credit_Card",
     "name": "Credit Card",
     "category": "Common",
-    "icon": "assets/all_icons/Common_Credit_Card.png",
+    "icon": "assets/icons/credit_card.png",
     "flaticon": "credit-card",
     "unicode": "e4c1"
   },
@@ -619,7 +619,7 @@
     "id": "Common_Document",
     "name": "Document",
     "category": "Common",
-    "icon": "assets/all_icons/Common_Document.png",
+    "icon": "assets/icons/document.png",
     "flaticon": "document",
     "unicode": "e57f"
   },
@@ -627,7 +627,7 @@
     "id": "Common_Female",
     "name": "Female",
     "category": "Common",
-    "icon": "assets/all_icons/Common_Female.png",
+    "icon": "assets/icons/female.png",
     "flaticon": "woman-head",
     "unicode": "f177"
   },
@@ -635,7 +635,7 @@
     "id": "Common_House",
     "name": "House",
     "category": "Common",
-    "icon": "assets/all_icons/Common_House.png",
+    "icon": "assets/icons/house.png",
     "flaticon": "home",
     "unicode": "e866"
   },
@@ -643,7 +643,7 @@
     "id": "Common_Male",
     "name": "Male",
     "category": "Common",
-    "icon": "assets/all_icons/Common_Male.png",
+    "icon": "assets/icons/male.png",
     "flaticon": "user",
     "unicode": "f0a7"
   },
@@ -651,7 +651,7 @@
     "id": "Common_Meeting",
     "name": "Meeting",
     "category": "Common",
-    "icon": "assets/all_icons/Common_Meeting.png",
+    "icon": "assets/icons/meeting.png",
     "flaticon": "users",
     "unicode": "f0df"
   },
@@ -659,7 +659,7 @@
     "id": "Common_Mobile_Phone",
     "name": "Mobile Phone",
     "category": "Common",
-    "icon": "assets/all_icons/Common_Mobile_Phone.png",
+    "icon": "assets/icons/mobile_phone.png",
     "flaticon": "mobile-button",
     "unicode": "ea71"
   },
@@ -667,7 +667,7 @@
     "id": "Common_Office",
     "name": "Office",
     "category": "Common",
-    "icon": "assets/all_icons/Common_Office.png",
+    "icon": "assets/icons/office.png",
     "flaticon": "briefcase",
     "unicode": "e25c"
   },
@@ -675,7 +675,7 @@
     "id": "Common_Organisation",
     "name": "Organisation",
     "category": "Common",
-    "icon": "assets/all_icons/Common_Organisation.png",
+    "icon": "assets/icons/organisation.png",
     "flaticon": "bank",
     "unicode": "e158"
   },
@@ -683,7 +683,7 @@
     "id": "Common_Subscriber",
     "name": "Subscriber",
     "category": "Common",
-    "icon": "assets/all_icons/Common_Subscriber.png",
+    "icon": "assets/icons/subscriber.png",
     "flaticon": "user-add",
     "unicode": "f0a8"
   },
@@ -691,7 +691,7 @@
     "id": "Common_Telephone",
     "name": "Telephone",
     "category": "Common",
-    "icon": "assets/all_icons/Common_Telephone.png",
+    "icon": "assets/icons/telephone.png",
     "flaticon": "phone-call",
     "unicode": "ebde"
   },
