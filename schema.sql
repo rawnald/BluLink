@@ -4,7 +4,7 @@
 -- npx wrangler d1 execute datalink-db --remote --file=./schema.sql
 -- ============================================================
 
--- 1. Users table (supports email/password, email verification, and Google OAuth)
+-- 1. Users table (stores only verified and confirmed accounts)
 CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY,
   email TEXT UNIQUE NOT NULL COLLATE NOCASE,
@@ -12,13 +12,21 @@ CREATE TABLE IF NOT EXISTS users (
   salt TEXT,
   auth_provider TEXT DEFAULT 'local', -- 'local' or 'google'
   google_id TEXT,
-  email_verified INTEGER DEFAULT 0,   -- 0: pending confirmation, 1: confirmed
-  verification_code TEXT,
-  verification_expires DATETIME,
+  email_verified INTEGER DEFAULT 1,   -- 1: confirmed
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- 2. Sessions table (JWT / Bearer Token store)
+-- 2. Pending Verifications table (unverified registrations; purged upon verification)
+CREATE TABLE IF NOT EXISTS pending_verifications (
+  email TEXT PRIMARY KEY COLLATE NOCASE,
+  password_hash TEXT NOT NULL,
+  salt TEXT NOT NULL,
+  code TEXT NOT NULL,
+  expires_at DATETIME NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 3. Sessions table (JWT / Bearer Token store)
 CREATE TABLE IF NOT EXISTS sessions (
   token TEXT PRIMARY KEY,
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,

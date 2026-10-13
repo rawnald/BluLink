@@ -14,24 +14,24 @@ export async function onRequestPost({ request, env }) {
       return error("Only Gmail addresses (@gmail.com) are allowed.", 400);
     }
 
-    const user = await env.DB.prepare(`
-      SELECT id, email, email_verified FROM users WHERE email = ?
+    const pending = await env.DB.prepare(`
+      SELECT email FROM pending_verifications WHERE email = ?
     `).bind(trimmedEmail).first();
 
-    if (!user) {
+    if (!pending) {
+      const user = await env.DB.prepare("SELECT id FROM users WHERE email = ?").bind(trimmedEmail).first();
+      if (user) {
+        return error("This account is already verified. Please sign in.", 400);
+      }
       return error("This email address is not registered. Please create an account first.", 404);
-    }
-
-    if (user.email_verified === 1) {
-      return error("This account is already verified. Please sign in.", 400);
     }
 
     const newCode = generateVerificationCode();
     await env.DB.prepare(`
-      UPDATE users 
-      SET verification_code = ?, verification_expires = datetime('now', '+15 minutes') 
-      WHERE id = ?
-    `).bind(newCode, user.id).run();
+      UPDATE pending_verifications 
+      SET code = ?, expires_at = datetime('now', '+15 minutes') 
+      WHERE email = ?
+    `).bind(newCode, trimmedEmail).run();
 
     let emailResult = { sent: false };
     try {

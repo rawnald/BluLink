@@ -22,6 +22,15 @@ export async function onRequestPost({ request, env }) {
     `).bind(trimmedEmail).first();
 
     if (!user) {
+      // Check if this account is pending verification
+      const pending = await env.DB.prepare("SELECT email FROM pending_verifications WHERE email = ?").bind(trimmedEmail).first().catch(() => null);
+      if (pending) {
+        return json({
+          require_verification: true,
+          email: trimmedEmail,
+          error: "Your email is not verified yet. Please enter the 6-digit code sent to your email."
+        }, 403);
+      }
       return error("This email address is not registered. Please create an account first.", 404);
     }
 

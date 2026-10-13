@@ -14,35 +14,38 @@ export async function onRequestPost({ request, env }) {
     const trimmedEmail = email.trim().toLowerCase();
     const trimmedCode = code.toString().trim();
 
-    // Query user by email
-    const user = await env.DB.prepare(`
-      SELECT id, email, email_verified, verification_code, verification_expires 
-      FROM users WHERE email = ?
+    // Check pending_verifications table
+    const pending = await env.DB.prepare(`
+      SELECT email, password_hash, salt, code, expires_at 
+      FROM pending_verifications WHERE email = ?
     `).bind(trimmedEmail).first();
 
-    if (!user) {
-      return error("Account not found with this email.", 404);
-    }
-
-    if (user.email_verified === 1) {
-      return error("This account is already verified. Please sign in.", 400);
+    if (!pending) {
+      const existingUser = await env.DB.prepare("SELECT id FROM users WHERE email = ?").bind(trimmedEmail).first();
+      if (existingUser) {
+        return error("This account is already verified. Please sign in.", 400);
+      }
+      return error("No pending registration found for this email. Please create an account first.", 404);
     }
 
     // Verify code and expiration
-    if (user.verification_code !== trimmedCode) {
+    if (pending.code !== trimmedCode) {
       return error("Invalid confirmation code. Please double check the code.", 400);
     }
 
-    if (user.verification_expires && new Date(user.verification_expires).getTime() < Date.now()) {
+    if (pending.expires_at && new Date(pending.expires_at).getTime() < Date.now()) {
       return error("Confirmation code has expired. Please request a new code.", 400);
     }
 
-    // Mark as verified
+    // ONLY NOW: Insert verified user into users table
+    const userId = "u_" + randomHex(8);
     await env.DB.prepare(`
-      UPDATE users 
-      SET email_verified = 1, verification_code = NULL, verification_expires = NULL 
-      WHERE id = ?
-    `).bind(user.id).run();
+      INSERT INTO users (id, email, password_hash, salt, auth_provider, email_verified) 
+      VALUES (?, ?, ?, ?, 'local', 1)
+    `).bind(userId, trimmedEmail, pending.password_hash, pending.salt).run();
+
+    // Clean up pending verification record
+    await env.DB.prepare("DELETE FROM pending_verifications WHERE email = ?").bind(trimmedEmail).run().catch(() => {});
 
     // Ensure workspace exists in D1
     const existingWs = await env.DB.prepare("SELECT user_id FROM workspaces WHERE user_id = ?").bind(user.id).first();
