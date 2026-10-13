@@ -2599,16 +2599,24 @@ function openEditLinkModal(linkId) {
   editingLinkId = linkId;
   initLinkWidthOptions();
 
-  const a = data.entities.find(x => x.id === l.from);
-  const b = data.entities.find(x => x.id === l.to);
+  const a = data.entities.find(x => x.id === l.from) || (data.boxes ? data.boxes.find(x => x.id === l.from) : null);
+  const b = data.entities.find(x => x.id === l.to) || (data.boxes ? data.boxes.find(x => x.id === l.to) : null);
 
   if ($("editLinkFromDisplay")) {
-    const aIcon = getEntityIcon(a);
-    $("editLinkFromDisplay").innerHTML = `<img src="${aIcon}" class="w-4 h-4 object-contain inline-block mr-1"><span>${esc(a ? a.name : 'Unknown')}</span>`;
+    if (a && a.w != null) {
+      $("editLinkFromDisplay").innerHTML = `<span class="inline-flex items-center gap-1 text-blue-600 font-bold"><svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-none stroke-current inline" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke-dasharray="3 2"/></svg><span>${esc(a.label || 'Group Box')}</span></span>`;
+    } else {
+      const aIcon = getEntityIcon(a);
+      $("editLinkFromDisplay").innerHTML = `<img src="${aIcon}" class="w-4 h-4 object-contain inline-block mr-1"><span>${esc(a ? a.name : 'Unknown')}</span>`;
+    }
   }
   if ($("editLinkToDisplay")) {
-    const bIcon = getEntityIcon(b);
-    $("editLinkToDisplay").innerHTML = `<img src="${bIcon}" class="w-4 h-4 object-contain inline-block mr-1"><span>${esc(b ? b.name : 'Unknown')}</span>`;
+    if (b && b.w != null) {
+      $("editLinkToDisplay").innerHTML = `<span class="inline-flex items-center gap-1 text-blue-600 font-bold"><svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-none stroke-current inline" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke-dasharray="3 2"/></svg><span>${esc(b.label || 'Group Box')}</span></span>`;
+    } else {
+      const bIcon = getEntityIcon(b);
+      $("editLinkToDisplay").innerHTML = `<img src="${bIcon}" class="w-4 h-4 object-contain inline-block mr-1"><span>${esc(b ? b.name : 'Unknown')}</span>`;
+    }
   }
 
   $("editLinkLabel").value = l.label != null && l.label !== "" ? l.label : "link";
@@ -2803,10 +2811,12 @@ if ($("btnDeleteEditBox")) {
   $("btnDeleteEditBox").onclick = () => {
     if (!editingBoxId || !data.boxes) return;
     if (!confirm("Are you sure you want to delete this group box? (Entities inside will NOT be deleted)")) return;
-    if (selectedBoxId === editingBoxId) selectedBoxId = null;
-    data.boxes = data.boxes.filter(x => x.id !== editingBoxId);
+    const boxId = editingBoxId;
+    if (selectedBoxId === boxId) selectedBoxId = null;
+    data.boxes = data.boxes.filter(x => x.id !== boxId);
+    data.links = data.links.filter(l => l.from !== boxId && l.to !== boxId);
     closeEditBoxModal();
-    if (net) net.redraw();
+    render(false);
     queueSave();
   };
 }
@@ -3142,17 +3152,25 @@ function initNet() {
 
   // Synchronized node selection on click
   net.on("selectNode", p => {
-    if (selectedBoxId) {
-      selectedBoxId = null;
-      net.redraw();
-    }
     selectedLinkId = null;
     const nid = p.nodes[0];
     if (typeof nid === "string" && nid.startsWith("corner_")) {
       selectedCornerNodeId = nid;
       selected = null;
+      if (selectedBoxId) { selectedBoxId = null; net.redraw(); }
       updateEdgeVisuals();
+    } else if (typeof nid === "string" && nid.startsWith("box_")) {
+      selectedBoxId = nid;
+      selectedCornerNodeId = null;
+      select(null, "net");
+      updateEdgeVisuals();
+      net.unselectAll();
+      net.redraw();
     } else {
+      if (selectedBoxId) {
+        selectedBoxId = null;
+        net.redraw();
+      }
       selectedCornerNodeId = null;
       if (!isLinkMode && !isDrawingLiveLine && !isCornerMode) {
         select(nid, "net");
@@ -3208,6 +3226,7 @@ function initNet() {
     const positions = net.getPositions(nodeIds);
 
     nodeIds.forEach(id => {
+      if (typeof id === "string" && id.startsWith("box_")) return;
       const pos = positions[id];
       if (!pos) return;
 
@@ -3256,7 +3275,7 @@ function initNet() {
             l.corners[cornerIdx].y = Math.round(positions[id].y);
             linkMoved = true;
           }
-        } else {
+        } else if (typeof id === "string" && !id.startsWith("box_")) {
           const ent = data.entities.find(x => x.id === id);
           if (ent && positions[id]) {
             ent.x = Math.round(positions[id].x);
@@ -3311,15 +3330,18 @@ function initNet() {
     let minDist = 30;
 
     data.links.forEach(l => {
-      const a = data.entities.find(x => x.id === l.from);
-      const b = data.entities.find(x => x.id === l.to);
+      const a = data.entities.find(x => x.id === l.from) || (data.boxes ? data.boxes.find(x => x.id === l.from) : null);
+      const b = data.entities.find(x => x.id === l.to) || (data.boxes ? data.boxes.find(x => x.id === l.to) : null);
       if (!a || !b) return;
 
-      const chain = [{ x: a.x, y: a.y }];
+      const aPos = a.w != null ? { x: Math.round(a.x + a.w / 2), y: Math.round(a.y + a.h / 2) } : { x: a.x, y: a.y };
+      const bPos = b.w != null ? { x: Math.round(b.x + b.w / 2), y: Math.round(b.y + b.h / 2) } : { x: b.x, y: b.y };
+
+      const chain = [aPos];
       if (l.corners) {
         l.corners.forEach(c => chain.push({ x: c.x, y: c.y }));
       }
-      chain.push({ x: b.x, y: b.y });
+      chain.push(bPos);
 
       for (let i = 0; i < chain.length - 1; i++) {
         const p1 = chain[i];
@@ -3390,19 +3412,31 @@ function initNet() {
       return;
     }
 
-    // 3. Handle Link Mode: click 1st entity then 2nd entity
+    // 3. Handle Link Mode: click 1st item then 2nd item (Entity or Box)
     if (isLinkMode) {
-      const clickedId = net.getNodeAt(params.pointer.DOM);
-      if (!clickedId) return;
+      let clickedId = net.getNodeAt(params.pointer.DOM);
       if (typeof clickedId === "string" && clickedId.startsWith("corner_")) return;
+      if (!clickedId) {
+        const cPos = net.DOMtoCanvas(params.pointer.DOM);
+        const hitBox = findBoxAt(cPos);
+        if (hitBox) clickedId = hitBox.id;
+      }
+      if (!clickedId) return;
 
       if (!linkingSourceId) {
         linkingSourceId = clickedId;
         const a = data.entities.find(x => x.id === clickedId);
+        const aBox = !a && data.boxes ? data.boxes.find(x => x.id === clickedId) : null;
+        const aName = a ? a.name : (aBox ? aBox.label : 'Item');
         if ($("linkModeBannerText")) {
-          $("linkModeBannerText").textContent = `Selected 1st: "${a ? a.name : 'Entity'}" ➔ Click or drag to 2nd entity`;
+          $("linkModeBannerText").textContent = `Selected 1st: "${aName}" ➔ Click or drag to 2nd entity or box`;
         }
-        net.selectNodes([clickedId]);
+        if (a) {
+          net.selectNodes([clickedId]);
+        } else if (aBox) {
+          selectedBoxId = aBox.id;
+          net.redraw();
+        }
       } else {
         if (clickedId !== linkingSourceId) {
           createLinkBetween(linkingSourceId, clickedId);
@@ -3422,6 +3456,14 @@ function initNet() {
           selectedBoxId = null;
           select(null, "net");
           updateEdgeVisuals();
+          net.redraw();
+        } else if (typeof clickedNode === "string" && clickedNode.startsWith("box_")) {
+          selectedBoxId = clickedNode;
+          selectedLinkId = null;
+          selectedCornerNodeId = null;
+          select(null, "net");
+          updateEdgeVisuals();
+          net.unselectAll();
           net.redraw();
         } else {
           selectedCornerNodeId = null;
@@ -3499,10 +3541,22 @@ function initNet() {
 
     if (!isDrawingLiveLine || !liveLineSourceId) return;
 
-    const srcPos = net.getPosition(liveLineSourceId);
+    let srcPos = null;
+    if (typeof liveLineSourceId === "string" && liveLineSourceId.startsWith("box_")) {
+      const b = data.boxes ? data.boxes.find(x => x.id === liveLineSourceId) : null;
+      if (b) srcPos = { x: Math.round(b.x + b.w / 2), y: Math.round(b.y + b.h / 2) };
+    } else {
+      srcPos = net.getPosition(liveLineSourceId);
+    }
+
     let targetPos = liveLineCurrentCanvasPos;
     if (liveLineHoverTargetId) {
-      targetPos = net.getPosition(liveLineHoverTargetId);
+      if (typeof liveLineHoverTargetId === "string" && liveLineHoverTargetId.startsWith("box_")) {
+        const b = data.boxes ? data.boxes.find(x => x.id === liveLineHoverTargetId) : null;
+        if (b) targetPos = { x: Math.round(b.x + b.w / 2), y: Math.round(b.y + b.h / 2) };
+      } else {
+        targetPos = net.getPosition(liveLineHoverTargetId);
+      }
     }
     if (!srcPos || !targetPos) return;
 
@@ -3580,34 +3634,66 @@ function initNet() {
 
     if (!isDrawingLiveLine || !liveLineSourceId) return;
 
-    const srcPos = net.getPosition(liveLineSourceId);
+    let srcPos = null;
+    if (typeof liveLineSourceId === "string" && liveLineSourceId.startsWith("box_")) {
+      const b = data.boxes ? data.boxes.find(x => x.id === liveLineSourceId) : null;
+      if (b) srcPos = { x: Math.round(b.x + b.w / 2), y: Math.round(b.y + b.h / 2) };
+    } else {
+      srcPos = net.getPosition(liveLineSourceId);
+    }
+
     let targetPos = liveLineCurrentCanvasPos;
     if (liveLineHoverTargetId) {
-      targetPos = net.getPosition(liveLineHoverTargetId);
+      if (typeof liveLineHoverTargetId === "string" && liveLineHoverTargetId.startsWith("box_")) {
+        const b = data.boxes ? data.boxes.find(x => x.id === liveLineHoverTargetId) : null;
+        if (b) targetPos = { x: Math.round(b.x + b.w / 2), y: Math.round(b.y + b.h / 2) };
+      } else {
+        targetPos = net.getPosition(liveLineHoverTargetId);
+      }
     }
     if (!srcPos || !targetPos) return;
 
     ctx.save();
 
-    // Source entity halo ring
-    ctx.fillStyle = "rgba(37, 99, 235, 0.15)";
-    ctx.strokeStyle = "#2563eb";
-    ctx.lineWidth = 2;
-    ctx.setLineDash([]);
-    ctx.beginPath();
-    ctx.arc(srcPos.x, srcPos.y, 26, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-
-    // Target entity snapping highlight ring
-    if (liveLineHoverTargetId) {
-      ctx.fillStyle = "rgba(37, 99, 235, 0.22)";
+    // Source entity / box halo highlight
+    if (typeof liveLineSourceId === "string" && liveLineSourceId.startsWith("box_")) {
+      const b = data.boxes ? data.boxes.find(x => x.id === liveLineSourceId) : null;
+      if (b) {
+        ctx.strokeStyle = "#2563eb";
+        ctx.lineWidth = 3;
+        ctx.setLineDash([6, 4]);
+        ctx.strokeRect(b.x - 3, b.y - 3, b.w + 6, b.h + 6);
+      }
+    } else {
+      ctx.fillStyle = "rgba(37, 99, 235, 0.15)";
       ctx.strokeStyle = "#2563eb";
-      ctx.lineWidth = 2.5;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([]);
       ctx.beginPath();
-      ctx.arc(targetPos.x, targetPos.y, 28, 0, Math.PI * 2);
+      ctx.arc(srcPos.x, srcPos.y, 26, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
+    }
+
+    // Target entity snapping highlight ring or box highlight
+    if (liveLineHoverTargetId) {
+      if (typeof liveLineHoverTargetId === "string" && liveLineHoverTargetId.startsWith("box_")) {
+        const b = data.boxes ? data.boxes.find(x => x.id === liveLineHoverTargetId) : null;
+        if (b) {
+          ctx.strokeStyle = "#2563eb";
+          ctx.lineWidth = 4;
+          ctx.setLineDash([8, 4]);
+          ctx.strokeRect(b.x - 4, b.y - 4, b.w + 8, b.h + 8);
+        }
+      } else {
+        ctx.fillStyle = "rgba(37, 99, 235, 0.22)";
+        ctx.strokeStyle = "#2563eb";
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(targetPos.x, targetPos.y, 28, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      }
     }
 
     ctx.restore();
@@ -3656,7 +3742,13 @@ function initNet() {
     if (isLinkMode || ev.shiftKey) {
       const rect = container.getBoundingClientRect();
       const domPos = { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
-      const startNode = net.getNodeAt(domPos);
+      let startNode = net.getNodeAt(domPos);
+      if (typeof startNode === "string" && startNode.startsWith("corner_")) startNode = null;
+      if (!startNode) {
+        const cPos = net.DOMtoCanvas(domPos);
+        const hitBox = findBoxAt(cPos);
+        if (hitBox) startNode = hitBox.id;
+      }
 
       if (startNode) {
         // Prevent Vis.Network from initiating dragView (panning) or dragNodes
@@ -3679,8 +3771,10 @@ function initNet() {
         if ($("linkModeBanner")) {
           $("linkModeBanner").classList.remove("hidden");
           const a = data.entities.find(x => x.id === startNode);
+          const aBox = !a && data.boxes ? data.boxes.find(x => x.id === startNode) : null;
+          const aName = a ? a.name : (aBox ? aBox.label : 'Item');
           if ($("linkModeBannerText")) {
-            $("linkModeBannerText").textContent = `Connecting from "${a ? a.name : 'Entity'}" ➔ Release on target entity`;
+            $("linkModeBannerText").textContent = `Connecting from "${aName}" ➔ Release on target entity or box`;
           }
         }
         return;
@@ -3772,6 +3866,9 @@ function initNet() {
           b.y = resizeBoxInitial.y + (resizeBoxInitial.h - newH);
           b.h = newH;
         }
+        if (nodes && nodes.get(b.id)) {
+          nodes.update({ id: b.id, x: Math.round(b.x + b.w / 2), y: Math.round(b.y + b.h / 2) });
+        }
         net.redraw();
       }
       return;
@@ -3801,6 +3898,9 @@ function initNet() {
       if (b) {
         b.x = Math.round(dragBoxInitialX + dx);
         b.y = Math.round(dragBoxInitialY + dy);
+        if (nodes && nodes.get(b.id)) {
+          nodes.update({ id: b.id, x: Math.round(b.x + b.w / 2), y: Math.round(b.y + b.h / 2) });
+        }
         net.redraw();
       }
       return;
@@ -3840,7 +3940,12 @@ function initNet() {
     const domPos = { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
     liveLineCurrentCanvasPos = net.DOMtoCanvas(domPos);
 
-    const hovered = net.getNodeAt(domPos);
+    let hovered = net.getNodeAt(domPos);
+    if (typeof hovered === "string" && hovered.startsWith("corner_")) hovered = null;
+    if (!hovered) {
+      const hitBox = findBoxAt(liveLineCurrentCanvasPos);
+      if (hitBox) hovered = hitBox.id;
+    }
     liveLineHoverTargetId = (hovered && hovered !== liveLineSourceId) ? hovered : null;
 
     net.redraw();
@@ -3891,6 +3996,24 @@ function initNet() {
             labelPos: "top-left"
           };
           data.boxes.push(newBox);
+          if (nodes && !nodes.get(newBox.id)) {
+            nodes.add({
+              id: newBox.id,
+              x: Math.round(newBox.x + newBox.w / 2),
+              y: Math.round(newBox.y + newBox.h / 2),
+              shape: "dot",
+              size: 0.1,
+              color: {
+                background: "rgba(0,0,0,0)",
+                border: "rgba(0,0,0,0)",
+                highlight: { background: "rgba(0,0,0,0)", border: "rgba(0,0,0,0)" },
+                hover: { background: "rgba(0,0,0,0)", border: "rgba(0,0,0,0)" }
+              },
+              physics: false,
+              fixed: true,
+              font: { size: 0, color: "rgba(0,0,0,0)", strokeWidth: 0 }
+            });
+          }
           selectedBoxId = newBox.id; // Automatically select newly drawn box so user can resize immediately!
           queueSave();
         }
@@ -3922,7 +4045,13 @@ function initNet() {
 
     const rect = container.getBoundingClientRect();
     const domPos = { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
-    const endNode = liveLineHoverTargetId || net.getNodeAt(domPos);
+    let endNode = liveLineHoverTargetId || net.getNodeAt(domPos);
+    if (typeof endNode === "string" && endNode.startsWith("corner_")) endNode = null;
+    if (!endNode) {
+      const cPos = net.DOMtoCanvas(domPos);
+      const hitBox = findBoxAt(cPos);
+      if (hitBox) endNode = hitBox.id;
+    }
 
     if (endNode && endNode !== liveLineSourceId) {
       createLinkBetween(liveLineSourceId, endNode);
@@ -4077,12 +4206,36 @@ function render(fitAll = false) {
     }
   });
 
+  if (data.boxes && data.boxes.length > 0) {
+    data.boxes.forEach(b => {
+      byId[b.id] = b;
+      nodes.add({
+        id: b.id,
+        x: Math.round(b.x + b.w / 2),
+        y: Math.round(b.y + b.h / 2),
+        shape: "dot",
+        size: 0.1,
+        color: {
+          background: "rgba(0,0,0,0)",
+          border: "rgba(0,0,0,0)",
+          highlight: { background: "rgba(0,0,0,0)", border: "rgba(0,0,0,0)" },
+          hover: { background: "rgba(0,0,0,0)", border: "rgba(0,0,0,0)" }
+        },
+        physics: false,
+        fixed: true,
+        font: { size: 0, color: "rgba(0,0,0,0)", strokeWidth: 0 }
+      });
+    });
+  }
+
   data.links.forEach(l => {
     const a = byId[l.from];
     const b = byId[l.to];
     if (!a || !b) return;
 
-    const isConnectedToSel = (selected && (l.from === selected || l.to === selected)) || (selectedLinkId && l.id === selectedLinkId);
+    const isConnectedToSel = (selected && (l.from === selected || l.to === selected)) ||
+      (selectedBoxId && (l.from === selectedBoxId || l.to === selectedBoxId)) ||
+      (selectedLinkId && l.id === selectedLinkId);
     const linkColor = l.color || "#000000";
     const linkWidth = parseInt(l.width) || 1;
     const isUnconfirmed = l.strength === "Unconfirmed";
@@ -4248,7 +4401,9 @@ function updateEdgeVisuals() {
   if (!edges || !data.links) return;
   const edgeUpdates = [];
   data.links.forEach(l => {
-    const isConnectedToSel = (selected && (l.from === selected || l.to === selected)) || (selectedLinkId && l.id === selectedLinkId);
+    const isConnectedToSel = (selected && (l.from === selected || l.to === selected)) ||
+      (selectedBoxId && (l.from === selectedBoxId || l.to === selectedBoxId)) ||
+      (selectedLinkId && l.id === selectedLinkId);
     const linkColor = l.color || "#000000";
     const linkWidth = parseInt(l.width) || 1;
     const col = {
@@ -4377,14 +4532,17 @@ function renderInspector() {
       const isOutgoing = l.from === e.id;
       const otherId = isOutgoing ? l.to : l.from;
       const other = data.entities.find(x => x.id === otherId);
-      const otherName = other ? other.name : "Unknown";
-      const otherIcon = getEntityIcon(other);
+      const otherBox = !other && data.boxes ? data.boxes.find(x => x.id === otherId) : null;
+      const otherName = other ? other.name : (otherBox ? otherBox.label : "Unknown");
+      const otherIconHtml = other
+        ? `<img src="${getEntityIcon(other)}" class="w-3.5 h-3.5 object-contain" alt="">`
+        : `<svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-none stroke-current text-blue-600 inline" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke-dasharray="3 2"/></svg>`;
       return `
         <div class="flex items-center justify-between p-2 rounded bg-white border border-black/20 hover:border-blue-600 transition text-xs">
           <div class="truncate mr-2 flex items-center gap-1.5">
             <span class="text-blue-600 font-bold">${isOutgoing ? "→" : "←"}</span>
             <span class="text-black/60 font-semibold">[${esc(l.label || "linked")}]</span>
-            <img src="${otherIcon}" class="w-3.5 h-3.5 object-contain" alt="">
+            ${otherIconHtml}
             <span class="text-black font-bold">${esc(otherName)}</span>
           </div>
           <div class="flex items-center gap-1 shrink-0">
@@ -4755,6 +4913,31 @@ function createLinkBetween(fromId, toId) {
   };
   data.links.push(newLink);
 
+  // Ensure anchor nodes exist in Vis.Network DataSet for group boxes
+  [fromId, toId].forEach(id => {
+    if (typeof id === "string" && id.startsWith("box_") && nodes && !nodes.get(id)) {
+      const b = data.boxes ? data.boxes.find(x => x.id === id) : null;
+      if (b) {
+        nodes.add({
+          id: b.id,
+          x: Math.round(b.x + b.w / 2),
+          y: Math.round(b.y + b.h / 2),
+          shape: "dot",
+          size: 0.1,
+          color: {
+            background: "rgba(0,0,0,0)",
+            border: "rgba(0,0,0,0)",
+            highlight: { background: "rgba(0,0,0,0)", border: "rgba(0,0,0,0)" },
+            hover: { background: "rgba(0,0,0,0)", border: "rgba(0,0,0,0)" }
+          },
+          physics: false,
+          fixed: true,
+          font: { size: 0, color: "rgba(0,0,0,0)", strokeWidth: 0 }
+        });
+      }
+    }
+  });
+
   // Add edge directly to Vis.Network DataSet without clearing or moving any nodes!
   if (edges) {
     edges.add({
@@ -5006,12 +5189,14 @@ window.addEventListener("keydown", e => {
       return;
     }
 
-    // 2. Delete selected Group Box
+    // 2. Delete selected Group Box (and connected links)
     if (selectedBoxId && data.boxes) {
       e.preventDefault();
-      data.boxes = data.boxes.filter(x => x.id !== selectedBoxId);
+      const bId = selectedBoxId;
+      data.boxes = data.boxes.filter(x => x.id !== bId);
+      data.links = data.links.filter(l => l.from !== bId && l.to !== bId);
       selectedBoxId = null;
-      if (net) net.redraw();
+      render(false);
       queueSave();
       return;
     }
