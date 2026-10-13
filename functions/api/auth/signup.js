@@ -28,13 +28,16 @@ export async function onRequestPost({ request, env }) {
         await env.DB.prepare(`
           UPDATE users SET verification_code = ?, verification_expires = datetime('now', '+15 minutes') WHERE id = ?
         `).bind(newCode, existing.id).run();
-        await sendEmailConfirmation(trimmedEmail, newCode, env);
+        try {
+          await sendEmailConfirmation(trimmedEmail, newCode, env);
+        } catch (e) {}
 
         return json({
           require_verification: true,
           email: trimmedEmail,
+          code: newCode,
           code_preview: newCode,
-          message: "A confirmation code was sent to your email. Please verify to enter."
+          message: "A verification code has been generated. Please verify to enter."
         });
       }
       if (existing.auth_provider === "google") {
@@ -54,15 +57,18 @@ export async function onRequestPost({ request, env }) {
       VALUES (?, ?, ?, ?, 'local', 0, ?, datetime('now', '+15 minutes'))
     `).bind(userId, trimmedEmail, passwordHash, salt, verificationCode).run();
 
-    // Send confirmation email (or log if Resend API key not set)
-    await sendEmailConfirmation(trimmedEmail, verificationCode, env);
+    // Send confirmation email if configured (optional)
+    try {
+      await sendEmailConfirmation(trimmedEmail, verificationCode, env);
+    } catch (e) {}
 
     // Notice: NO session token is issued until email is confirmed!
     return json({
       require_verification: true,
       email: trimmedEmail,
+      code: verificationCode,
       code_preview: verificationCode,
-      message: "Account created! Please enter the 6-digit confirmation code sent to your email."
+      message: "Account created! Your 6-digit confirmation code has been generated."
     }, 201);
   } catch (err) {
     return error(err.message || "Sign up failed", 500);

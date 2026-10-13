@@ -1,4 +1,4 @@
-import { json, error, randomHex, hashPassword } from "../utils.js";
+import { json, error, randomHex, hashPassword, generateVerificationCode } from "../utils.js";
 
 export async function onRequestPost({ request, env }) {
   if (!env.DB) {
@@ -15,7 +15,7 @@ export async function onRequestPost({ request, env }) {
 
     // Query user by email
     const user = await env.DB.prepare(`
-      SELECT id, email, password_hash, salt, auth_provider, email_verified FROM users WHERE email = ?
+      SELECT id, email, password_hash, salt, auth_provider, email_verified, verification_code FROM users WHERE email = ?
     `).bind(trimmedEmail).first();
 
     if (!user) {
@@ -34,9 +34,18 @@ export async function onRequestPost({ request, env }) {
 
     // Check if email has been confirmed
     if (user.email_verified === 0) {
+      let code = user.verification_code;
+      if (!code) {
+        code = generateVerificationCode();
+        await env.DB.prepare(`
+          UPDATE users SET verification_code = ?, verification_expires = datetime('now', '+15 minutes') WHERE id = ?
+        `).bind(code, user.id).run();
+      }
       return json({
         require_verification: true,
         email: user.email,
+        code: code,
+        code_preview: code,
         error: "Please confirm your email first before entering the workspace."
       }, 403);
     }

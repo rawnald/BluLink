@@ -30,13 +30,16 @@ export async function onRequestPost({ request, env }) {
       WHERE id = ?
     `).bind(newCode, user.id).run();
 
-    await sendEmailConfirmation(trimmedEmail, newCode, env);
+    try {
+      await sendEmailConfirmation(trimmedEmail, newCode, env);
+    } catch (e) {}
 
     return json({
       success: true,
       email: trimmedEmail,
+      code: newCode,
       code_preview: newCode,
-      message: "New confirmation code has been sent to your email."
+      message: "New confirmation code has been generated."
     });
   } catch (err) {
     return error(err.message || "Failed to resend confirmation code", 500);

@@ -335,19 +335,19 @@
     <div id="authConfirmView" class="hidden space-y-5">
       <div class="text-center space-y-2">
         <div class="w-14 h-14 mx-auto rounded-full bg-blue-50 border-2 border-blue-600 flex items-center justify-center text-blue-600 text-2xl">
-          <i class="fi fi-rr-envelope text-xl"></i>
+          <i class="fi fi-rr-shield-check text-xl"></i>
         </div>
-        <h2 class="text-lg font-bold text-black">Confirm Your Email</h2>
+        <h2 class="text-lg font-bold text-black">Email Verification</h2>
         <p class="text-xs text-black/70 leading-relaxed">
-          We sent a 6-digit confirmation code to: <br>
-          <span id="confirmEmailDisplay" class="font-bold text-blue-600 text-sm"></span>
+          Account: <span id="confirmEmailDisplay" class="font-bold text-blue-600 text-sm"></span><br>
+          Your 6-digit verification code is generated below:
         </p>
       </div>
 
       <div class="space-y-3">
         <div>
           <label for="confirmCodeInput" class="block text-xs font-bold text-black uppercase tracking-wider mb-1 text-center">
-            Enter 6-Digit Code
+            6-Digit Verification Code
           </label>
           <input id="confirmCodeInput" maxlength="6" placeholder="123456" autofocus
             class="w-full text-center text-3xl font-mono tracking-[0.3em] px-3 py-3 rounded-lg bg-white border-2 border-black text-black font-bold focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600">
@@ -363,7 +363,7 @@
         <div class="flex items-center justify-between text-xs pt-2 border-t border-slate-200">
           <button id="btnResendCode" class="btn-secondary py-1.5 px-3 text-xs">
             <i class="fi fi-rr-refresh text-xs"></i>
-            <span>Resend Code</span>
+            <span>Generate New Code</span>
           </button>
           <button id="btnBackToLogin" class="btn-secondary py-1.5 px-3 text-xs">
             <i class="fi fi-rr-arrow-left text-xs"></i>
@@ -1307,14 +1307,19 @@ function showAuthMsg(msg, isError) {
     : "min-h-[20px] text-xs font-semibold text-blue-600 text-center";
 }
 
-function showConfirmScreen(email, previewCode) {
+function showConfirmScreen(email, code) {
   pendingEmail = email;
   $("authFormView").classList.add("hidden");
   $("authConfirmView").classList.remove("hidden");
   $("confirmEmailDisplay").textContent = email;
-  $("confirmCodeInput").value = previewCode || "";
-  $("confirmMsg").textContent = previewCode ? `(Dev Preview Code: ${previewCode})` : "";
-  $("confirmMsg").className = "min-h-[20px] text-xs font-semibold text-blue-600 text-center";
+  const targetCode = (code || "").toString().trim();
+  $("confirmCodeInput").value = targetCode;
+  if (targetCode) {
+    $("confirmMsg").textContent = `Code ${targetCode} generated & auto-filled! Click "Verify & Enter Workspace" below.`;
+    $("confirmMsg").className = "min-h-[20px] text-xs font-bold text-blue-600 bg-blue-50 border border-blue-200 py-1.5 px-2 rounded-lg text-center";
+  } else {
+    $("confirmMsg").textContent = "";
+  }
   $("confirmCodeInput").focus();
 }
 
@@ -1345,7 +1350,7 @@ $("btnSubmitAuth").onclick = async () => {
 
     // Check if email confirmation is required
     if (resJson.require_verification) {
-      showConfirmScreen(resJson.email, resJson.code_preview);
+      showConfirmScreen(resJson.email, resJson.code || resJson.code_preview);
       return;
     }
 
@@ -1402,7 +1407,7 @@ $("btnVerifyConfirm").onclick = async () => {
 $("confirmCodeInput").onkeydown = e => { if (e.key === "Enter") $("btnVerifyConfirm").click(); };
 
 $("btnResendCode").onclick = async () => {
-  $("confirmMsg").textContent = "Sending new confirmation code…";
+  $("confirmMsg").textContent = "Generating new confirmation code…";
   $("confirmMsg").className = "min-h-[20px] text-xs font-semibold text-blue-600 text-center";
   try {
     const res = await fetch("/api/auth/resend-code", {
@@ -1412,14 +1417,22 @@ $("btnResendCode").onclick = async () => {
     });
     const resJson = await res.json();
     if (!res.ok) {
-      $("confirmMsg").textContent = resJson.error || "Failed to resend code.";
+      $("confirmMsg").textContent = resJson.error || "Failed to generate code.";
       $("confirmMsg").className = "min-h-[20px] text-xs font-bold text-black text-center";
       return;
     }
-    $("confirmMsg").textContent = resJson.code_preview ? `New code sent! (Dev code: ${resJson.code_preview})` : "New code sent to your email!";
-    $("confirmMsg").className = "min-h-[20px] text-xs font-semibold text-blue-600 text-center";
+    const newCode = (resJson.code || resJson.code_preview || "").toString().trim();
+    if (newCode) {
+      $("confirmCodeInput").value = newCode;
+      $("confirmMsg").textContent = `New code ${newCode} generated & filled! Click below to enter.`;
+      $("confirmMsg").className = "min-h-[20px] text-xs font-bold text-blue-600 bg-blue-50 border border-blue-200 py-1.5 px-2 rounded-lg text-center";
+    } else {
+      $("confirmMsg").textContent = "New code generated.";
+      $("confirmMsg").className = "min-h-[20px] text-xs font-semibold text-blue-600 text-center";
+    }
   } catch (e) {
-    $("confirmMsg").textContent = "Error sending code.";
+    $("confirmMsg").textContent = "Error generating code.";
+    $("confirmMsg").className = "min-h-[20px] text-xs font-bold text-black text-center";
   }
 };
 
