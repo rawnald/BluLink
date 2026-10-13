@@ -1,7 +1,7 @@
 # BluLink — Geospatial & Link Analysis Intelligence Workspace
 
 An Integrated Platform for Geospatial Intelligence, Link Analysis, and Intelligence Data Management
-Developed b: Rawnald Blu
+Developed by: Rawnald Blu
 
 ---
 
@@ -15,42 +15,42 @@ Its objective is to improve situational awareness, information organization, and
 
 ## 🎯 Objective
 
---Consolidate relevant geospatial and analytical information in one workspace.
---Visualize geographic information through interactive mapping tools.
---Identify and examine relationships among entities using link analysis.
---Organize intelligence records and projects
---Support authorized users in maintaining organized and traceable analytical records.
+Consolidate relevant geospatial and analytical information in one workspace. <br>
+Visualize geographic information through interactive mapping tools.<br>
+Identify and examine relationships among entities using link analysis.<br>
+Organize intelligence records and projects<br>
+Support authorized users in maintaining organized and traceable analytical records.
 
 ## ✨ Core Capabilities
 
 🗺️ 1. Geospatial Intelligence Workspace
 
---Interactive geographic map visualization.
---Display of geographic features and Basemap layers.
---Geographic search and location-based information management.
---Map markers, labels, and relevant feature details.
---Configurable map views and layer controls.
+Interactive geographic map visualization.<br>
+Display of geographic features and Basemap layers.<br>
+Geographic search and location-based information management.<br>
+Map markers, labels, and relevant feature details.<br>
+Configurable map views and layer controls.
 
 🔗 2. Link Analysis
 
---Visual representation of entities and their relationships.
---Relationship mapping between persons, organizations, locations, events, and other record types.
---Interactive node-and-edge network diagrams.
---Entity profile and relationship details.
---Support for examining connections across authorized datasets.
+Visual representation of entities and their relationships.<br>
+Relationship mapping between persons, organizations, locations, events, and other record types.<br>
+Interactive node-and-edge network diagrams.<br>
+Entity profile and relationship details.<br>
+Support for examining connections across authorized datasets.
 
 ## 🖥️ Technology Stack
 
---Frontend: Single-page application using Leaflet (Google Hybrid, Satellite, Terrain layers) and Vis.js Network.
---Backend: Cloudflare Pages Functions (/api/auth/* and /api/workspace/*).
---Database: Cloudflare D1 (Serverless SQLite edge database with zero cold-starts).
---Security: Web Crypto API salted SHA-256 password hashing 
+Frontend: Single-page application using Leaflet (Google Hybrid, Satellite, Terrain layers) and Vis.js Network.<br>
+Backend: Cloudflare Pages Functions (/api/auth/* and /api/workspace/*).<br>
+Database: Cloudflare D1 (Serverless SQLite edge database with zero cold-starts)<br>
+Security: Web Crypto API salted SHA-256 password hashing 
 
 ## 🚀 How to Use
 
---1. Register and Login using your gmail account at https://blulink.pages.dev/
---2. Create Project
---3. Drag and Drop Entities from Palette
---4. Create Link to another Entities and Automatically show in the map
---5. Print and Export for Presentation and Visualization
+1. Register and Login using your gmail account at https://blulink.pages.dev/<br>
+2. Create Project<br>
+3. Drag and Drop Entities from Palette<br>
+4. Create Link to another Entities and Automatically show in the map<br>
+5. Print and Export for Presentation and Visualization
 
