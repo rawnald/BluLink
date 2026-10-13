@@ -35,20 +35,28 @@ export async function onRequestPost({ request, env }) {
     if (!user) {
       // Create new user in Cloudflare D1 (Google accounts are automatically email_verified = 1)
       userId = "g_" + randomHex(8);
+      const googleDummyHash = "OAUTH_GOOGLE_" + randomHex(16);
+      const googleDummySalt = "OAUTH_GOOGLE";
       await env.DB.prepare(`
-        INSERT INTO users (id, email, auth_provider, google_id, email_verified) VALUES (?, ?, 'google', ?, 1)
-      `).bind(userId, trimmedEmail, googleId).run();
+        INSERT INTO users (id, email, password_hash, salt, auth_provider, google_id, email_verified) 
+        VALUES (?, ?, ?, ?, 'google', ?, 1)
+      `).bind(userId, trimmedEmail, googleDummyHash, googleDummySalt, googleId).run();
 
-      // Initialize empty workspace for new Google user in D1
+      // Initialize empty workspace for new Google user in D1 (safe fallback)
       await env.DB.prepare(`
-        INSERT INTO workspaces (user_id, data) VALUES (?, ?)
-      `).bind(userId, JSON.stringify({ entities: [], links: [] })).run();
+        INSERT OR IGNORE INTO workspaces (user_id, data) VALUES (?, ?)
+      `).bind(userId, JSON.stringify({ entities: [], links: [] })).run().catch(() => {});
     } else {
       userId = user.id;
-      // Update google_id and mark email as verified
+      // Update google_id, mark email as verified, and backfill password_hash if empty
       await env.DB.prepare(`
-        UPDATE users SET google_id = ?, auth_provider = 'google', email_verified = 1 WHERE id = ?
-      `).bind(googleId, userId).run();
+        UPDATE users 
+        SET google_id = ?, 
+            email_verified = 1,
+            password_hash = COALESCE(password_hash, ?),
+            salt = COALESCE(salt, ?)
+        WHERE id = ?
+      `).bind(googleId, "OAUTH_GOOGLE_" + randomHex(16), "OAUTH_GOOGLE", userId).run();
     }
 
     // Create session token valid for 30 days

@@ -22,7 +22,7 @@ export async function onRequestPost({ request, env }) {
       return error("Invalid email or password.", 401);
     }
 
-    if (user.auth_provider === "google" && !user.password_hash) {
+    if (user.auth_provider === "google" || (user.password_hash && user.password_hash.startsWith("OAUTH_GOOGLE"))) {
       return error("This account was created with Google. Please click 'Sign in with Google'.", 400);
     }
 
