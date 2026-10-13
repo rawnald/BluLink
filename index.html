@@ -538,7 +538,6 @@
   <div class="w-full max-w-sm bg-white border-2 border-black rounded-2xl p-6 shadow-2xl space-y-4 relative z-10">
     <div class="flex items-center justify-between border-b border-black/15 pb-3">
       <h3 class="text-sm font-bold text-black flex items-center gap-2">
-        <span class="w-2 h-2 rounded-full bg-blue-600"></span>
         Create New Project
       </h3>
       <button id="btnCloseProjectModal" class="text-black/60 hover:text-black font-bold text-sm">✕</button>
@@ -547,7 +546,7 @@
     <div class="space-y-3">
       <div>
         <label for="newProjectName" class="block text-xs font-bold text-black uppercase tracking-wider mb-1">Project Name</label>
-        <input id="newProjectName" placeholder="e.g. Operation Blue Horizon"
+        <input id="newProjectName" placeholder="e.g. Operation Daguma Link Analysis"
           class="w-full px-3 py-2 rounded-lg bg-white border-2 border-black/30 text-black text-sm focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600">
       </div>
 
@@ -557,9 +556,7 @@
           class="w-full px-3 py-2 rounded-lg bg-white border-2 border-black/30 text-black text-sm focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600">
       </div>
 
-      <div class="p-2.5 rounded-lg bg-blue-50 border border-blue-200 text-[11px] text-black">
-        <span class="font-bold text-blue-600">Storage:</span> Stored safely in <strong>Cloudflare R2 Object Storage</strong>.
-      </div>
+
 
       <div class="flex items-center gap-2 pt-2">
         <button id="btnCreateProjectSubmit" class="flex-1 btn-primary py-2 text-xs">
@@ -726,7 +723,7 @@
         <span>Selected</span>
       </button>
       <button id="tabBtnList" class="flex-1 btn-secondary py-1.5 px-2 text-xs font-bold rounded-md text-black/70 border-transparent hover:border-blue-400">
-        <i class="fi fi-rr-list text-xs"></i>
+      
         <span>Entities (<span id="tabCount">0</span>)</span>
       </button>
     </div>
@@ -740,7 +737,7 @@
         <section class="space-y-3">
           <div class="flex items-center justify-between">
             <h2 class="text-xs font-bold uppercase tracking-wider text-black flex items-center gap-2">
-              <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+             
               Entity Palette
             </h2>
             <span class="text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-200">Drag to Chart</span>
@@ -762,14 +759,14 @@
         <section class="space-y-2.5">
           <div class="flex items-center justify-between">
             <h2 class="text-xs font-bold uppercase tracking-wider text-black flex items-center gap-2">
-              <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+             
               Add Link
             </h2>
             <span id="linkToolBadge" class="text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-200">Ready</span>
           </div>
 
           <p class="text-[11px] text-black/60 leading-relaxed">
-            Drag a displayed line from one entity to another on the chart. You can also hold <kbd class="px-1.5 py-0.5 bg-blue-50 border border-blue-200 text-blue-700 font-mono text-[10px] rounded font-bold">Shift</kbd> while dragging any entity. Double-click any line to edit.
+            Drag a displayed line from one entity to another on the chart. You can also hold <kbd class="px-1.5 py-0.5 bg-blue-50 border border-blue-200 text-blue-700 font-mono text-[10px] rounded font-bold">Shift</kbd> while dragging any entity. <strong>Double-click</strong> any line to edit.
           </p>
 
           <button id="btnLinkTool" type="button"
