@@ -123,6 +123,44 @@
     background-color: #dbeafe;
   }
 
+  /* Responsive Chart Toolbar */
+  .chart-ctrl-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.375rem;
+    max-width: 100%;
+  }
+  .btn-chart-ctrl {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+    padding: 0.25rem 0.625rem;
+    font-size: 0.75rem;
+    line-height: 1rem;
+  }
+  @media (max-width: 768px) {
+    .btn-chart-ctrl {
+      padding: 0.25rem 0.5rem;
+      gap: 0.25rem;
+    }
+  }
+  @media (max-width: 640px) {
+    .btn-chart-ctrl {
+      padding: 0.35rem 0.45rem;
+      min-width: 2rem;
+      height: 2rem;
+      gap: 0;
+    }
+    .btn-chart-ctrl span {
+      display: none !important;
+    }
+  }
+
   /* Flaticon alignment */
   .fi {
     display: inline-flex;
@@ -1085,79 +1123,82 @@
   <section id="netSection" class="relative w-full h-full min-w-0 min-h-0 flex flex-col border-l-2 border-r-2 border-black/20 border-t-2 border-t-blue-600 border-b-2 border-b-black/15 bg-white overflow-hidden shadow-inner">
     <!-- Workspace Boundary Frame: Clearly defines chart area and prevents clipping under sidebar or map -->
     <div class="absolute inset-0 pointer-events-none border-2 border-blue-600/20 z-10 m-1 rounded-sm"></div>
-    <!-- Network Header Overlay -->
-    <div class="absolute top-3 left-3 z-10 flex items-center gap-2 bg-white/95 backdrop-blur border-2 border-blue-600 rounded-lg px-3 py-1.5 shadow-md">
-      <div class="w-2 h-2 rounded-full bg-blue-600"></div>
-      <span class="text-xs font-bold text-black tracking-wide">Link Chart</span>
-      <span class="text-[10px] text-blue-600 font-semibold border-l border-blue-200 pl-2">Work Station</span>
+    <!-- Top Chart Header / Floating Controls (Responsive Layout) -->
+    <div class="absolute top-2.5 left-2.5 right-2.5 z-20 flex items-start justify-between gap-1.5 sm:gap-2 pointer-events-none">
+      <!-- Network Header Overlay -->
+      <div class="hidden sm:flex items-center gap-1.5 sm:gap-2 bg-white/95 backdrop-blur border-2 border-blue-600 rounded-lg px-2.5 py-1 sm:py-1.5 shadow-md pointer-events-auto shrink-0 select-none">
+        <div class="w-2 h-2 rounded-full bg-blue-600 shrink-0"></div>
+        <span class="text-xs font-bold text-black tracking-wide whitespace-nowrap">Link Chart</span>
+        <span class="text-[10px] text-blue-600 font-semibold border-l border-blue-200 pl-1.5 sm:pl-2 hidden xl:inline whitespace-nowrap">Work Station</span>
+      </div>
+
+      <!-- Chart Control Buttons (Responsive Toolbar) -->
+      <div class="chart-ctrl-bar pointer-events-auto ml-auto">
+        <button id="btnLinkModeToggle" title="Draw Relationship Link: Drag from one entity to another (or hold Shift on chart)" class="btn-secondary btn-chart-ctrl py-1 px-2 sm:px-2.5 text-xs">
+          <i class="fi fi-rr-link-alt text-xs"></i>
+          <span id="btnLinkModeToggleText">Draw Link</span>
+        </button>
+        <button id="btnBoxModeToggle" title="Draw Box: Click and drag anywhere on chart to draw a container box inside or outside entities" class="btn-secondary btn-chart-ctrl py-1 px-2 sm:px-2.5 text-xs">
+          <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-none stroke-current" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke-dasharray="3 2"/>
+          </svg>
+          <span id="btnBoxModeToggleText">Draw Box</span>
+        </button>
+        <button id="btnCornerModeToggle" title="Add Corner to Link: Click any link to insert a draggable diamond handle" class="btn-secondary btn-chart-ctrl py-1 px-2 sm:px-2.5 text-xs">
+          <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
+            <line x1="2" y1="12" x2="8.5" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+            <polygon points="12,7 16,12 12,17 8,12" fill="currentColor"/>
+            <line x1="15.5" y1="12" x2="22" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+          <span id="btnCornerModeToggleText">Add Corner</span>
+        </button>
+        <button id="btnFitNet" title="Fit All Nodes" class="btn-secondary btn-chart-ctrl py-1 px-2 sm:px-2.5 text-xs">
+          <i class="fi fi-rr-expand text-xs"></i>
+          <span id="btnFitNetText">Fit View</span>
+        </button>
+        <!-- Full Screen View Button (Replaced Stabilize) -->
+        <button id="btnFullscreenNet" title="Full Screen View (Esc to exit)" class="btn-secondary btn-chart-ctrl py-1 px-2 sm:px-2.5 text-xs">
+          <svg id="iconEnterFullscreenNet" viewBox="0 0 24 24" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+          </svg>
+          <svg id="iconExitFullscreenNet" viewBox="0 0 24 24" class="w-3.5 h-3.5 hidden" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 14h6m0 0v6m0-6L3 21m17-7h-6m0 0v6m0-6l7 7M14 4h6m-6 0v6m0-6l7-7M4 10h6m0 0V4m0 6L3 3"/>
+          </svg>
+          <span id="btnFullscreenNetText">Full Screen</span>
+        </button>
+      </div>
     </div>
 
     <!-- Active Link Mode Banner -->
-    <div id="linkModeBanner" class="hidden absolute top-3 left-1/2 -translate-x-1/2 z-20 bg-blue-600 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-xl flex items-center gap-3">
-      <div class="flex items-center gap-2">
-        <i class="fi fi-rr-link-alt text-xs"></i>
-        <span id="linkModeBannerText">Click or drag from the first entity to the second entity</span>
+    <div id="linkModeBanner" class="hidden absolute top-12 sm:top-14 left-1/2 -translate-x-1/2 z-30 bg-blue-600 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-xl flex items-center gap-3 max-w-[90%] text-center">
+      <div class="flex items-center gap-2 truncate">
+        <i class="fi fi-rr-link-alt text-xs shrink-0"></i>
+        <span id="linkModeBannerText" class="truncate">Click or drag from the first entity to the second entity</span>
       </div>
-      <button id="cancelLinkModeBtn" type="button" class="btn-secondary py-0.5 px-2.5 text-[11px] bg-white text-black border-white hover:border-blue-300">
+      <button id="cancelLinkModeBtn" type="button" class="btn-secondary py-0.5 px-2.5 text-[11px] bg-white text-black border-white hover:border-blue-300 shrink-0">
         <span>Cancel</span>
       </button>
     </div>
 
     <!-- Active Box Mode Banner -->
-    <div id="boxModeBanner" class="hidden absolute top-3 left-1/2 -translate-x-1/2 z-20 bg-blue-600 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-xl flex items-center gap-3">
-      <div class="flex items-center gap-2">
-        <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-none stroke-current" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <div id="boxModeBanner" class="hidden absolute top-12 sm:top-14 left-1/2 -translate-x-1/2 z-30 bg-blue-600 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-xl flex items-center gap-3 max-w-[90%] text-center">
+      <div class="flex items-center gap-2 truncate">
+        <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-none stroke-current shrink-0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke-dasharray="3 2"/>
         </svg>
-        <span id="boxModeBannerText">Click and drag anywhere on the chart to draw a box</span>
+        <span id="boxModeBannerText" class="truncate">Click and drag anywhere on the chart to draw a box</span>
       </div>
-      <button id="cancelBoxModeBtn" type="button" class="btn-secondary py-0.5 px-2.5 text-[11px] bg-white text-black border-white hover:border-blue-300">
+      <button id="cancelBoxModeBtn" type="button" class="btn-secondary py-0.5 px-2.5 text-[11px] bg-white text-black border-white hover:border-blue-300 shrink-0">
         <span>Cancel</span>
       </button>
     </div>
 
     <!-- Exit Fullscreen Button (Shown in Fullscreen mode) -->
-    <button id="btnExitFullscreenNet" type="button" title="Exit Full Screen (Esc)" class="hidden absolute top-3 right-3 z-30 btn-primary py-1.5 px-3 text-xs shadow-2xl flex items-center gap-1.5">
+    <button id="btnExitFullscreenNet" type="button" title="Exit Full Screen (Esc)" class="hidden absolute top-2.5 right-2.5 z-30 btn-primary py-1.5 px-3 text-xs shadow-2xl flex items-center gap-1.5">
       <i class="fi fi-rr-cross text-xs"></i>
       <span>Exit Full Screen</span>
       <kbd class="ml-1 text-[10px] bg-white/20 px-1 py-0.5 rounded font-mono">Esc</kbd>
     </button>
-
-    <!-- Chart Control Buttons -->
-    <div class="absolute top-3 right-3 z-10 flex items-center gap-1.5">
-      <button id="btnLinkModeToggle" title="Draw Relationship Link: Drag from one entity to another (or hold Shift on chart)" class="btn-secondary py-1 px-2.5 text-xs">
-        <i class="fi fi-rr-link-alt text-xs"></i>
-        <span id="btnLinkModeToggleText">Draw Link</span>
-      </button>
-      <button id="btnBoxModeToggle" title="Draw Box: Click and drag anywhere on chart to draw a container box inside or outside entities" class="btn-secondary py-1 px-2.5 text-xs">
-        <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-none stroke-current" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke-dasharray="3 2"/>
-        </svg>
-        <span id="btnBoxModeToggleText">Draw Box</span>
-      </button>
-      <button id="btnCornerModeToggle" title="Add Corner to Link: Click any link to insert a draggable diamond handle" class="btn-secondary py-1 px-2.5 text-xs">
-        <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
-          <line x1="2" y1="12" x2="8.5" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-          <polygon points="12,7 16,12 12,17 8,12" fill="currentColor"/>
-          <line x1="15.5" y1="12" x2="22" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-        </svg>
-        <span id="btnCornerModeToggleText">Add Corner</span>
-      </button>
-      <button id="btnFitNet" title="Fit All Nodes" class="btn-secondary py-1 px-2.5 text-xs">
-        <i class="fi fi-rr-expand text-xs"></i>
-        <span>Fit View</span>
-      </button>
-      <!-- Full Screen View Button (Replaced Stabilize) -->
-      <button id="btnFullscreenNet" title="Full Screen View (Esc to exit)" class="btn-secondary py-1 px-2.5 text-xs">
-        <svg id="iconEnterFullscreenNet" viewBox="0 0 24 24" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
-        </svg>
-        <svg id="iconExitFullscreenNet" viewBox="0 0 24 24" class="w-3.5 h-3.5 hidden" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M4 14h6m0 0v6m0-6L3 21m17-7h-6m0 0v6m0-6l7 7M14 4h6m-6 0v6m0-6l7-7M4 10h6m0 0V4m0 6L3 3"/>
-        </svg>
-        <span id="btnFullscreenNetText">Full Screen</span>
-      </button>
-    </div>
 
     <!-- Vis.Network Container (Pure White) -->
     <div id="net" class="flex-1 w-full h-full bg-white"></div>
@@ -2984,7 +3025,7 @@ function enterBoxMode() {
   isBoxMode = true;
   const topBtn = $("btnBoxModeToggle");
   if (topBtn) {
-    topBtn.className = "btn-secondary py-1 px-2.5 text-xs bg-blue-600 text-white border-blue-600 hover:bg-blue-700 shadow-sm";
+    topBtn.className = "btn-secondary btn-chart-ctrl py-1 px-2 sm:px-2.5 text-xs bg-blue-600 text-white border-blue-600 hover:bg-blue-700 shadow-sm";
     if ($("btnBoxModeToggleText")) $("btnBoxModeToggleText").textContent = "Cancel Box";
   }
   const sideBtn = $("btnBoxTool");
@@ -3007,7 +3048,7 @@ function exitBoxMode() {
 
   const topBtn = $("btnBoxModeToggle");
   if (topBtn) {
-    topBtn.className = "btn-secondary py-1 px-2.5 text-xs";
+    topBtn.className = "btn-secondary btn-chart-ctrl py-1 px-2 sm:px-2.5 text-xs";
     if ($("btnBoxModeToggleText")) $("btnBoxModeToggleText").textContent = "Draw Box";
   }
   const sideBtn = $("btnBoxTool");
@@ -4637,7 +4678,7 @@ function enterLinkMode(fromNodeId = null) {
   }
   const topBtn = $("btnLinkModeToggle");
   if (topBtn) {
-    topBtn.className = "btn-secondary py-1 px-2.5 text-xs bg-blue-600 text-white border-blue-600 hover:bg-blue-700 shadow-sm";
+    topBtn.className = "btn-secondary btn-chart-ctrl py-1 px-2 sm:px-2.5 text-xs bg-blue-600 text-white border-blue-600 hover:bg-blue-700 shadow-sm";
     if ($("btnLinkModeToggleText")) $("btnLinkModeToggleText").textContent = "Cancel Link";
   }
   if ($("linkToolBadge")) {
@@ -4679,7 +4720,7 @@ function exitLinkMode() {
   }
   const topBtn = $("btnLinkModeToggle");
   if (topBtn) {
-    topBtn.className = "btn-secondary py-1 px-2.5 text-xs";
+    topBtn.className = "btn-secondary btn-chart-ctrl py-1 px-2 sm:px-2.5 text-xs";
     if ($("btnLinkModeToggleText")) $("btnLinkModeToggleText").textContent = "Draw Link";
   }
   if ($("linkToolBadge")) {
@@ -4813,7 +4854,7 @@ function enterCornerMode() {
   }
   const topBtn = $("btnCornerModeToggle");
   if (topBtn) {
-    topBtn.className = "btn-secondary py-1 px-2.5 text-xs bg-blue-600 text-white border-blue-600 hover:bg-blue-700 shadow-sm";
+    topBtn.className = "btn-secondary btn-chart-ctrl py-1 px-2 sm:px-2.5 text-xs bg-blue-600 text-white border-blue-600 hover:bg-blue-700 shadow-sm";
     if ($("btnCornerModeToggleText")) $("btnCornerModeToggleText").textContent = "Cancel Corner";
   }
   if ($("linkToolBadge")) {
@@ -4841,7 +4882,7 @@ function exitCornerMode() {
   }
   const topBtn = $("btnCornerModeToggle");
   if (topBtn) {
-    topBtn.className = "btn-secondary py-1 px-2.5 text-xs";
+    topBtn.className = "btn-secondary btn-chart-ctrl py-1 px-2 sm:px-2.5 text-xs";
     if ($("btnCornerModeToggleText")) $("btnCornerModeToggleText").textContent = "Add Corner";
   }
   if ($("linkToolBadge")) {
