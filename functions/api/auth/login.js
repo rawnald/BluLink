@@ -61,8 +61,6 @@ export async function onRequestPost({ request, env }) {
       return json({
         require_verification: true,
         email: user.email,
-        email_sent: emailResult.sent,
-        code_preview: !emailResult.sent ? code : undefined,
         error: "Please confirm your email first before entering the workspace."
       }, 403);
     }

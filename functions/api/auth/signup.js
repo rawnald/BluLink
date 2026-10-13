@@ -72,12 +72,7 @@ export async function onRequestPost({ request, env }) {
     return json({
       require_verification: true,
       email: trimmedEmail,
-      email_sent: emailResult.sent,
-      // If email delivery was not possible (no email service configured on Cloudflare), provide fallback preview
-      code_preview: !emailResult.sent ? verificationCode : undefined,
-      message: emailResult.sent
-        ? "Account created! A 6-digit confirmation code was sent to your email."
-        : "Account created! Please check your email for the 6-digit verification code."
+      message: "Account created! A 6-digit confirmation code was sent to your email."
     }, 201);
   } catch (err) {
     return error(err.message || "Sign up failed", 500);

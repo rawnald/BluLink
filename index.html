@@ -1307,19 +1307,13 @@ function showAuthMsg(msg, isError) {
     : "min-h-[20px] text-xs font-semibold text-blue-600 text-center";
 }
 
-function showConfirmScreen(email, codePreview) {
+function showConfirmScreen(email) {
   pendingEmail = email;
   $("authFormView").classList.add("hidden");
   $("authConfirmView").classList.remove("hidden");
   $("confirmEmailDisplay").textContent = email;
   $("confirmCodeInput").value = "";
-  if (codePreview) {
-    $("confirmMsg").textContent = `Email service not configured. Your 6-digit code is: ${codePreview}`;
-    $("confirmMsg").className = "min-h-[20px] text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 py-1.5 px-2 rounded-lg text-center";
-  } else {
-    $("confirmMsg").textContent = "We sent a 6-digit confirmation code to your email. Please check your inbox.";
-    $("confirmMsg").className = "min-h-[20px] text-xs font-semibold text-blue-600 text-center";
-  }
+  $("confirmMsg").textContent = "";
   $("confirmCodeInput").focus();
 }
 
@@ -1361,7 +1355,7 @@ $("btnSubmitAuth").onclick = async () => {
 
     // Check if email confirmation is required
     if (resJson.require_verification) {
-      showConfirmScreen(resJson.email, resJson.code_preview);
+      showConfirmScreen(resJson.email);
       return;
     }
 
@@ -1433,13 +1427,8 @@ $("btnResendCode").onclick = async () => {
       return;
     }
     $("confirmCodeInput").value = "";
-    if (resJson.code_preview) {
-      $("confirmMsg").textContent = `Email service not configured. Your new code is: ${resJson.code_preview}`;
-      $("confirmMsg").className = "min-h-[20px] text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 py-1.5 px-2 rounded-lg text-center";
-    } else {
-      $("confirmMsg").textContent = "New confirmation code has been sent to your email!";
-      $("confirmMsg").className = "min-h-[20px] text-xs font-semibold text-blue-600 text-center";
-    }
+    $("confirmMsg").textContent = "New confirmation code has been sent to your email!";
+    $("confirmMsg").className = "min-h-[20px] text-xs font-semibold text-blue-600 text-center";
     $("confirmCodeInput").focus();
   } catch (e) {
     $("confirmMsg").textContent = "Error sending code.";
