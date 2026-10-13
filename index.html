@@ -3023,6 +3023,154 @@ function findBoxHeaderOrBorderAt(canvasPos) {
   return null;
 }
 
+// Calculate the exact point on the perimeter border of a group box facing a target coordinate
+function getBoxBorderAnchor(b, targetPoint) {
+  if (!b) return { x: 0, y: 0 };
+  const cx = b.x + b.w / 2;
+  const cy = b.y + b.h / 2;
+  if (!targetPoint) return { x: Math.round(cx), y: Math.round(b.y) };
+
+  const px = targetPoint.x;
+  const py = targetPoint.y;
+
+  // If inside the box, snap to closest perimeter border edge
+  if (px >= b.x && px <= b.x + b.w && py >= b.y && py <= b.y + b.h) {
+    const dLeft = Math.abs(px - b.x);
+    const dRight = Math.abs(b.x + b.w - px);
+    const dTop = Math.abs(py - b.y);
+    const dBottom = Math.abs(b.y + b.h - py);
+    const minD = Math.min(dLeft, dRight, dTop, dBottom);
+
+    if (minD === dLeft) return { x: Math.round(b.x), y: Math.round(py) };
+    if (minD === dRight) return { x: Math.round(b.x + b.w), y: Math.round(py) };
+    if (minD === dTop) return { x: Math.round(px), y: Math.round(b.y) };
+    return { x: Math.round(px), y: Math.round(b.y + b.h) };
+  }
+
+  // Outside the box: ray from center to targetPoint intersects bounding box perimeter
+  const dx = px - cx;
+  const dy = py - cy;
+  if (Math.abs(dx) < 0.001 && Math.abs(dy) < 0.001) {
+    return { x: Math.round(cx), y: Math.round(b.y) };
+  }
+
+  const hw = b.w / 2;
+  const hh = b.h / 2;
+  const tx = Math.abs(dx) > 0 ? hw / Math.abs(dx) : Infinity;
+  const ty = Math.abs(dy) > 0 ? hh / Math.abs(dy) : Infinity;
+  const t = Math.min(tx, ty);
+
+  return {
+    x: Math.round(cx + dx * t),
+    y: Math.round(cy + dy * t)
+  };
+}
+
+// Helper to get center position of any entity, box, or corner node
+function getNodeCenterPos(nodeId) {
+  if (!nodeId) return null;
+  if (typeof nodeId === "string" && nodeId.startsWith("box_")) {
+    const b = data.boxes ? data.boxes.find(x => x.id === nodeId) : null;
+    if (b) return { x: Math.round(b.x + b.w / 2), y: Math.round(b.y + b.h / 2) };
+  }
+  if (net && nodes && nodes.get(nodeId)) {
+    try {
+      const p = net.getPosition(nodeId);
+      if (p && !isNaN(p.x) && !isNaN(p.y)) return p;
+    } catch (e) {}
+  }
+  const ent = data.entities ? data.entities.find(x => x.id === nodeId) : null;
+  if (ent && ent.x != null && ent.y != null) return { x: ent.x, y: ent.y };
+  return null;
+}
+
+// Update the border anchor node positions for a specific link
+function updateLinkBoxAnchors(l, nodeUpdates = null) {
+  if (!l || !data.boxes) return;
+  const isFromBox = typeof l.from === "string" && l.from.startsWith("box_");
+  const isToBox = typeof l.to === "string" && l.to.startsWith("box_");
+  if (!isFromBox && !isToBox) return;
+
+  const bFrom = isFromBox ? data.boxes.find(x => x.id === l.from) : null;
+  const bTo = isToBox ? data.boxes.find(x => x.id === l.to) : null;
+
+  const hasCorners = l.corners && l.corners.length > 0;
+  const firstTarget = hasCorners ? l.corners[0] : getNodeCenterPos(l.to);
+  const lastTarget = hasCorners ? l.corners[l.corners.length - 1] : getNodeCenterPos(l.from);
+
+  const updates = nodeUpdates || [];
+
+  if (bFrom && firstTarget) {
+    const pt = getBoxBorderAnchor(bFrom, firstTarget);
+    const anchorId = `box_anchor_${l.id}_from`;
+    if (nodes) {
+      if (nodes.get(anchorId)) {
+        updates.push({ id: anchorId, x: pt.x, y: pt.y });
+      } else {
+        nodes.add({
+          id: anchorId,
+          x: pt.x,
+          y: pt.y,
+          shape: "dot",
+          size: 0.1,
+          color: {
+            background: "rgba(0,0,0,0)",
+            border: "rgba(0,0,0,0)",
+            highlight: { background: "rgba(0,0,0,0)", border: "rgba(0,0,0,0)" },
+            hover: { background: "rgba(0,0,0,0)", border: "rgba(0,0,0,0)" }
+          },
+          physics: false,
+          fixed: true,
+          font: { size: 0, color: "rgba(0,0,0,0)", strokeWidth: 0 }
+        });
+      }
+    }
+  }
+
+  if (bTo && lastTarget) {
+    const pt = getBoxBorderAnchor(bTo, lastTarget);
+    const anchorId = `box_anchor_${l.id}_to`;
+    if (nodes) {
+      if (nodes.get(anchorId)) {
+        updates.push({ id: anchorId, x: pt.x, y: pt.y });
+      } else {
+        nodes.add({
+          id: anchorId,
+          x: pt.x,
+          y: pt.y,
+          shape: "dot",
+          size: 0.1,
+          color: {
+            background: "rgba(0,0,0,0)",
+            border: "rgba(0,0,0,0)",
+            highlight: { background: "rgba(0,0,0,0)", border: "rgba(0,0,0,0)" },
+            hover: { background: "rgba(0,0,0,0)", border: "rgba(0,0,0,0)" }
+          },
+          physics: false,
+          fixed: true,
+          font: { size: 0, color: "rgba(0,0,0,0)", strokeWidth: 0 }
+        });
+      }
+    }
+  }
+
+  if (!nodeUpdates && updates.length > 0 && nodes) {
+    try { nodes.update(updates); } catch (e) {}
+  }
+}
+
+// Update all box border anchor positions across all links
+function updateAllBoxAnchors() {
+  if (!nodes || !data.links || !data.boxes) return;
+  const nodeUpdates = [];
+  data.links.forEach(l => {
+    updateLinkBoxAnchors(l, nodeUpdates);
+  });
+  if (nodeUpdates.length > 0) {
+    try { nodes.update(nodeUpdates); } catch (e) {}
+  }
+}
+
 function enterBoxMode() {
   if (!currentProjectId) {
     showNoProjectError();
@@ -3159,8 +3307,14 @@ function initNet() {
       selected = null;
       if (selectedBoxId) { selectedBoxId = null; net.redraw(); }
       updateEdgeVisuals();
-    } else if (typeof nid === "string" && nid.startsWith("box_")) {
-      selectedBoxId = nid;
+    } else if (typeof nid === "string" && (nid.startsWith("box_") || nid.startsWith("box_anchor_"))) {
+      let bId = nid;
+      if (nid.startsWith("box_anchor_")) {
+        const parts = nid.split("_");
+        const l = data.links ? data.links.find(x => x.id === parts[2]) : null;
+        if (l) bId = parts[3] === "from" ? l.from : l.to;
+      }
+      selectedBoxId = bId;
       selectedCornerNodeId = null;
       select(null, "net");
       updateEdgeVisuals();
@@ -3226,7 +3380,7 @@ function initNet() {
     const positions = net.getPositions(nodeIds);
 
     nodeIds.forEach(id => {
-      if (typeof id === "string" && id.startsWith("box_")) return;
+      if (typeof id === "string" && (id.startsWith("box_") || id.startsWith("box_anchor_"))) return;
       const pos = positions[id];
       if (!pos) return;
 
@@ -3250,10 +3404,11 @@ function initNet() {
     }
   }
 
-  // Real-time clamping while dragging nodes
+  // Real-time clamping and box border anchor tracking while dragging nodes
   net.on("dragging", p => {
     if (p.nodes && p.nodes.length && !isDrawingLiveLine) {
       clampNodesToWorkspace(p.nodes);
+      updateAllBoxAnchors();
     }
   });
 
@@ -3275,7 +3430,7 @@ function initNet() {
             l.corners[cornerIdx].y = Math.round(positions[id].y);
             linkMoved = true;
           }
-        } else if (typeof id === "string" && !id.startsWith("box_")) {
+        } else if (typeof id === "string" && !id.startsWith("box_") && !id.startsWith("box_anchor_")) {
           const ent = data.entities.find(x => x.id === id);
           if (ent && positions[id]) {
             ent.x = Math.round(positions[id].x);
@@ -3284,6 +3439,7 @@ function initNet() {
         }
       });
       queueSave();
+      updateAllBoxAnchors();
     }
   });
 
@@ -3293,6 +3449,11 @@ function initNet() {
     if (clickedNodeId && typeof clickedNodeId === "string" && clickedNodeId.startsWith("corner_")) {
       const parts = clickedNodeId.split("_");
       openEditLinkModal(parts[1]);
+      return;
+    }
+    if (clickedNodeId && typeof clickedNodeId === "string" && clickedNodeId.startsWith("box_anchor_")) {
+      const parts = clickedNodeId.split("_");
+      openEditLinkModal(parts[2]);
       return;
     }
 
@@ -3334,8 +3495,11 @@ function initNet() {
       const b = data.entities.find(x => x.id === l.to) || (data.boxes ? data.boxes.find(x => x.id === l.to) : null);
       if (!a || !b) return;
 
-      const aPos = a.w != null ? { x: Math.round(a.x + a.w / 2), y: Math.round(a.y + a.h / 2) } : { x: a.x, y: a.y };
-      const bPos = b.w != null ? { x: Math.round(b.x + b.w / 2), y: Math.round(b.y + b.h / 2) } : { x: b.x, y: b.y };
+      const firstTarget = (l.corners && l.corners.length > 0) ? l.corners[0] : (b.w != null ? { x: Math.round(b.x + b.w / 2), y: Math.round(b.y + b.h / 2) } : { x: b.x, y: b.y });
+      const lastTarget = (l.corners && l.corners.length > 0) ? l.corners[l.corners.length - 1] : (a.w != null ? { x: Math.round(a.x + a.w / 2), y: Math.round(a.y + a.h / 2) } : { x: a.x, y: a.y });
+
+      const aPos = a.w != null ? getBoxBorderAnchor(a, firstTarget) : { x: a.x, y: a.y };
+      const bPos = b.w != null ? getBoxBorderAnchor(b, lastTarget) : { x: b.x, y: b.y };
 
       const chain = [aPos];
       if (l.corners) {
@@ -3416,6 +3580,11 @@ function initNet() {
     if (isLinkMode) {
       let clickedId = net.getNodeAt(params.pointer.DOM);
       if (typeof clickedId === "string" && clickedId.startsWith("corner_")) return;
+      if (typeof clickedId === "string" && clickedId.startsWith("box_anchor_")) {
+        const parts = clickedId.split("_");
+        const l = data.links ? data.links.find(x => x.id === parts[2]) : null;
+        if (l) clickedId = parts[3] === "from" ? l.from : l.to;
+      }
       if (!clickedId) {
         const cPos = net.DOMtoCanvas(params.pointer.DOM);
         const hitBox = findBoxAt(cPos);
@@ -3457,8 +3626,14 @@ function initNet() {
           select(null, "net");
           updateEdgeVisuals();
           net.redraw();
-        } else if (typeof clickedNode === "string" && clickedNode.startsWith("box_")) {
-          selectedBoxId = clickedNode;
+        } else if (typeof clickedNode === "string" && (clickedNode.startsWith("box_") || clickedNode.startsWith("box_anchor_"))) {
+          let bId = clickedNode;
+          if (clickedNode.startsWith("box_anchor_")) {
+            const parts = clickedNode.split("_");
+            const l = data.links ? data.links.find(x => x.id === parts[2]) : null;
+            if (l) bId = parts[3] === "from" ? l.from : l.to;
+          }
+          selectedBoxId = bId;
           selectedLinkId = null;
           selectedCornerNodeId = null;
           select(null, "net");
@@ -3541,22 +3716,26 @@ function initNet() {
 
     if (!isDrawingLiveLine || !liveLineSourceId) return;
 
-    let srcPos = null;
-    if (typeof liveLineSourceId === "string" && liveLineSourceId.startsWith("box_")) {
-      const b = data.boxes ? data.boxes.find(x => x.id === liveLineSourceId) : null;
-      if (b) srcPos = { x: Math.round(b.x + b.w / 2), y: Math.round(b.y + b.h / 2) };
-    } else {
-      srcPos = net.getPosition(liveLineSourceId);
-    }
-
     let targetPos = liveLineCurrentCanvasPos;
     if (liveLineHoverTargetId) {
       if (typeof liveLineHoverTargetId === "string" && liveLineHoverTargetId.startsWith("box_")) {
         const b = data.boxes ? data.boxes.find(x => x.id === liveLineHoverTargetId) : null;
-        if (b) targetPos = { x: Math.round(b.x + b.w / 2), y: Math.round(b.y + b.h / 2) };
+        const srcRef = (typeof liveLineSourceId === "string" && liveLineSourceId.startsWith("box_"))
+          ? (data.boxes ? data.boxes.find(x => x.id === liveLineSourceId) : null)
+          : net.getPosition(liveLineSourceId);
+        const refPt = srcRef ? (srcRef.w != null ? { x: srcRef.x + srcRef.w/2, y: srcRef.y + srcRef.h/2 } : srcRef) : liveLineCurrentCanvasPos;
+        if (b) targetPos = getBoxBorderAnchor(b, refPt);
       } else {
         targetPos = net.getPosition(liveLineHoverTargetId);
       }
+    }
+
+    let srcPos = null;
+    if (typeof liveLineSourceId === "string" && liveLineSourceId.startsWith("box_")) {
+      const b = data.boxes ? data.boxes.find(x => x.id === liveLineSourceId) : null;
+      if (b) srcPos = getBoxBorderAnchor(b, targetPos);
+    } else {
+      srcPos = net.getPosition(liveLineSourceId);
     }
     if (!srcPos || !targetPos) return;
 
@@ -3568,15 +3747,22 @@ function initNet() {
     const angle = Math.atan2(dy, dx);
     const nodeMargin = 38;
 
-    // Start outside source icon boundary
-    const startDist = Math.min(nodeMargin, dist * 0.45);
-    const startX = srcPos.x + Math.cos(angle) * startDist;
-    const startY = srcPos.y + Math.sin(angle) * startDist;
+    const isSrcBox = typeof liveLineSourceId === "string" && liveLineSourceId.startsWith("box_");
+    const isTargetBox = typeof liveLineHoverTargetId === "string" && liveLineHoverTargetId.startsWith("box_");
 
-    // End outside target icon if snapped to an entity, or at cursor
+    // Start outside source icon boundary, or right on border for box
+    let startX = srcPos.x;
+    let startY = srcPos.y;
+    if (!isSrcBox) {
+      const startDist = Math.min(nodeMargin, dist * 0.45);
+      startX = srcPos.x + Math.cos(angle) * startDist;
+      startY = srcPos.y + Math.sin(angle) * startDist;
+    }
+
+    // End outside target icon if snapped to an entity, or at cursor, or right on border for box
     let endX = targetPos.x;
     let endY = targetPos.y;
-    if (liveLineHoverTargetId && dist > nodeMargin * 1.5) {
+    if (liveLineHoverTargetId && !isTargetBox && dist > nodeMargin * 1.5) {
       endX = targetPos.x - Math.cos(angle) * nodeMargin;
       endY = targetPos.y - Math.sin(angle) * nodeMargin;
     }
@@ -3634,22 +3820,26 @@ function initNet() {
 
     if (!isDrawingLiveLine || !liveLineSourceId) return;
 
-    let srcPos = null;
-    if (typeof liveLineSourceId === "string" && liveLineSourceId.startsWith("box_")) {
-      const b = data.boxes ? data.boxes.find(x => x.id === liveLineSourceId) : null;
-      if (b) srcPos = { x: Math.round(b.x + b.w / 2), y: Math.round(b.y + b.h / 2) };
-    } else {
-      srcPos = net.getPosition(liveLineSourceId);
-    }
-
     let targetPos = liveLineCurrentCanvasPos;
     if (liveLineHoverTargetId) {
       if (typeof liveLineHoverTargetId === "string" && liveLineHoverTargetId.startsWith("box_")) {
         const b = data.boxes ? data.boxes.find(x => x.id === liveLineHoverTargetId) : null;
-        if (b) targetPos = { x: Math.round(b.x + b.w / 2), y: Math.round(b.y + b.h / 2) };
+        const srcRef = (typeof liveLineSourceId === "string" && liveLineSourceId.startsWith("box_"))
+          ? (data.boxes ? data.boxes.find(x => x.id === liveLineSourceId) : null)
+          : net.getPosition(liveLineSourceId);
+        const refPt = srcRef ? (srcRef.w != null ? { x: srcRef.x + srcRef.w/2, y: srcRef.y + srcRef.h/2 } : srcRef) : liveLineCurrentCanvasPos;
+        if (b) targetPos = getBoxBorderAnchor(b, refPt);
       } else {
         targetPos = net.getPosition(liveLineHoverTargetId);
       }
+    }
+
+    let srcPos = null;
+    if (typeof liveLineSourceId === "string" && liveLineSourceId.startsWith("box_")) {
+      const b = data.boxes ? data.boxes.find(x => x.id === liveLineSourceId) : null;
+      if (b) srcPos = getBoxBorderAnchor(b, targetPos);
+    } else {
+      srcPos = net.getPosition(liveLineSourceId);
     }
     if (!srcPos || !targetPos) return;
 
@@ -3663,6 +3853,11 @@ function initNet() {
         ctx.lineWidth = 3;
         ctx.setLineDash([6, 4]);
         ctx.strokeRect(b.x - 3, b.y - 3, b.w + 6, b.h + 6);
+        ctx.fillStyle = "#2563eb";
+        ctx.setLineDash([]);
+        ctx.beginPath();
+        ctx.arc(srcPos.x, srcPos.y, 5, 0, Math.PI * 2);
+        ctx.fill();
       }
     } else {
       ctx.fillStyle = "rgba(37, 99, 235, 0.15)";
@@ -3684,6 +3879,11 @@ function initNet() {
           ctx.lineWidth = 4;
           ctx.setLineDash([8, 4]);
           ctx.strokeRect(b.x - 4, b.y - 4, b.w + 8, b.h + 8);
+          ctx.fillStyle = "#2563eb";
+          ctx.setLineDash([]);
+          ctx.beginPath();
+          ctx.arc(targetPos.x, targetPos.y, 6, 0, Math.PI * 2);
+          ctx.fill();
         }
       } else {
         ctx.fillStyle = "rgba(37, 99, 235, 0.22)";
@@ -3744,6 +3944,11 @@ function initNet() {
       const domPos = { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
       let startNode = net.getNodeAt(domPos);
       if (typeof startNode === "string" && startNode.startsWith("corner_")) startNode = null;
+      if (typeof startNode === "string" && startNode.startsWith("box_anchor_")) {
+        const parts = startNode.split("_");
+        const l = data.links ? data.links.find(x => x.id === parts[2]) : null;
+        if (l) startNode = parts[3] === "from" ? l.from : l.to;
+      }
       if (!startNode) {
         const cPos = net.DOMtoCanvas(domPos);
         const hitBox = findBoxAt(cPos);
@@ -3869,6 +4074,7 @@ function initNet() {
         if (nodes && nodes.get(b.id)) {
           nodes.update({ id: b.id, x: Math.round(b.x + b.w / 2), y: Math.round(b.y + b.h / 2) });
         }
+        updateAllBoxAnchors();
         net.redraw();
       }
       return;
@@ -3901,6 +4107,7 @@ function initNet() {
         if (nodes && nodes.get(b.id)) {
           nodes.update({ id: b.id, x: Math.round(b.x + b.w / 2), y: Math.round(b.y + b.h / 2) });
         }
+        updateAllBoxAnchors();
         net.redraw();
       }
       return;
@@ -3942,6 +4149,11 @@ function initNet() {
 
     let hovered = net.getNodeAt(domPos);
     if (typeof hovered === "string" && hovered.startsWith("corner_")) hovered = null;
+    if (typeof hovered === "string" && hovered.startsWith("box_anchor_")) {
+      const parts = hovered.split("_");
+      const l = data.links ? data.links.find(x => x.id === parts[2]) : null;
+      if (l) hovered = parts[3] === "from" ? l.from : l.to;
+    }
     if (!hovered) {
       const hitBox = findBoxAt(liveLineCurrentCanvasPos);
       if (hitBox) hovered = hitBox.id;
@@ -4047,6 +4259,11 @@ function initNet() {
     const domPos = { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
     let endNode = liveLineHoverTargetId || net.getNodeAt(domPos);
     if (typeof endNode === "string" && endNode.startsWith("corner_")) endNode = null;
+    if (typeof endNode === "string" && endNode.startsWith("box_anchor_")) {
+      const parts = endNode.split("_");
+      const l = data.links ? data.links.find(x => x.id === parts[2]) : null;
+      if (l) endNode = parts[3] === "from" ? l.from : l.to;
+    }
     if (!endNode) {
       const cPos = net.DOMtoCanvas(domPos);
       const hitBox = findBoxAt(cPos);
@@ -4233,6 +4450,10 @@ function render(fitAll = false) {
     const b = byId[l.to];
     if (!a || !b) return;
 
+    updateLinkBoxAnchors(l);
+    const edgeFrom = (typeof l.from === "string" && l.from.startsWith("box_")) ? `box_anchor_${l.id}_from` : l.from;
+    const edgeTo = (typeof l.to === "string" && l.to.startsWith("box_")) ? `box_anchor_${l.id}_to` : l.to;
+
     const isConnectedToSel = (selected && (l.from === selected || l.to === selected)) ||
       (selectedBoxId && (l.from === selectedBoxId || l.to === selectedBoxId)) ||
       (selectedLinkId && l.id === selectedLinkId);
@@ -4252,8 +4473,8 @@ function render(fitAll = false) {
       // Direct straight line
       edges.add({
         id: l.id,
-        from: l.from,
-        to: l.to,
+        from: edgeFrom,
+        to: edgeTo,
         label: l.label != null && l.label !== "" ? l.label : "link",
         smooth: false,
         dashes: isUnconfirmed ? [6, 6] : false,
@@ -4293,7 +4514,7 @@ function render(fitAll = false) {
         });
       });
 
-      const chain = [l.from, ...cornerNodeIds, l.to];
+      const chain = [edgeFrom, ...cornerNodeIds, edgeTo];
       for (let i = 0; i < chain.length - 1; i++) {
         const fromNode = chain[i];
         const toNode = chain[i + 1];
@@ -4913,37 +5134,17 @@ function createLinkBetween(fromId, toId) {
   };
   data.links.push(newLink);
 
-  // Ensure anchor nodes exist in Vis.Network DataSet for group boxes
-  [fromId, toId].forEach(id => {
-    if (typeof id === "string" && id.startsWith("box_") && nodes && !nodes.get(id)) {
-      const b = data.boxes ? data.boxes.find(x => x.id === id) : null;
-      if (b) {
-        nodes.add({
-          id: b.id,
-          x: Math.round(b.x + b.w / 2),
-          y: Math.round(b.y + b.h / 2),
-          shape: "dot",
-          size: 0.1,
-          color: {
-            background: "rgba(0,0,0,0)",
-            border: "rgba(0,0,0,0)",
-            highlight: { background: "rgba(0,0,0,0)", border: "rgba(0,0,0,0)" },
-            hover: { background: "rgba(0,0,0,0)", border: "rgba(0,0,0,0)" }
-          },
-          physics: false,
-          fixed: true,
-          font: { size: 0, color: "rgba(0,0,0,0)", strokeWidth: 0 }
-        });
-      }
-    }
-  });
+  // Update border anchor nodes for group boxes
+  updateLinkBoxAnchors(newLink);
+  const edgeFrom = (typeof fromId === "string" && fromId.startsWith("box_")) ? `box_anchor_${newLink.id}_from` : fromId;
+  const edgeTo = (typeof toId === "string" && toId.startsWith("box_")) ? `box_anchor_${newLink.id}_to` : toId;
 
   // Add edge directly to Vis.Network DataSet without clearing or moving any nodes!
   if (edges) {
     edges.add({
       id: newLink.id,
-      from: newLink.from,
-      to: newLink.to,
+      from: edgeFrom,
+      to: edgeTo,
       label: "link",
       smooth: false,
       dashes: false,
