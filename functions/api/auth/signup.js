@@ -12,36 +12,23 @@ export async function onRequestPost({ request, env }) {
     }
 
     const trimmedEmail = email.trim().toLowerCase();
-    if (trimmedEmail.length < 3 || !trimmedEmail.includes("@")) {
-      return error("Please enter a valid email address.");
+    if (!trimmedEmail.endsWith("@gmail.com") && !trimmedEmail.endsWith("@googlemail.com")) {
+      return error("Only Gmail addresses (@gmail.com) are allowed. Please register using your Gmail account.", 400);
     }
     if (password.length < 6) {
-      return error("Password must be at least 6 characters long.");
+      return error("Password must be at least 6 characters long.", 400);
     }
 
     // Check if user already exists
     const existing = await env.DB.prepare("SELECT id, email_verified, auth_provider FROM users WHERE email = ?").bind(trimmedEmail).first();
     if (existing) {
-      if (existing.email_verified === 0) {
-        // Resend code to unconfirmed user
-        const newCode = generateVerificationCode();
-        await env.DB.prepare(`
-          UPDATE users SET verification_code = ?, verification_expires = datetime('now', '+15 minutes') WHERE id = ?
-        `).bind(newCode, existing.id).run();
-        try {
-          await sendEmailConfirmation(trimmedEmail, newCode, env);
-        } catch (e) {}
-
-        return json({
-          require_verification: true,
-          email: trimmedEmail,
-          message: "A confirmation code has been sent to your email. Please verify to enter."
-        });
-      }
       if (existing.auth_provider === "google") {
-        return error("This email is registered via Google. Please sign in with Google.");
+        return error("This email address is already registered via Google. Please click 'Continue with Google'.", 409);
       }
-      return error("An account with this email already exists. Please sign in instead.");
+      if (existing.email_verified === 1) {
+        return error("This email address is already registered. Please sign in instead.", 409);
+      }
+      return error("This email address is already registered. Please sign in to enter or verify your account.", 409);
     }
 
     const userId = "u_" + randomHex(8);
@@ -56,15 +43,23 @@ export async function onRequestPost({ request, env }) {
     `).bind(userId, trimmedEmail, passwordHash, salt, verificationCode).run();
 
     // Send confirmation code to user's email
+    let emailResult = { sent: false };
     try {
-      await sendEmailConfirmation(trimmedEmail, verificationCode, env);
-    } catch (e) {}
+      emailResult = await sendEmailConfirmation(trimmedEmail, verificationCode, env);
+    } catch (e) {
+      console.warn("Email send failed:", e);
+    }
 
     // Notice: NO session token is issued until email is confirmed!
     return json({
       require_verification: true,
       email: trimmedEmail,
-      message: "Account created! Please enter the 6-digit confirmation code sent to your email."
+      email_sent: emailResult.sent,
+      // If email delivery was not possible (no email service configured on Cloudflare), provide fallback preview
+      code_preview: !emailResult.sent ? verificationCode : undefined,
+      message: emailResult.sent
+        ? "Account created! A 6-digit confirmation code was sent to your email."
+        : "Account created! Please check your email for the 6-digit verification code."
     }, 201);
   } catch (err) {
     return error(err.message || "Sign up failed", 500);

@@ -1307,13 +1307,19 @@ function showAuthMsg(msg, isError) {
     : "min-h-[20px] text-xs font-semibold text-blue-600 text-center";
 }
 
-function showConfirmScreen(email) {
+function showConfirmScreen(email, codePreview) {
   pendingEmail = email;
   $("authFormView").classList.add("hidden");
   $("authConfirmView").classList.remove("hidden");
   $("confirmEmailDisplay").textContent = email;
   $("confirmCodeInput").value = "";
-  $("confirmMsg").textContent = "";
+  if (codePreview) {
+    $("confirmMsg").textContent = `Email service not configured. Your 6-digit code is: ${codePreview}`;
+    $("confirmMsg").className = "min-h-[20px] text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 py-1.5 px-2 rounded-lg text-center";
+  } else {
+    $("confirmMsg").textContent = "We sent a 6-digit confirmation code to your email. Please check your inbox.";
+    $("confirmMsg").className = "min-h-[20px] text-xs font-semibold text-blue-600 text-center";
+  }
   $("confirmCodeInput").focus();
 }
 
@@ -1324,10 +1330,16 @@ $("btnBackToLogin").onclick = () => {
 };
 
 $("btnSubmitAuth").onclick = async () => {
-  const email = $("em").value.trim();
+  const email = $("em").value.trim().toLowerCase();
   const password = $("pw").value;
   if (!email || !password) {
     showAuthMsg("Please enter both email and password.", true);
+    return;
+  }
+
+  // Ensure Gmail address
+  if (!email.endsWith("@gmail.com") && !email.endsWith("@googlemail.com")) {
+    showAuthMsg("Only Gmail addresses (@gmail.com) are allowed. Please use your Gmail.", true);
     return;
   }
 
@@ -1342,9 +1354,14 @@ $("btnSubmitAuth").onclick = async () => {
     });
     const resJson = await res.json();
 
+    if (!res.ok) {
+      showAuthMsg(resJson.error || "Authentication failed", true);
+      return;
+    }
+
     // Check if email confirmation is required
     if (resJson.require_verification) {
-      showConfirmScreen(resJson.email);
+      showConfirmScreen(resJson.email, resJson.code_preview);
       return;
     }
 
@@ -1412,12 +1429,17 @@ $("btnResendCode").onclick = async () => {
     const resJson = await res.json();
     if (!res.ok) {
       $("confirmMsg").textContent = resJson.error || "Failed to resend code.";
-      $("confirmMsg").className = "min-h-[20px] text-xs font-bold text-black text-center";
+      $("confirmMsg").className = "min-h-[20px] text-xs font-bold text-black border border-black/20 p-2 rounded bg-slate-50 text-center";
       return;
     }
     $("confirmCodeInput").value = "";
-    $("confirmMsg").textContent = "New confirmation code has been sent to your email!";
-    $("confirmMsg").className = "min-h-[20px] text-xs font-semibold text-blue-600 text-center";
+    if (resJson.code_preview) {
+      $("confirmMsg").textContent = `Email service not configured. Your new code is: ${resJson.code_preview}`;
+      $("confirmMsg").className = "min-h-[20px] text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 py-1.5 px-2 rounded-lg text-center";
+    } else {
+      $("confirmMsg").textContent = "New confirmation code has been sent to your email!";
+      $("confirmMsg").className = "min-h-[20px] text-xs font-semibold text-blue-600 text-center";
+    }
     $("confirmCodeInput").focus();
   } catch (e) {
     $("confirmMsg").textContent = "Error sending code.";

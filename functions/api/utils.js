@@ -77,8 +77,8 @@ export async function getSessionUser(request, env) {
 // Send verification email via Resend API (if env.RESEND_API_KEY is configured)
 export async function sendEmailConfirmation(email, code, env) {
   if (!env.RESEND_API_KEY) {
-    console.log(`[BluLink Email Service] No RESEND_API_KEY provided. Verification code for ${email} is: ${code}`);
-    return { sent: false, note: "Email service not configured. Code logged." };
+    console.warn(`[BluLink Email Service] No RESEND_API_KEY provided in Cloudflare Pages environment. Verification code for ${email} is: ${code}`);
+    return { sent: false, note: "Email service not configured in Cloudflare Pages" };
   }
 
   try {
@@ -89,13 +89,13 @@ export async function sendEmailConfirmation(email, code, env) {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        from: env.EMAIL_FROM || "BluLink Security <auth@blulink.app>",
+        from: env.EMAIL_FROM || "BluLink <onboarding@resend.dev>",
         to: [email],
-        subject: "Confirm your BluLink Account",
+        subject: "Your BluLink 6-Digit Verification Code",
         html: `
           <div style="font-family:'Segoe UI',sans-serif;max-width:520px;margin:0 auto;padding:24px;background:#ffffff;border:1px solid #e2e8f0;border-radius:12px">
             <h2 style="color:#000000;margin-top:0">Welcome to BluLink</h2>
-            <p style="color:#334155;font-size:14px;line-height:1.5">Please confirm your email address to activate your workspace and access your Cloudflare D1 database.</p>
+            <p style="color:#334155;font-size:14px;line-height:1.5">Here is your 6-digit confirmation code to activate your BluLink account and access your workspace:</p>
             <div style="margin:24px 0;padding:16px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;text-align:center">
               <span style="font-size:32px;font-weight:700;letter-spacing:6px;color:#2563eb">${code}</span>
             </div>
@@ -104,7 +104,12 @@ export async function sendEmailConfirmation(email, code, env) {
         `
       })
     });
-    return { sent: res.ok };
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      console.error("[Resend API Error]:", data);
+      return { sent: false, error: data.message || "Resend API call failed" };
+    }
+    return { sent: true, id: data.id };
   } catch (err) {
     console.error("Failed to send email via Resend:", err);
     return { sent: false, error: err.message };

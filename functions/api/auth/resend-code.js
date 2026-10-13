@@ -10,13 +10,16 @@ export async function onRequestPost({ request, env }) {
     if (!email) return error("Email address is required.");
 
     const trimmedEmail = email.trim().toLowerCase();
+    if (!trimmedEmail.endsWith("@gmail.com") && !trimmedEmail.endsWith("@googlemail.com")) {
+      return error("Only Gmail addresses (@gmail.com) are allowed.", 400);
+    }
 
     const user = await env.DB.prepare(`
       SELECT id, email, email_verified FROM users WHERE email = ?
     `).bind(trimmedEmail).first();
 
     if (!user) {
-      return error("No account found with this email.", 404);
+      return error("This email address is not registered. Please create an account first.", 404);
     }
 
     if (user.email_verified === 1) {
@@ -30,14 +33,19 @@ export async function onRequestPost({ request, env }) {
       WHERE id = ?
     `).bind(newCode, user.id).run();
 
+    let emailResult = { sent: false };
     try {
-      await sendEmailConfirmation(trimmedEmail, newCode, env);
+      emailResult = await sendEmailConfirmation(trimmedEmail, newCode, env);
     } catch (e) {}
 
     return json({
       success: true,
       email: trimmedEmail,
-      message: "New confirmation code has been sent to your email."
+      email_sent: emailResult.sent,
+      code_preview: !emailResult.sent ? newCode : undefined,
+      message: emailResult.sent
+        ? "New confirmation code has been sent to your email."
+        : "Email service not configured; new code is: " + newCode
     });
   } catch (err) {
     return error(err.message || "Failed to resend confirmation code", 500);

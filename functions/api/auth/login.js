@@ -12,6 +12,9 @@ export async function onRequestPost({ request, env }) {
     }
 
     const trimmedEmail = email.trim().toLowerCase();
+    if (!trimmedEmail.endsWith("@gmail.com") && !trimmedEmail.endsWith("@googlemail.com")) {
+      return error("Please enter a valid Gmail address (@gmail.com).", 400);
+    }
 
     // Query user by email
     const user = await env.DB.prepare(`
@@ -19,24 +22,38 @@ export async function onRequestPost({ request, env }) {
     `).bind(trimmedEmail).first();
 
     if (!user) {
-      return error("Invalid email or password.", 401);
+      return error("This email address is not registered. Please create an account first.", 404);
     }
 
     if (user.auth_provider === "google" || (user.password_hash && user.password_hash.startsWith("OAUTH_GOOGLE"))) {
-      return error("This account was created with Google. Please click 'Sign in with Google'.", 400);
+      return error("This account was created with Google. Please click 'Continue with Google'.", 400);
     }
 
     // Verify hash
     const computedHash = await hashPassword(password, user.salt);
     if (computedHash !== user.password_hash) {
-      return error("Invalid email or password.", 401);
+      return error("Incorrect password. Please try again.", 401);
     }
 
     // Check if email has been confirmed
     if (user.email_verified === 0) {
+      let code = user.verification_code;
+      if (!code) {
+        code = generateVerificationCode();
+        await env.DB.prepare(`
+          UPDATE users SET verification_code = ?, verification_expires = datetime('now', '+15 minutes') WHERE id = ?
+        `).bind(code, user.id).run();
+      }
+      let emailResult = { sent: false };
+      try {
+        emailResult = await sendEmailConfirmation(user.email, code, env);
+      } catch (e) {}
+
       return json({
         require_verification: true,
         email: user.email,
+        email_sent: emailResult.sent,
+        code_preview: !emailResult.sent ? code : undefined,
         error: "Please confirm your email first before entering the workspace."
       }, 403);
     }
