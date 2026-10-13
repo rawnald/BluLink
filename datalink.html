@@ -526,6 +526,121 @@
   </div>
 </div>
 
+<!-- ==================== EDIT GROUP BOX MODAL (ON DOUBLE CLICK) ==================== -->
+<div id="editBoxModal" class="hidden fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+  <div class="w-full max-w-md bg-white border-2 border-black rounded-2xl p-6 shadow-2xl space-y-4 relative z-10 select-none">
+    <div class="flex items-center justify-between border-b border-black/15 pb-3">
+      <h3 class="text-sm font-bold text-black flex items-center gap-2">
+        <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+        <span>Edit Group Box</span>
+      </h3>
+      <button id="btnCloseEditBoxModal" type="button" class="text-black/60 hover:text-black font-bold text-sm">✕</button>
+    </div>
+
+    <div class="space-y-3.5">
+      <!-- Box Label / Title -->
+      <div>
+        <label for="editBoxLabel" class="block text-xs font-bold text-black uppercase tracking-wider mb-1">Box Label / Title</label>
+        <input id="editBoxLabel" placeholder="e.g. Suspect Cluster, Operations Zone, Perimeter"
+          class="w-full px-3 py-2 rounded-lg bg-white border-2 border-black/30 text-black text-xs font-semibold focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition">
+      </div>
+
+      <!-- Border Color & Border Style (Grid) -->
+      <div class="grid grid-cols-2 gap-3">
+        <!-- Border Color -->
+        <div>
+          <label for="editBoxBorderColor" class="block text-xs font-bold text-black uppercase tracking-wider mb-1">Border Color</label>
+          <div class="flex items-center gap-2">
+            <input id="editBoxBorderColor" type="color" value="#2563eb"
+              class="w-10 h-9 p-0.5 rounded-lg border-2 border-black/30 bg-white cursor-pointer shrink-0">
+            <input id="editBoxBorderColorText" type="text" value="#2563eb" maxlength="7"
+              class="flex-1 min-w-0 px-2.5 py-2 rounded-lg bg-white border-2 border-black/30 text-black text-xs font-mono font-bold uppercase focus:outline-none focus:border-blue-600">
+          </div>
+        </div>
+
+        <!-- Border Style -->
+        <div>
+          <label for="editBoxBorderStyle" class="block text-xs font-bold text-black uppercase tracking-wider mb-1">Border Style</label>
+          <select id="editBoxBorderStyle" class="w-full px-2.5 py-2 rounded-lg bg-white border-2 border-black/30 text-black text-xs font-bold focus:outline-none focus:border-blue-600 cursor-pointer">
+            <option value="dashed">╌╌╌ Dashed</option>
+            <option value="solid">─── Solid</option>
+            <option value="dotted">··· Dotted</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Background Color & Fill Opacity (Grid) -->
+      <div class="grid grid-cols-2 gap-3">
+        <!-- Background Fill Color -->
+        <div>
+          <label for="editBoxBgColor" class="block text-xs font-bold text-black uppercase tracking-wider mb-1">Fill Color</label>
+          <div class="flex items-center gap-2">
+            <input id="editBoxBgColor" type="color" value="#2563eb"
+              class="w-10 h-9 p-0.5 rounded-lg border-2 border-black/30 bg-white cursor-pointer shrink-0">
+            <input id="editBoxBgColorText" type="text" value="#2563eb" maxlength="7"
+              class="flex-1 min-w-0 px-2.5 py-2 rounded-lg bg-white border-2 border-black/30 text-black text-xs font-mono font-bold uppercase focus:outline-none focus:border-blue-600">
+          </div>
+        </div>
+
+        <!-- Background Fill Opacity -->
+        <div>
+          <label for="editBoxBgOpacity" class="block text-xs font-bold text-black uppercase tracking-wider mb-1">Fill Opacity</label>
+          <select id="editBoxBgOpacity" class="w-full px-2.5 py-2 rounded-lg bg-white border-2 border-black/30 text-black text-xs font-bold focus:outline-none focus:border-blue-600 cursor-pointer">
+            <option value="0">0% (Transparent)</option>
+            <option value="0.05">5% (Subtle)</option>
+            <option value="0.08" selected>8% (Default)</option>
+            <option value="0.15">15% (Soft)</option>
+            <option value="0.25">25% (Medium)</option>
+            <option value="0.4">40% (Prominent)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Border Width & Label Position (Grid) -->
+      <div class="grid grid-cols-2 gap-3">
+        <!-- Border Width -->
+        <div>
+          <label for="editBoxBorderWidth" class="block text-xs font-bold text-black uppercase tracking-wider mb-1">Border Width</label>
+          <select id="editBoxBorderWidth" class="w-full px-2.5 py-2 rounded-lg bg-white border-2 border-black/30 text-black text-xs font-bold focus:outline-none focus:border-blue-600 cursor-pointer">
+            <option value="1">1 px (Fine)</option>
+            <option value="2" selected>2 px (Standard)</option>
+            <option value="3">3 px (Thick)</option>
+            <option value="4">4 px (Bold)</option>
+          </select>
+        </div>
+
+        <!-- Label Position -->
+        <div>
+          <label for="editBoxLabelPos" class="block text-xs font-bold text-black uppercase tracking-wider mb-1">Label Position</label>
+          <select id="editBoxLabelPos" class="w-full px-2.5 py-2 rounded-lg bg-white border-2 border-black/30 text-black text-xs font-bold focus:outline-none focus:border-blue-600 cursor-pointer">
+            <option value="top-left">Top Left</option>
+            <option value="top-center">Top Center</option>
+            <option value="top-right">Top Right</option>
+            <option value="bottom-left">Bottom Left</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="space-y-2 pt-2 border-t border-black/15">
+        <div class="flex items-center gap-2">
+          <button id="btnSaveEditBox" type="button" class="flex-1 btn-primary py-2 text-xs">
+            <i class="fi fi-rr-check text-xs"></i>
+            <span>Save Changes</span>
+          </button>
+          <button id="btnDeleteEditBox" type="button" class="btn-secondary py-2 text-xs text-red-600 border-red-300 hover:border-red-600 hover:bg-red-50">
+            <i class="fi fi-rr-trash text-xs"></i>
+            <span>Delete Box</span>
+          </button>
+          <button id="btnCancelEditBox" type="button" class="btn-secondary py-2 text-xs">
+            <span>Cancel</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ==================== NO PROJECT ERROR MODAL ==================== -->
 <div id="noProjectModal" class="hidden fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
   <div class="w-full max-w-sm bg-white border-2 border-black rounded-2xl p-6 shadow-2xl space-y-4 relative z-10 text-center">
@@ -821,6 +936,17 @@
           <p class="text-[10px] text-black/50 leading-tight">
             Click <strong>Add Corner</strong> to shape link. To delete: click <strong>Delete Corner</strong>, or <strong>right-click / press Delete</strong> on any diamond handle.
           </p>
+
+          <!-- Group Box Drawing Tool -->
+          <button id="btnBoxTool" type="button" title="Draw Group Box: Click and drag on chart to draw a container box inside or outside entities"
+                  class="w-full flex items-center justify-center gap-2 py-2.5 px-3 mt-2 rounded-xl border-2 border-black/20 bg-white hover:border-blue-600 hover:bg-blue-50/50 transition cursor-pointer select-none text-xs font-bold text-black shadow-sm">
+            <div class="w-6 h-6 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center">
+              <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-none stroke-current" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke-dasharray="3 2"/>
+              </svg>
+            </div>
+            <span id="btnBoxToolText">Draw Group Box</span>
+          </button>
         </section>
       </div>
 
@@ -963,6 +1089,19 @@
       </button>
     </div>
 
+    <!-- Active Box Mode Banner -->
+    <div id="boxModeBanner" class="hidden absolute top-3 left-1/2 -translate-x-1/2 z-20 bg-blue-600 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-xl flex items-center gap-3">
+      <div class="flex items-center gap-2">
+        <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-none stroke-current" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke-dasharray="3 2"/>
+        </svg>
+        <span id="boxModeBannerText">Click and drag anywhere on the chart to draw a box</span>
+      </div>
+      <button id="cancelBoxModeBtn" type="button" class="btn-secondary py-0.5 px-2.5 text-[11px] bg-white text-black border-white hover:border-blue-300">
+        <span>Cancel</span>
+      </button>
+    </div>
+
     <!-- Exit Fullscreen Button (Shown in Fullscreen mode) -->
     <button id="btnExitFullscreenNet" type="button" title="Exit Full Screen (Esc)" class="hidden absolute top-3 right-3 z-30 btn-primary py-1.5 px-3 text-xs shadow-2xl flex items-center gap-1.5">
       <i class="fi fi-rr-cross text-xs"></i>
@@ -975,6 +1114,12 @@
       <button id="btnLinkModeToggle" title="Draw Relationship Link: Drag from one entity to another (or hold Shift on chart)" class="btn-secondary py-1 px-2.5 text-xs">
         <i class="fi fi-rr-link-alt text-xs"></i>
         <span id="btnLinkModeToggleText">Draw Link</span>
+      </button>
+      <button id="btnBoxModeToggle" title="Draw Box: Click and drag anywhere on chart to draw a container box inside or outside entities" class="btn-secondary py-1 px-2.5 text-xs">
+        <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-none stroke-current" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke-dasharray="3 2"/>
+        </svg>
+        <span id="btnBoxModeToggleText">Draw Box</span>
       </button>
       <button id="btnCornerModeToggle" title="Add Corner to Link: Click any link to insert a draggable diamond handle" class="btn-secondary py-1 px-2.5 text-xs">
         <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
@@ -1089,7 +1234,7 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 /* ---------- State ---------- */
 let cfToken = localStorage.getItem("blulink_cf_token") || null;
 let user = null;
-let data = { entities: [], links: [] };
+let data = { entities: [], links: [], boxes: [] };
 let projects = [];
 let currentProjectId = null;
 let selected = null, picking = false, pickTarget = "new", saveTimer = null, ready = false;
@@ -1097,6 +1242,10 @@ let isSignUpMode = false;
 let pendingEmail = "";
 let map, net, nodes, edges, markerLayer, lineLayer;
 let markersByEntityId = {}, linesByLinkId = {};
+let isBoxMode = false, isDrawingLiveBox = false;
+let boxDrawStartCanvasPos = null, boxDrawCurrentCanvasPos = null;
+let editingBoxId = null, isDraggingBox = false, draggingBoxId = null;
+let dragBoxStartPointer = null, dragBoxInitialX = 0, dragBoxInitialY = 0;
 
 /* ---------- Interactive Dot-Network (Constellation) Canvas ---------- */
 let particleAnimId = null;
@@ -1555,8 +1704,9 @@ async function selectProject(projectId) {
       const body = await res.json();
       if (body.data && Array.isArray(body.data.entities)) {
         data = body.data;
+        if (!Array.isArray(data.boxes)) data.boxes = [];
       } else {
-        data = { entities: [], links: [] };
+        data = { entities: [], links: [], boxes: [] };
       }
       render(true);
       ready = true;
@@ -1566,7 +1716,7 @@ async function selectProject(projectId) {
   } catch (e) {
     setStatus("Load error: " + e.message, true);
   }
-  data = { entities: [], links: [] };
+  data = { entities: [], links: [], boxes: [] };
   render(true);
   ready = true;
 }
@@ -2501,6 +2651,307 @@ if ($("btnDeleteEditLink")) {
   };
 }
 
+/* ---------- Group Box Operations & Modal ---------- */
+function openEditBoxModal(boxId) {
+  if (!boxId || !data.boxes) return;
+  const b = data.boxes.find(x => x.id === boxId);
+  if (!b) return;
+
+  editingBoxId = boxId;
+  $("editBoxLabel").value = b.label || "";
+  
+  const bColor = b.borderColor || "#2563eb";
+  $("editBoxBorderColor").value = bColor;
+  $("editBoxBorderColorText").value = bColor;
+  
+  $("editBoxBorderStyle").value = b.borderStyle || "dashed";
+  
+  const bgColor = b.bgColor || b.borderColor || "#2563eb";
+  $("editBoxBgColor").value = bgColor;
+  $("editBoxBgColorText").value = bgColor;
+  
+  $("editBoxBgOpacity").value = String(b.bgOpacity != null ? b.bgOpacity : 0.08);
+  $("editBoxBorderWidth").value = String(b.borderWidth || 2);
+  $("editBoxLabelPos").value = b.labelPos || "top-left";
+
+  $("editBoxModal").classList.remove("hidden");
+  $("editBoxLabel").focus();
+}
+
+function closeEditBoxModal() {
+  $("editBoxModal").classList.add("hidden");
+  editingBoxId = null;
+}
+
+if ($("btnCloseEditBoxModal")) $("btnCloseEditBoxModal").onclick = closeEditBoxModal;
+if ($("btnCancelEditBox")) $("btnCancelEditBox").onclick = closeEditBoxModal;
+
+if ($("editBoxBorderColor") && $("editBoxBorderColorText")) {
+  $("editBoxBorderColor").oninput = e => {
+    $("editBoxBorderColorText").value = e.target.value;
+  };
+  $("editBoxBorderColorText").oninput = e => {
+    const val = e.target.value.trim();
+    if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+      $("editBoxBorderColor").value = val;
+    }
+  };
+}
+
+if ($("editBoxBgColor") && $("editBoxBgColorText")) {
+  $("editBoxBgColor").oninput = e => {
+    $("editBoxBgColorText").value = e.target.value;
+  };
+  $("editBoxBgColorText").oninput = e => {
+    const val = e.target.value.trim();
+    if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+      $("editBoxBgColor").value = val;
+    }
+  };
+}
+
+if ($("btnSaveEditBox")) {
+  $("btnSaveEditBox").onclick = () => {
+    if (!editingBoxId || !data.boxes) return;
+    const b = data.boxes.find(x => x.id === editingBoxId);
+    if (!b) return;
+
+    b.label = $("editBoxLabel").value.trim();
+    b.borderColor = $("editBoxBorderColor").value || "#2563eb";
+    b.borderStyle = $("editBoxBorderStyle").value || "dashed";
+    b.bgColor = $("editBoxBgColor").value || "#2563eb";
+    b.bgOpacity = parseFloat($("editBoxBgOpacity").value) || 0;
+    b.borderWidth = parseInt($("editBoxBorderWidth").value) || 2;
+    b.labelPos = $("editBoxLabelPos").value || "top-left";
+
+    closeEditBoxModal();
+    if (net) net.redraw();
+    queueSave();
+  };
+}
+
+if ($("btnDeleteEditBox")) {
+  $("btnDeleteEditBox").onclick = () => {
+    if (!editingBoxId || !data.boxes) return;
+    if (!confirm("Are you sure you want to delete this group box? (Entities inside will NOT be deleted)")) return;
+    data.boxes = data.boxes.filter(x => x.id !== editingBoxId);
+    closeEditBoxModal();
+    if (net) net.redraw();
+    queueSave();
+  };
+}
+
+function drawBoxOnCanvas(ctx, b) {
+  const x = b.x;
+  const y = b.y;
+  const w = b.w;
+  const h = b.h;
+  if (w <= 0 || h <= 0) return;
+
+  ctx.save();
+
+  // 1. Fill background with configured opacity
+  const opacity = b.bgOpacity != null ? b.bgOpacity : 0.08;
+  if (opacity > 0) {
+    ctx.globalAlpha = opacity;
+    ctx.fillStyle = b.bgColor || b.borderColor || "#2563eb";
+    const r = Math.min(10, Math.min(w, h) / 4);
+    ctx.beginPath();
+    if (ctx.roundRect) {
+      ctx.roundRect(x, y, w, h, r);
+    } else {
+      ctx.rect(x, y, w, h);
+    }
+    ctx.fill();
+  }
+
+  // 2. Stroke boundary border
+  ctx.globalAlpha = 1;
+  ctx.lineWidth = b.borderWidth || 2;
+  ctx.strokeStyle = b.borderColor || "#2563eb";
+  if (b.borderStyle === "dashed") {
+    ctx.setLineDash([8, 5]);
+  } else if (b.borderStyle === "dotted") {
+    ctx.setLineDash([3, 4]);
+  } else {
+    ctx.setLineDash([]);
+  }
+
+  const r = Math.min(10, Math.min(w, h) / 4);
+  ctx.beginPath();
+  if (ctx.roundRect) {
+    ctx.roundRect(x, y, w, h, r);
+  } else {
+    ctx.rect(x, y, w, h);
+  }
+  ctx.stroke();
+
+  // 3. Draw Header Label Tag (if label is present)
+  if (b.label && b.label.trim()) {
+    ctx.setLineDash([]);
+    const labelText = b.label.trim();
+    ctx.font = 'bold 11px "DM Sans", -apple-system, sans-serif';
+    const textWidth = ctx.measureText(labelText).width;
+    const badgeHeight = 18;
+    const badgePad = 8;
+    const badgeWidth = textWidth + badgePad * 2;
+
+    let badgeX = x + 10;
+    let badgeY = y - badgeHeight / 2;
+
+    if (b.labelPos === "top-center") {
+      badgeX = x + (w - badgeWidth) / 2;
+    } else if (b.labelPos === "top-right") {
+      badgeX = x + w - badgeWidth - 10;
+    } else if (b.labelPos === "bottom-left") {
+      badgeY = y + h - badgeHeight / 2;
+    }
+
+    // Badge pill background
+    ctx.fillStyle = b.borderColor || "#2563eb";
+    ctx.beginPath();
+    if (ctx.roundRect) {
+      ctx.roundRect(badgeX, badgeY, badgeWidth, badgeHeight, 4);
+    } else {
+      ctx.rect(badgeX, badgeY, badgeWidth, badgeHeight);
+    }
+    ctx.fill();
+
+    // Badge text
+    ctx.fillStyle = "#ffffff";
+    ctx.textBaseline = "middle";
+    ctx.textAlign = "center";
+    ctx.fillText(labelText, badgeX + badgeWidth / 2, badgeY + badgeHeight / 2);
+  }
+
+  ctx.restore();
+}
+
+function drawLiveBoxPreview(ctx, startPos, currPos) {
+  const x = Math.min(startPos.x, currPos.x);
+  const y = Math.min(startPos.y, currPos.y);
+  const w = Math.abs(currPos.x - startPos.x);
+  const h = Math.abs(currPos.y - startPos.y);
+
+  ctx.save();
+  // Translucent background
+  ctx.fillStyle = "rgba(37, 99, 235, 0.12)";
+  ctx.fillRect(x, y, w, h);
+
+  // Dashed border
+  ctx.strokeStyle = "#2563eb";
+  ctx.lineWidth = 2;
+  ctx.setLineDash([7, 4]);
+  ctx.strokeRect(x, y, w, h);
+
+  // Dimension tag
+  ctx.setLineDash([]);
+  ctx.font = 'bold 10px "DM Sans", sans-serif';
+  const dimStr = `${Math.round(w)} × ${Math.round(h)}`;
+  const dimW = ctx.measureText(dimStr).width + 10;
+  ctx.fillStyle = "#2563eb";
+  ctx.fillRect(x + 6, y + 6, dimW, 16);
+  ctx.fillStyle = "#ffffff";
+  ctx.textBaseline = "middle";
+  ctx.textAlign = "center";
+  ctx.fillText(dimStr, x + 6 + dimW / 2, y + 14);
+
+  ctx.restore();
+}
+
+function findBoxAt(canvasPos) {
+  if (!data.boxes || !data.boxes.length) return null;
+  for (let i = data.boxes.length - 1; i >= 0; i--) {
+    const b = data.boxes[i];
+    if (canvasPos.x >= b.x && canvasPos.x <= b.x + b.w &&
+        canvasPos.y >= b.y - 12 && canvasPos.y <= b.y + b.h) {
+      return b;
+    }
+  }
+  return null;
+}
+
+function findBoxHeaderOrBorderAt(canvasPos) {
+  if (!data.boxes || !data.boxes.length) return null;
+  const tol = 12;
+  for (let i = data.boxes.length - 1; i >= 0; i--) {
+    const b = data.boxes[i];
+    // Check header tag zone
+    if (canvasPos.x >= b.x - 5 && canvasPos.x <= b.x + b.w + 5 &&
+        canvasPos.y >= b.y - 16 && canvasPos.y <= b.y + 16) {
+      return b;
+    }
+    // Check perimeter borders
+    const nearLeft = Math.abs(canvasPos.x - b.x) <= tol && canvasPos.y >= b.y - tol && canvasPos.y <= b.y + b.h + tol;
+    const nearRight = Math.abs(canvasPos.x - (b.x + b.w)) <= tol && canvasPos.y >= b.y - tol && canvasPos.y <= b.y + b.h + tol;
+    const nearTop = Math.abs(canvasPos.y - b.y) <= tol && canvasPos.x >= b.x - tol && canvasPos.x <= b.x + b.w + tol;
+    const nearBottom = Math.abs(canvasPos.y - (b.y + b.h)) <= tol && canvasPos.x >= b.x - tol && canvasPos.x <= b.x + b.w + tol;
+    if (nearLeft || nearRight || nearTop || nearBottom) {
+      return b;
+    }
+  }
+  return null;
+}
+
+function enterBoxMode() {
+  if (!currentProjectId) {
+    showNoProjectError();
+    return;
+  }
+  if (isLinkMode) exitLinkMode();
+  if (isCornerMode) exitCornerMode();
+  if (isDeleteCornerMode) exitDeleteCornerMode();
+
+  isBoxMode = true;
+  const topBtn = $("btnBoxModeToggle");
+  if (topBtn) {
+    topBtn.className = "btn-secondary py-1 px-2.5 text-xs bg-blue-600 text-white border-blue-600 hover:bg-blue-700 shadow-sm";
+    if ($("btnBoxModeToggleText")) $("btnBoxModeToggleText").textContent = "Cancel Box";
+  }
+  const sideBtn = $("btnBoxTool");
+  if (sideBtn) {
+    sideBtn.className = "w-full flex items-center justify-center gap-2 py-2.5 px-3 mt-2 rounded-xl border-2 border-blue-600 bg-blue-600 text-white transition cursor-pointer select-none text-xs font-bold shadow-sm";
+    if ($("btnBoxToolText")) $("btnBoxToolText").textContent = "Cancel Draw Box";
+  }
+  if ($("boxModeBanner")) $("boxModeBanner").classList.remove("hidden");
+  if ($("net")) $("net").style.cursor = "crosshair";
+  if (net) {
+    net.setOptions({ interaction: { dragView: false, dragNodes: false } });
+  }
+}
+
+function exitBoxMode() {
+  isBoxMode = false;
+  isDrawingLiveBox = false;
+  boxDrawStartCanvasPos = null;
+  boxDrawCurrentCanvasPos = null;
+
+  const topBtn = $("btnBoxModeToggle");
+  if (topBtn) {
+    topBtn.className = "btn-secondary py-1 px-2.5 text-xs";
+    if ($("btnBoxModeToggleText")) $("btnBoxModeToggleText").textContent = "Draw Box";
+  }
+  const sideBtn = $("btnBoxTool");
+  if (sideBtn) {
+    sideBtn.className = "w-full flex items-center justify-center gap-2 py-2.5 px-3 mt-2 rounded-xl border-2 border-black/20 bg-white hover:border-blue-600 hover:bg-blue-50/50 transition cursor-pointer select-none text-xs font-bold text-black shadow-sm";
+    if ($("btnBoxToolText")) $("btnBoxToolText").textContent = "Draw Group Box";
+  }
+  if ($("boxModeBanner")) $("boxModeBanner").classList.add("hidden");
+  if ($("net")) $("net").style.cursor = "";
+  if (net) {
+    net.setOptions({ interaction: { dragView: true, dragNodes: true } });
+    net.redraw();
+  }
+}
+
+function toggleBoxMode() {
+  if (isBoxMode) {
+    exitBoxMode();
+  } else {
+    enterBoxMode();
+  }
+}
+
 /* ---------- Link Chart Setup (vis.Network) ---------- */
 function initNet() {
   nodes = new vis.DataSet();
@@ -2679,6 +3130,17 @@ function initNet() {
     } else if (params.edges && params.edges.length > 0 && (!params.nodes || params.nodes.length === 0)) {
       const realId = params.edges[0].includes("_seg") ? params.edges[0].split("_seg")[0] : params.edges[0];
       openEditLinkModal(realId);
+      return;
+    }
+
+    // Double click group box (header tag, border, or inside box) to open edit modal
+    const canvasPos = net.DOMtoCanvas(params.pointer.DOM);
+    const hitBox = findBoxAt(canvasPos);
+    if (hitBox) {
+      if (!clickedNodeId || findBoxHeaderOrBorderAt(canvasPos)) {
+        openEditBoxModal(hitBox.id);
+        return;
+      }
     }
   });
 
@@ -2809,6 +3271,16 @@ function initNet() {
 
   // Real-time Draggable Display Line Rendering (beforeDrawing - drawn at the back of icons and text)
   net.on("beforeDrawing", ctx => {
+    // 0. Render saved group boxes (behind entities and links)
+    if (data.boxes && data.boxes.length > 0) {
+      data.boxes.forEach(b => drawBoxOnCanvas(ctx, b));
+    }
+
+    // 0b. Render live box preview while drawing
+    if (isDrawingLiveBox && boxDrawStartCanvasPos && boxDrawCurrentCanvasPos) {
+      drawLiveBoxPreview(ctx, boxDrawStartCanvasPos, boxDrawCurrentCanvasPos);
+    }
+
     if (!isDrawingLiveLine || !liveLineSourceId) return;
 
     const srcPos = net.getPosition(liveLineSourceId);
@@ -2917,10 +3389,24 @@ function initNet() {
     ctx.restore();
   });
 
-  // Pointer event listeners on canvas container: CAPTURE phase prevents Vis.Network from panning/moving entities while drawing a link
+  // Pointer event listeners on canvas container: CAPTURE phase prevents Vis.Network from panning/moving entities while drawing a link or box
   container.addEventListener("pointerdown", ev => {
     if (ev.button !== 0) return; // Left click only
 
+    // 1. Box Mode: click & drag to draw a container box
+    if (isBoxMode) {
+      ev.stopPropagation();
+      ev.preventDefault();
+      const rect = container.getBoundingClientRect();
+      const domPos = { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
+      isDrawingLiveBox = true;
+      boxDrawStartCanvasPos = net.DOMtoCanvas(domPos);
+      boxDrawCurrentCanvasPos = boxDrawStartCanvasPos;
+      net.redraw();
+      return;
+    }
+
+    // 2. Link Mode: draw relationship line
     if (isLinkMode || ev.shiftKey) {
       const rect = container.getBoundingClientRect();
       const domPos = { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
@@ -2951,11 +3437,64 @@ function initNet() {
             $("linkModeBannerText").textContent = `Connecting from "${a ? a.name : 'Entity'}" ➔ Release on target entity`;
           }
         }
+        return;
+      }
+    }
+
+    // 3. Normal Mode: drag box by clicking on its header badge or border
+    if (!isCornerMode && !isDeleteCornerMode) {
+      const rect = container.getBoundingClientRect();
+      const domPos = { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
+      const clickedNode = net.getNodeAt(domPos);
+      if (!clickedNode) {
+        const cPos = net.DOMtoCanvas(domPos);
+        const boxToMove = findBoxHeaderOrBorderAt(cPos);
+        if (boxToMove) {
+          ev.stopPropagation();
+          ev.preventDefault();
+          isDraggingBox = true;
+          draggingBoxId = boxToMove.id;
+          dragBoxStartPointer = cPos;
+          dragBoxInitialX = boxToMove.x;
+          dragBoxInitialY = boxToMove.y;
+          net.setOptions({ interaction: { dragNodes: false, dragView: false } });
+          return;
+        }
       }
     }
   }, true);
 
   window.addEventListener("pointermove", ev => {
+    // 1. Updating Live Box drawing
+    if (isDrawingLiveBox && net) {
+      ev.stopPropagation();
+      ev.preventDefault();
+      const rect = container.getBoundingClientRect();
+      const domPos = { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
+      boxDrawCurrentCanvasPos = net.DOMtoCanvas(domPos);
+      net.redraw();
+      return;
+    }
+
+    // 2. Dragging/moving an existing Group Box
+    if (isDraggingBox && net) {
+      ev.stopPropagation();
+      ev.preventDefault();
+      const rect = container.getBoundingClientRect();
+      const domPos = { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
+      const cPos = net.DOMtoCanvas(domPos);
+      const dx = cPos.x - dragBoxStartPointer.x;
+      const dy = cPos.y - dragBoxStartPointer.y;
+      const b = data.boxes ? data.boxes.find(x => x.id === draggingBoxId) : null;
+      if (b) {
+        b.x = Math.round(dragBoxInitialX + dx);
+        b.y = Math.round(dragBoxInitialY + dy);
+        net.redraw();
+      }
+      return;
+    }
+
+    // 3. Updating Live Link line
     if (!isDrawingLiveLine || !net) return;
 
     // Prevent Vis.Network from panning canvas while drawing the link line
@@ -2973,6 +3512,57 @@ function initNet() {
   }, true);
 
   window.addEventListener("pointerup", ev => {
+    // 1. Completing Live Box drawing
+    if (isDrawingLiveBox) {
+      ev.stopPropagation();
+      ev.preventDefault();
+
+      if (boxDrawStartCanvasPos && boxDrawCurrentCanvasPos) {
+        const x = Math.min(boxDrawStartCanvasPos.x, boxDrawCurrentCanvasPos.x);
+        const y = Math.min(boxDrawStartCanvasPos.y, boxDrawCurrentCanvasPos.y);
+        const w = Math.abs(boxDrawCurrentCanvasPos.x - boxDrawStartCanvasPos.x);
+        const h = Math.abs(boxDrawCurrentCanvasPos.y - boxDrawStartCanvasPos.y);
+
+        if (w >= 20 && h >= 20) {
+          if (!data.boxes) data.boxes = [];
+          const newBox = {
+            id: "box_" + uid(),
+            label: "Group " + (data.boxes.length + 1),
+            x: Math.round(x),
+            y: Math.round(y),
+            w: Math.round(w),
+            h: Math.round(h),
+            borderColor: "#2563eb",
+            borderWidth: 2,
+            borderStyle: "dashed",
+            bgColor: "#2563eb",
+            bgOpacity: 0.08,
+            labelPos: "top-left"
+          };
+          data.boxes.push(newBox);
+          queueSave();
+        }
+      }
+
+      exitBoxMode();
+      return;
+    }
+
+    // 2. Releasing dragged Group Box
+    if (isDraggingBox) {
+      ev.stopPropagation();
+      ev.preventDefault();
+      isDraggingBox = false;
+      draggingBoxId = null;
+      if (net) {
+        net.setOptions({ interaction: { dragNodes: !isLinkMode && !isBoxMode, dragView: !isLinkMode && !isBoxMode } });
+        net.redraw();
+      }
+      queueSave();
+      return;
+    }
+
+    // 3. Completing Live Link line
     if (!isDrawingLiveLine) return;
 
     ev.stopPropagation();
@@ -2991,7 +3581,7 @@ function initNet() {
     liveLineHoverTargetId = null;
 
     if (net) {
-      net.setOptions({ interaction: { dragNodes: !isLinkMode, dragView: !isLinkMode } });
+      net.setOptions({ interaction: { dragNodes: !isLinkMode && !isBoxMode, dragView: !isLinkMode && !isBoxMode } });
       net.redraw();
     }
 
@@ -3855,6 +4445,17 @@ if ($("btnLinkModeToggle")) {
 // Cancel link mode button & Esc key
 if ($("cancelLinkModeBtn")) $("cancelLinkModeBtn").onclick = exitLinkMode;
 
+// Group Box Tool Button events
+if ($("btnBoxTool")) {
+  $("btnBoxTool").onclick = toggleBoxMode;
+}
+if ($("btnBoxModeToggle")) {
+  $("btnBoxModeToggle").onclick = toggleBoxMode;
+}
+if ($("cancelBoxModeBtn")) {
+  $("cancelBoxModeBtn").onclick = exitBoxMode;
+}
+
 /* ---------- Corner to a Link (Add & Delete) Feature ---------- */
 let isCornerMode = false;
 let isDeleteCornerMode = false;
@@ -4013,8 +4614,10 @@ window.addEventListener("keydown", e => {
       return;
     }
     if (isLinkMode) exitLinkMode();
+    if (isBoxMode) exitBoxMode();
     if (isCornerMode) exitCornerMode();
     if (isDeleteCornerMode) exitDeleteCornerMode();
+    closeEditBoxModal();
     return;
   }
 
