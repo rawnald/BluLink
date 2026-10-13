@@ -35,9 +35,7 @@ export async function onRequestPost({ request, env }) {
         return json({
           require_verification: true,
           email: trimmedEmail,
-          code: newCode,
-          code_preview: newCode,
-          message: "A verification code has been generated. Please verify to enter."
+          message: "A confirmation code has been sent to your email. Please verify to enter."
         });
       }
       if (existing.auth_provider === "google") {
@@ -57,7 +55,7 @@ export async function onRequestPost({ request, env }) {
       VALUES (?, ?, ?, ?, 'local', 0, ?, datetime('now', '+15 minutes'))
     `).bind(userId, trimmedEmail, passwordHash, salt, verificationCode).run();
 
-    // Send confirmation email if configured (optional)
+    // Send confirmation code to user's email
     try {
       await sendEmailConfirmation(trimmedEmail, verificationCode, env);
     } catch (e) {}
@@ -66,9 +64,7 @@ export async function onRequestPost({ request, env }) {
     return json({
       require_verification: true,
       email: trimmedEmail,
-      code: verificationCode,
-      code_preview: verificationCode,
-      message: "Account created! Your 6-digit confirmation code has been generated."
+      message: "Account created! Please enter the 6-digit confirmation code sent to your email."
     }, 201);
   } catch (err) {
     return error(err.message || "Sign up failed", 500);

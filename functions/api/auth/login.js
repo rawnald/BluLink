@@ -34,18 +34,9 @@ export async function onRequestPost({ request, env }) {
 
     // Check if email has been confirmed
     if (user.email_verified === 0) {
-      let code = user.verification_code;
-      if (!code) {
-        code = generateVerificationCode();
-        await env.DB.prepare(`
-          UPDATE users SET verification_code = ?, verification_expires = datetime('now', '+15 minutes') WHERE id = ?
-        `).bind(code, user.id).run();
-      }
       return json({
         require_verification: true,
         email: user.email,
-        code: code,
-        code_preview: code,
         error: "Please confirm your email first before entering the workspace."
       }, 403);
     }
