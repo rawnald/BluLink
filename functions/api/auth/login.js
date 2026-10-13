@@ -1,4 +1,4 @@
-import { json, error, randomHex, hashPassword, generateVerificationCode } from "../utils.js";
+import { json, error, randomHex, hashPassword, generateVerificationCode, sendEmailConfirmation } from "../utils.js";
 
 export async function onRequestPost({ request, env }) {
   if (!env.DB) {

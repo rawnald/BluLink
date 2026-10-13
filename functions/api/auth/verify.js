@@ -48,11 +48,11 @@ export async function onRequestPost({ request, env }) {
     await env.DB.prepare("DELETE FROM pending_verifications WHERE email = ?").bind(trimmedEmail).run().catch(() => {});
 
     // Ensure workspace exists in D1
-    const existingWs = await env.DB.prepare("SELECT user_id FROM workspaces WHERE user_id = ?").bind(user.id).first();
+    const existingWs = await env.DB.prepare("SELECT user_id FROM workspaces WHERE user_id = ?").bind(userId).first();
     if (!existingWs) {
       await env.DB.prepare(`
         INSERT INTO workspaces (user_id, data) VALUES (?, ?)
-      `).bind(user.id, JSON.stringify({ entities: [], links: [] })).run();
+      `).bind(userId, JSON.stringify({ entities: [], links: [] })).run();
     }
 
     // Now issue session token
@@ -61,13 +61,13 @@ export async function onRequestPost({ request, env }) {
 
     await env.DB.prepare(`
       INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)
-    `).bind(token, user.id, expiresAt).run();
+    `).bind(token, userId, expiresAt).run();
 
     return json({
       token,
       user: {
-        id: user.id,
-        email: user.email
+        id: userId,
+        email: trimmedEmail
       },
       message: "Email successfully verified! Welcome to BluLink."
     });
