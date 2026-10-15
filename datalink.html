@@ -1498,6 +1498,13 @@
       <kbd class="ml-1 text-[10px] bg-white/20 px-1 py-0.5 rounded font-mono">Esc</kbd>
     </button>
 
+    <!-- Map Floating Deselect All Button (Visible when an entity/item is selected) -->
+    <button id="btnMapDeselect" type="button" title="Deselect All (or click anywhere on the map to deselect)"
+      class="hidden absolute top-3 left-14 z-[400] btn-secondary py-1 px-2.5 text-xs font-bold shadow-md bg-white border border-black/30 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-500 transition flex items-center gap-1.5 cursor-pointer">
+      <i class="fi fi-rr-cross-circle text-xs text-blue-600"></i>
+      <span>Deselect All</span>
+    </button>
+
     <!-- Map Leaflet Container -->
     <div id="map" class="flex-1 w-full h-full"></div>
   </section>
@@ -3027,30 +3034,43 @@ function initMap() {
   markerLayer = L.layerGroup().addTo(map);
 
   map.on("click", e => {
-    if (!picking) return;
-    const lat = e.latlng.lat;
-    const lng = e.latlng.lng;
-    const mgrsStr = toMgrs(lat, lng);
+    if (picking) {
+      const lat = e.latlng.lat;
+      const lng = e.latlng.lng;
+      const mgrsStr = toMgrs(lat, lng);
 
-    if (selected) {
-      const entity = data.entities.find(x => x.id === selected);
-      if (entity) {
-        entity.lat = parseFloat(lat.toFixed(6));
-        entity.lng = parseFloat(lng.toFixed(6));
-        entity.mgrs = mgrsStr;
-        if ($("sMgrs")) {
-          $("sMgrs").value = mgrsStr;
-          updateMgrsClearBtn();
-          if ($("sMgrsStatus")) {
-            $("sMgrsStatus").textContent = "Picked from Map";
-            $("sMgrsStatus").className = "text-[10px] text-blue-600 font-bold font-mono";
+      if (selected) {
+        const entity = data.entities.find(x => x.id === selected);
+        if (entity) {
+          entity.lat = parseFloat(lat.toFixed(6));
+          entity.lng = parseFloat(lng.toFixed(6));
+          entity.mgrs = mgrsStr;
+          if ($("sMgrs")) {
+            $("sMgrs").value = mgrsStr;
+            updateMgrsClearBtn();
+            if ($("sMgrsStatus")) {
+              $("sMgrsStatus").textContent = "Picked from Map";
+              $("sMgrsStatus").className = "text-[10px] text-blue-600 font-bold font-mono";
+            }
           }
+          render(false);
+          queueSave();
         }
-        render(false);
-        queueSave();
       }
+      stopPick();
+      return;
     }
-    stopPick();
+
+    // When clicking empty map space: Deselect all (entities, links, boxes, and multi-selections)
+    if (selected || selectedBoxId || selectedLinkId || selectedCornerNodeId || (typeof multiSelectedEntityIds !== "undefined" && multiSelectedEntityIds && multiSelectedEntityIds.length)) {
+      selected = null;
+      selectedBoxId = null;
+      selectedLinkId = null;
+      selectedCornerNodeId = null;
+      if (typeof multiSelectedEntityIds !== "undefined") multiSelectedEntityIds = null;
+      select(null, "map");
+      if (map) map.closePopup();
+    }
   });
 }
 
@@ -5599,7 +5619,12 @@ function render(fitAll = false) {
           ${(e.mgrs || toMgrs(e.lat, e.lng)) ? `<div class="text-[10px] text-black font-bold mt-1.5 font-mono bg-blue-50 border border-blue-200 px-2 py-0.5 rounded tracking-wider flex items-center gap-1.5"><span class="text-blue-600 font-extrabold">MGRS</span><span>${esc(formatMgrsDisplay(e.mgrs || toMgrs(e.lat, e.lng)))}</span></div>` : ''}
         </div>
       `);
-      marker.on("click", () => select(e.id, "map"));
+      marker.on("click", ev => {
+        if (ev && ev.originalEvent) {
+          L.DomEvent.stopPropagation(ev);
+        }
+        select(e.id, "map");
+      });
     }
   });
 
@@ -5797,6 +5822,15 @@ function updateMapSelection() {
       });
     }
   });
+
+  const mapDeselectBtn = $("btnMapDeselect");
+  if (mapDeselectBtn) {
+    if (selected || selectedBoxId || selectedLinkId || (typeof multiSelectedEntityIds !== "undefined" && multiSelectedEntityIds && multiSelectedEntityIds.length)) {
+      mapDeselectBtn.classList.remove("hidden");
+    } else {
+      mapDeselectBtn.classList.add("hidden");
+    }
+  }
 
   updateGifOverlayPositions();
 }
@@ -6136,6 +6170,19 @@ if ($("sBtnRemoveImg")) {
 }
 
 $("sBtnDeselect").onclick = () => select(null);
+
+if ($("btnMapDeselect")) {
+  $("btnMapDeselect").onclick = ev => {
+    ev.stopPropagation();
+    selected = null;
+    selectedBoxId = null;
+    selectedLinkId = null;
+    selectedCornerNodeId = null;
+    if (typeof multiSelectedEntityIds !== "undefined") multiSelectedEntityIds = null;
+    select(null, "map");
+    if (map) map.closePopup();
+  };
+}
 
 $("delE").onclick = () => {
   const e = data.entities.find(x => x.id === selected);
