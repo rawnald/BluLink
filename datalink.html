@@ -693,6 +693,156 @@
   </div>
 </div>
 
+<!-- ==================== EDIT TEXT BOX MODAL ==================== -->
+<div id="editTextBoxModal" class="hidden fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+  <div class="w-full max-w-md bg-white border-2 border-black rounded-2xl p-6 shadow-2xl space-y-4 relative z-10 select-none">
+    <div class="flex items-center justify-between border-b border-black/15 pb-3">
+      <h3 class="text-sm font-bold text-black flex items-center gap-2">
+        <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+        <span>Edit Text Box</span>
+      </h3>
+      <button id="btnCloseEditTextBoxModal" type="button" class="text-black/60 hover:text-black font-bold text-sm">✕</button>
+    </div>
+
+    <div class="space-y-3.5">
+      <!-- Textarea for Text Content -->
+      <div>
+        <label for="editTextBoxContent" class="block text-xs font-bold text-black uppercase tracking-wider mb-1">Text Content</label>
+        <textarea id="editTextBoxContent" rows="4" placeholder="Type text, notes, or brief here..."
+          class="w-full px-3 py-2 rounded-lg bg-white border-2 border-black/30 text-black text-xs font-medium focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition resize-y"></textarea>
+      </div>
+
+      <!-- Font Size & Font Weight & Text Alignment (Grid) -->
+      <div class="grid grid-cols-3 gap-2.5">
+        <!-- Font Size -->
+        <div>
+          <label for="editTextBoxFontSize" class="block text-xs font-bold text-black uppercase tracking-wider mb-1">Font Size</label>
+          <select id="editTextBoxFontSize" class="w-full px-2 py-2 rounded-lg bg-white border-2 border-black/30 text-black text-xs font-bold focus:outline-none focus:border-blue-600 cursor-pointer">
+            <option value="11">11px (Small)</option>
+            <option value="13" selected>13px (Default)</option>
+            <option value="16">16px (Medium)</option>
+            <option value="20">20px (Large)</option>
+            <option value="24">24px (Title)</option>
+            <option value="32">32px (Header)</option>
+          </select>
+        </div>
+
+        <!-- Font Weight -->
+        <div>
+          <label for="editTextBoxFontWeight" class="block text-xs font-bold text-black uppercase tracking-wider mb-1">Style</label>
+          <select id="editTextBoxFontWeight" class="w-full px-2 py-2 rounded-lg bg-white border-2 border-black/30 text-black text-xs font-bold focus:outline-none focus:border-blue-600 cursor-pointer">
+            <option value="normal" selected>Regular</option>
+            <option value="bold">Bold</option>
+          </select>
+        </div>
+
+        <!-- Text Alignment -->
+        <div>
+          <label for="editTextBoxTextAlign" class="block text-xs font-bold text-black uppercase tracking-wider mb-1">Align</label>
+          <select id="editTextBoxTextAlign" class="w-full px-2 py-2 rounded-lg bg-white border-2 border-black/30 text-black text-xs font-bold focus:outline-none focus:border-blue-600 cursor-pointer">
+            <option value="left" selected>Left</option>
+            <option value="center">Center</option>
+            <option value="right">Right</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Text Color & Background Fill Color (Grid) -->
+      <div class="grid grid-cols-2 gap-3">
+        <!-- Text Color -->
+        <div>
+          <label for="editTextBoxFontColor" class="block text-xs font-bold text-black uppercase tracking-wider mb-1">Text Color</label>
+          <div class="flex items-center gap-2">
+            <input id="editTextBoxFontColor" type="color" value="#000000"
+              class="w-10 h-9 p-0.5 rounded-lg border-2 border-black/30 bg-white cursor-pointer shrink-0">
+            <input id="editTextBoxFontColorText" type="text" value="#000000" maxlength="7"
+              class="flex-1 min-w-0 px-2.5 py-2 rounded-lg bg-white border-2 border-black/30 text-black text-xs font-mono font-bold uppercase focus:outline-none focus:border-blue-600">
+          </div>
+        </div>
+
+        <!-- Background Fill Color -->
+        <div>
+          <label for="editTextBoxBgColor" class="block text-xs font-bold text-black uppercase tracking-wider mb-1">Fill Color</label>
+          <div class="flex items-center gap-2">
+            <input id="editTextBoxBgColor" type="color" value="#ffffff"
+              class="w-10 h-9 p-0.5 rounded-lg border-2 border-black/30 bg-white cursor-pointer shrink-0">
+            <input id="editTextBoxBgColorText" type="text" value="#FFFFFF" maxlength="7"
+              class="flex-1 min-w-0 px-2.5 py-2 rounded-lg bg-white border-2 border-black/30 text-black text-xs font-mono font-bold uppercase focus:outline-none focus:border-blue-600">
+          </div>
+        </div>
+      </div>
+
+      <!-- Fill Opacity & Border Style (Grid) -->
+      <div class="grid grid-cols-2 gap-3">
+        <!-- Background Opacity -->
+        <div>
+          <label for="editTextBoxBgOpacity" class="block text-xs font-bold text-black uppercase tracking-wider mb-1">Fill Opacity</label>
+          <select id="editTextBoxBgOpacity" class="w-full px-2.5 py-2 rounded-lg bg-white border-2 border-black/30 text-black text-xs font-bold focus:outline-none focus:border-blue-600 cursor-pointer">
+            <option value="0">0% (Transparent)</option>
+            <option value="0.2">20% (Subtle)</option>
+            <option value="0.5">50% (Translucent)</option>
+            <option value="0.8">80% (Soft Solid)</option>
+            <option value="0.95" selected>95% (Default)</option>
+            <option value="1">100% (Solid)</option>
+          </select>
+        </div>
+
+        <!-- Border Style -->
+        <div>
+          <label for="editTextBoxBorderStyle" class="block text-xs font-bold text-black uppercase tracking-wider mb-1">Border Style</label>
+          <select id="editTextBoxBorderStyle" class="w-full px-2.5 py-2 rounded-lg bg-white border-2 border-black/30 text-black text-xs font-bold focus:outline-none focus:border-blue-600 cursor-pointer">
+            <option value="dashed">╌╌╌ Dashed</option>
+            <option value="solid" selected>─── Solid</option>
+            <option value="dotted">··· Dotted</option>
+            <option value="none">∅ None (Borderless)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Border Color & Width -->
+      <div class="grid grid-cols-2 gap-3">
+        <!-- Border Color -->
+        <div>
+          <label for="editTextBoxBorderColor" class="block text-xs font-bold text-black uppercase tracking-wider mb-1">Border Color</label>
+          <div class="flex items-center gap-2">
+            <input id="editTextBoxBorderColor" type="color" value="#2563eb"
+              class="w-10 h-9 p-0.5 rounded-lg border-2 border-black/30 bg-white cursor-pointer shrink-0">
+            <input id="editTextBoxBorderColorText" type="text" value="#2563EB" maxlength="7"
+              class="flex-1 min-w-0 px-2.5 py-2 rounded-lg bg-white border-2 border-black/30 text-black text-xs font-mono font-bold uppercase focus:outline-none focus:border-blue-600">
+          </div>
+        </div>
+
+        <!-- Border Width -->
+        <div>
+          <label for="editTextBoxBorderWidth" class="block text-xs font-bold text-black uppercase tracking-wider mb-1">Border Width</label>
+          <select id="editTextBoxBorderWidth" class="w-full px-2.5 py-2 rounded-lg bg-white border-2 border-black/30 text-black text-xs font-bold focus:outline-none focus:border-blue-600 cursor-pointer">
+            <option value="1" selected>1 px (Fine)</option>
+            <option value="2">2 px (Standard)</option>
+            <option value="3">3 px (Thick)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="space-y-2 pt-2 border-t border-black/15">
+        <div class="flex items-center gap-2">
+          <button id="btnSaveEditTextBox" type="button" class="flex-1 btn-primary py-2 text-xs">
+            <i class="fi fi-rr-check text-xs"></i>
+            <span>Save Text</span>
+          </button>
+          <button id="btnDeleteEditTextBox" type="button" class="btn-secondary py-2 text-xs text-red-600 border-red-300 hover:border-red-600 hover:bg-red-50">
+            <i class="fi fi-rr-trash text-xs"></i>
+            <span>Delete</span>
+          </button>
+          <button id="btnCancelEditTextBox" type="button" class="btn-secondary py-2 text-xs">
+            <span>Cancel</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ==================== NO PROJECT ERROR MODAL ==================== -->
 <div id="noProjectModal" class="hidden fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
   <div class="w-full max-w-sm bg-white border-2 border-black rounded-2xl p-6 shadow-2xl space-y-4 relative z-10 text-center">
@@ -989,16 +1139,26 @@
             Click <strong>Add Corner</strong> to shape link. To delete: click <strong>Delete Corner</strong>, or <strong>right-click / press Delete</strong> on any diamond handle.
           </p>
 
-          <!-- Group Box Drawing Tool -->
-          <button id="btnBoxTool" type="button" title="Draw Group Box: Click and drag on chart to draw a container box inside or outside entities"
-                  class="w-full flex items-center justify-center gap-2 py-2.5 px-3 mt-2 rounded-xl border-2 border-black/20 bg-white hover:border-blue-600 hover:bg-blue-50/50 transition cursor-pointer select-none text-xs font-bold text-black shadow-sm">
-            <div class="w-6 h-6 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center">
-              <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-none stroke-current" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <!-- Group Box & Text Box Drawing Tools -->
+          <div class="grid grid-cols-2 gap-2 mt-2">
+            <button id="btnBoxTool" type="button" title="Draw Group Box: Click and drag on chart to draw a container box inside or outside entities"
+                    class="flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl border-2 border-black/20 bg-white hover:border-blue-600 hover:bg-blue-50/50 transition cursor-pointer select-none text-[11px] font-bold text-black shadow-sm">
+              <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-none stroke-current text-blue-600 shrink-0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke-dasharray="3 2"/>
               </svg>
-            </div>
-            <span id="btnBoxToolText">Draw Group Box</span>
-          </button>
+              <span id="btnBoxToolText">Group Box</span>
+            </button>
+
+            <button id="btnTextTool" type="button" title="Draw Text Box: Click or drag on chart to place a text box and input text"
+                    class="flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl border-2 border-black/20 bg-white hover:border-blue-600 hover:bg-blue-50/50 transition cursor-pointer select-none text-[11px] font-bold text-black shadow-sm">
+              <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-none stroke-current text-blue-600 shrink-0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="4 7 4 4 20 4 20 7"/>
+                <line x1="9" y1="20" x2="15" y2="20"/>
+                <line x1="12" y1="4" x2="12" y2="20"/>
+              </svg>
+              <span id="btnTextToolText">Text Box</span>
+            </button>
+          </div>
         </section>
       </div>
 
@@ -1144,6 +1304,14 @@
           </svg>
           <span id="btnBoxModeToggleText">Draw Box</span>
         </button>
+        <button id="btnTextModeToggle" title="Draw Text Box: Click or drag on chart to place a text box and input text" class="btn-secondary btn-chart-ctrl py-1 px-2 sm:px-2.5 text-xs">
+          <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-none stroke-current" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="4 7 4 4 20 4 20 7"/>
+            <line x1="9" y1="20" x2="15" y2="20"/>
+            <line x1="12" y1="4" x2="12" y2="20"/>
+          </svg>
+          <span id="btnTextModeToggleText">Text Box</span>
+        </button>
         <button id="btnCornerModeToggle" title="Add Corner to Link: Click any link to insert a draggable diamond handle" class="btn-secondary btn-chart-ctrl py-1 px-2 sm:px-2.5 text-xs">
           <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
             <line x1="2" y1="12" x2="8.5" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
@@ -1189,6 +1357,21 @@
         <span id="boxModeBannerText" class="truncate">Click and drag anywhere on the chart to draw a box</span>
       </div>
       <button id="cancelBoxModeBtn" type="button" class="btn-secondary py-0.5 px-2.5 text-[11px] bg-white text-black border-white hover:border-blue-300 shrink-0">
+        <span>Cancel</span>
+      </button>
+    </div>
+
+    <!-- Active Text Box Mode Banner -->
+    <div id="textModeBanner" class="hidden absolute top-12 sm:top-14 left-1/2 -translate-x-1/2 z-30 bg-blue-600 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-xl flex items-center gap-3 max-w-[90%] text-center">
+      <div class="flex items-center gap-2 truncate">
+        <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-none stroke-current shrink-0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="4 7 4 4 20 4 20 7"/>
+          <line x1="9" y1="20" x2="15" y2="20"/>
+          <line x1="12" y1="4" x2="12" y2="20"/>
+        </svg>
+        <span id="textModeBannerText" class="truncate">Click or drag anywhere on the chart to place a text box</span>
+      </div>
+      <button id="cancelTextModeBtn" type="button" class="btn-secondary py-0.5 px-2.5 text-[11px] bg-white text-black border-white hover:border-blue-300 shrink-0">
         <span>Cancel</span>
       </button>
     </div>
@@ -1299,7 +1482,9 @@ let map, net, nodes, edges, markerLayer, lineLayer;
 let markersByEntityId = {}, linesByLinkId = {};
 let isBoxMode = false, isDrawingLiveBox = false;
 let boxDrawStartCanvasPos = null, boxDrawCurrentCanvasPos = null;
-let editingBoxId = null, isDraggingBox = false, draggingBoxId = null;
+let isTextMode = false, isDrawingLiveText = false;
+let textDrawStartCanvasPos = null, textDrawCurrentCanvasPos = null;
+let editingBoxId = null, editingTextBoxId = null, isDraggingBox = false, draggingBoxId = null;
 let dragBoxStartPointer = null, dragBoxInitialX = 0, dragBoxInitialY = 0;
 let selectedBoxId = null, isResizingBox = false, activeResizeHandle = null;
 let resizeBoxInitial = null, resizeStartPointer = null;
@@ -2821,6 +3006,122 @@ if ($("btnDeleteEditBox")) {
   };
 }
 
+/* ---------- Text Box Operations & Modal ---------- */
+function openEditTextModal(boxId) {
+  if (!boxId || !data.boxes) return;
+  const b = data.boxes.find(x => x.id === boxId);
+  if (!b) return;
+
+  editingTextBoxId = boxId;
+  if ($("editTextBoxContent")) $("editTextBoxContent").value = b.text || "";
+  if ($("editTextBoxFontSize")) $("editTextBoxFontSize").value = String(b.fontSize || 14);
+  if ($("editTextBoxFontWeight")) $("editTextBoxFontWeight").value = b.fontWeight || "normal";
+  if ($("editTextBoxTextAlign")) $("editTextBoxTextAlign").value = b.textAlign || "left";
+
+  const fColor = b.fontColor || "#000000";
+  if ($("editTextBoxColor")) $("editTextBoxColor").value = fColor;
+  if ($("editTextBoxColorText")) $("editTextBoxColorText").value = fColor;
+
+  const bgColor = b.bgColor || "#ffffff";
+  if ($("editTextBoxBgColor")) $("editTextBoxBgColor").value = bgColor;
+  if ($("editTextBoxBgColorText")) $("editTextBoxBgColorText").value = bgColor;
+
+  if ($("editTextBoxBgOpacity")) $("editTextBoxBgOpacity").value = String(b.bgOpacity != null ? b.bgOpacity : 0);
+
+  const bColor = b.borderColor || "#2563eb";
+  if ($("editTextBoxBorderColor")) $("editTextBoxBorderColor").value = bColor;
+  if ($("editTextBoxBorderColorText")) $("editTextBoxBorderColorText").value = bColor;
+
+  if ($("editTextBoxBorderStyle")) $("editTextBoxBorderStyle").value = b.borderStyle || "solid";
+  if ($("editTextBoxBorderWidth")) $("editTextBoxBorderWidth").value = String(b.borderWidth || 1);
+
+  if ($("editTextBoxModal")) $("editTextBoxModal").classList.remove("hidden");
+  setTimeout(() => {
+    if ($("editTextBoxContent")) $("editTextBoxContent").focus();
+  }, 50);
+}
+
+function closeEditTextModal() {
+  if ($("editTextBoxModal")) $("editTextBoxModal").classList.add("hidden");
+  editingTextBoxId = null;
+}
+
+if ($("btnCloseEditTextBoxModal")) $("btnCloseEditTextBoxModal").onclick = closeEditTextModal;
+if ($("btnCancelEditTextBox")) $("btnCancelEditTextBox").onclick = closeEditTextModal;
+
+if ($("editTextBoxColor") && $("editTextBoxColorText")) {
+  $("editTextBoxColor").oninput = e => {
+    $("editTextBoxColorText").value = e.target.value;
+  };
+  $("editTextBoxColorText").oninput = e => {
+    const val = e.target.value.trim();
+    if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+      $("editTextBoxColor").value = val;
+    }
+  };
+}
+
+if ($("editTextBoxBgColor") && $("editTextBoxBgColorText")) {
+  $("editTextBoxBgColor").oninput = e => {
+    $("editTextBoxBgColorText").value = e.target.value;
+  };
+  $("editTextBoxBgColorText").oninput = e => {
+    const val = e.target.value.trim();
+    if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+      $("editTextBoxBgColor").value = val;
+    }
+  };
+}
+
+if ($("editTextBoxBorderColor") && $("editTextBoxBorderColorText")) {
+  $("editTextBoxBorderColor").oninput = e => {
+    $("editTextBoxBorderColorText").value = e.target.value;
+  };
+  $("editTextBoxBorderColorText").oninput = e => {
+    const val = e.target.value.trim();
+    if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+      $("editTextBoxBorderColor").value = val;
+    }
+  };
+}
+
+if ($("btnSaveEditTextBox")) {
+  $("btnSaveEditTextBox").onclick = () => {
+    if (!editingTextBoxId || !data.boxes) return;
+    const b = data.boxes.find(x => x.id === editingTextBoxId);
+    if (!b) return;
+
+    if ($("editTextBoxContent")) b.text = $("editTextBoxContent").value;
+    if ($("editTextBoxFontSize")) b.fontSize = parseInt($("editTextBoxFontSize").value) || 14;
+    if ($("editTextBoxFontWeight")) b.fontWeight = $("editTextBoxFontWeight").value || "normal";
+    if ($("editTextBoxTextAlign")) b.textAlign = $("editTextBoxTextAlign").value || "left";
+    if ($("editTextBoxColor")) b.fontColor = $("editTextBoxColor").value || "#000000";
+    if ($("editTextBoxBgColor")) b.bgColor = $("editTextBoxBgColor").value || "#ffffff";
+    if ($("editTextBoxBgOpacity")) b.bgOpacity = parseFloat($("editTextBoxBgOpacity").value) || 0;
+    if ($("editTextBoxBorderColor")) b.borderColor = $("editTextBoxBorderColor").value || "#2563eb";
+    if ($("editTextBoxBorderStyle")) b.borderStyle = $("editTextBoxBorderStyle").value || "solid";
+    if ($("editTextBoxBorderWidth")) b.borderWidth = parseInt($("editTextBoxBorderWidth").value) || 1;
+
+    closeEditTextModal();
+    if (net) net.redraw();
+    queueSave();
+  };
+}
+
+if ($("btnDeleteEditTextBox")) {
+  $("btnDeleteEditTextBox").onclick = () => {
+    if (!editingTextBoxId || !data.boxes) return;
+    if (!confirm("Are you sure you want to delete this text box?")) return;
+    const boxId = editingTextBoxId;
+    if (selectedBoxId === boxId) selectedBoxId = null;
+    data.boxes = data.boxes.filter(x => x.id !== boxId);
+    data.links = data.links.filter(l => l.from !== boxId && l.to !== boxId);
+    closeEditTextModal();
+    render(false);
+    queueSave();
+  };
+}
+
 function getBoxResizeHandles(b) {
   return [
     { type: "nw", x: b.x, y: b.y, cursor: "nwse-resize" },
@@ -2871,6 +3172,87 @@ function drawBoxResizeHandles(ctx, b) {
   ctx.restore();
 }
 
+function drawTextBoxContent(ctx, b) {
+  const x = b.x;
+  const y = b.y;
+  const w = b.w;
+  const h = b.h;
+  const pad = 10;
+  const innerW = w - pad * 2;
+  const innerH = h - pad * 2;
+  if (innerW <= 4 || innerH <= 4) return;
+
+  ctx.save();
+  // Clip text rendering strictly to box interior so it never overflows
+  ctx.beginPath();
+  ctx.rect(x + 3, y + 3, w - 6, h - 6);
+  ctx.clip();
+
+  const fontSize = parseInt(b.fontSize) || 14;
+  const weight = b.fontWeight || "normal";
+  const align = b.textAlign || "left";
+  const color = b.fontColor || "#000000";
+  const text = (b.text != null && b.text !== "") ? String(b.text) : "";
+
+  ctx.font = `${weight} ${fontSize}px "DM Sans", -apple-system, sans-serif`;
+  ctx.fillStyle = color;
+  ctx.textBaseline = "top";
+  ctx.textAlign = align;
+
+  let startX = x + pad;
+  if (align === "center") {
+    startX = x + w / 2;
+  } else if (align === "right") {
+    startX = x + w - pad;
+  }
+
+  const lineHeight = Math.round(fontSize * 1.35);
+
+  if (!text.trim()) {
+    // Placeholder when text is empty
+    ctx.font = `italic 400 ${fontSize}px "DM Sans", -apple-system, sans-serif`;
+    ctx.fillStyle = "#9ca3af";
+    ctx.fillText("Double-click to type text...", startX, y + pad);
+    ctx.restore();
+    return;
+  }
+
+  // Word-wrap multiline text support
+  const paragraphs = text.split("\n");
+  let curY = y + pad;
+
+  for (let p = 0; p < paragraphs.length; p++) {
+    const para = paragraphs[p];
+    if (para === "") {
+      curY += lineHeight;
+      if (curY > y + h - pad) break;
+      continue;
+    }
+    const words = para.split(" ");
+    let currentLine = "";
+
+    for (let i = 0; i < words.length; i++) {
+      const testLine = currentLine ? (currentLine + " " + words[i]) : words[i];
+      const testWidth = ctx.measureText(testLine).width;
+      if (testWidth > innerW && currentLine) {
+        ctx.fillText(currentLine, startX, curY);
+        curY += lineHeight;
+        if (curY > y + h - pad) break;
+        currentLine = words[i];
+      } else {
+        currentLine = testLine;
+      }
+    }
+    if (currentLine && curY <= y + h - pad) {
+      ctx.fillText(currentLine, startX, curY);
+      curY += lineHeight;
+    }
+    if (curY > y + h - pad) break;
+  }
+
+  ctx.restore();
+}
+
 function drawBoxOnCanvas(ctx, b) {
   const x = b.x;
   const y = b.y;
@@ -2878,6 +3260,53 @@ function drawBoxOnCanvas(ctx, b) {
   const h = b.h;
   if (w <= 0 || h <= 0) return;
 
+  // Handle Text Box rendering
+  if (b.type === "text") {
+    ctx.save();
+    const opacity = b.bgOpacity != null ? b.bgOpacity : 0;
+    if (opacity > 0) {
+      ctx.globalAlpha = opacity;
+      ctx.fillStyle = b.bgColor || "#ffffff";
+      const r = Math.min(8, Math.min(w, h) / 4);
+      ctx.beginPath();
+      if (ctx.roundRect) {
+        ctx.roundRect(x, y, w, h, r);
+      } else {
+        ctx.rect(x, y, w, h);
+      }
+      ctx.fill();
+    }
+
+    // Stroke border (unless style is 'none')
+    if (b.borderStyle && b.borderStyle !== "none") {
+      ctx.globalAlpha = 1;
+      ctx.lineWidth = b.borderWidth || 1;
+      ctx.strokeStyle = b.borderColor || "#2563eb";
+      if (b.borderStyle === "dashed") {
+        ctx.setLineDash([6, 4]);
+      } else if (b.borderStyle === "dotted") {
+        ctx.setLineDash([2, 3]);
+      } else {
+        ctx.setLineDash([]);
+      }
+      const r = Math.min(8, Math.min(w, h) / 4);
+      ctx.beginPath();
+      if (ctx.roundRect) {
+        ctx.roundRect(x, y, w, h, r);
+      } else {
+        ctx.rect(x, y, w, h);
+      }
+      ctx.stroke();
+    }
+
+    ctx.restore();
+
+    // Render word-wrapped text content
+    drawTextBoxContent(ctx, b);
+    return;
+  }
+
+  // Handle Group Box rendering
   ctx.save();
 
   // 1. Fill background with configured opacity
@@ -2978,6 +3407,36 @@ function drawLiveBoxPreview(ctx, startPos, currPos) {
   ctx.setLineDash([]);
   ctx.font = 'bold 10px "DM Sans", sans-serif';
   const dimStr = `${Math.round(w)} × ${Math.round(h)}`;
+  const dimW = ctx.measureText(dimStr).width + 10;
+  ctx.fillStyle = "#2563eb";
+  ctx.fillRect(x + 6, y + 6, dimW, 16);
+  ctx.fillStyle = "#ffffff";
+  ctx.textBaseline = "middle";
+  ctx.textAlign = "center";
+  ctx.fillText(dimStr, x + 6 + dimW / 2, y + 14);
+
+  ctx.restore();
+}
+
+function drawLiveTextPreview(ctx, startPos, currPos) {
+  const x = Math.min(startPos.x, currPos.x);
+  const y = Math.min(startPos.y, currPos.y);
+  const w = Math.abs(currPos.x - startPos.x);
+  const h = Math.abs(currPos.y - startPos.y);
+
+  ctx.save();
+  ctx.fillStyle = "rgba(37, 99, 235, 0.08)";
+  ctx.fillRect(x, y, w, h);
+
+  ctx.strokeStyle = "#2563eb";
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([4, 3]);
+  ctx.strokeRect(x, y, w, h);
+
+  // Text label or dimension tag
+  ctx.setLineDash([]);
+  ctx.font = 'bold 10px "DM Sans", sans-serif';
+  const dimStr = (w < 20 && h < 20) ? "Text Box" : `${Math.round(w)} × ${Math.round(h)}`;
   const dimW = ctx.measureText(dimStr).width + 10;
   ctx.fillStyle = "#2563eb";
   ctx.fillRect(x + 6, y + 6, dimW, 16);
@@ -3177,6 +3636,7 @@ function enterBoxMode() {
     return;
   }
   if (isLinkMode) exitLinkMode();
+  if (isTextMode) exitTextMode();
   if (isCornerMode) exitCornerMode();
   if (isDeleteCornerMode) exitDeleteCornerMode();
 
@@ -3188,8 +3648,8 @@ function enterBoxMode() {
   }
   const sideBtn = $("btnBoxTool");
   if (sideBtn) {
-    sideBtn.className = "w-full flex items-center justify-center gap-2 py-2.5 px-3 mt-2 rounded-xl border-2 border-blue-600 bg-blue-600 text-white transition cursor-pointer select-none text-xs font-bold shadow-sm";
-    if ($("btnBoxToolText")) $("btnBoxToolText").textContent = "Cancel Draw Box";
+    sideBtn.className = "flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl border-2 border-blue-600 bg-blue-600 text-white transition cursor-pointer select-none text-[11px] font-bold shadow-sm";
+    if ($("btnBoxToolText")) $("btnBoxToolText").textContent = "Cancel Box";
   }
   if ($("boxModeBanner")) $("boxModeBanner").classList.remove("hidden");
   if ($("net")) $("net").style.cursor = "crosshair";
@@ -3211,8 +3671,8 @@ function exitBoxMode() {
   }
   const sideBtn = $("btnBoxTool");
   if (sideBtn) {
-    sideBtn.className = "w-full flex items-center justify-center gap-2 py-2.5 px-3 mt-2 rounded-xl border-2 border-black/20 bg-white hover:border-blue-600 hover:bg-blue-50/50 transition cursor-pointer select-none text-xs font-bold text-black shadow-sm";
-    if ($("btnBoxToolText")) $("btnBoxToolText").textContent = "Draw Group Box";
+    sideBtn.className = "flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl border-2 border-black/20 bg-white hover:border-blue-600 hover:bg-blue-50/50 transition cursor-pointer select-none text-[11px] font-bold text-black shadow-sm";
+    if ($("btnBoxToolText")) $("btnBoxToolText").textContent = "Group Box";
   }
   if ($("boxModeBanner")) $("boxModeBanner").classList.add("hidden");
   if ($("net")) $("net").style.cursor = "";
@@ -3227,6 +3687,66 @@ function toggleBoxMode() {
     exitBoxMode();
   } else {
     enterBoxMode();
+  }
+}
+
+function enterTextMode() {
+  if (!currentProjectId) {
+    showNoProjectError();
+    return;
+  }
+  if (isLinkMode) exitLinkMode();
+  if (isBoxMode) exitBoxMode();
+  if (isCornerMode) exitCornerMode();
+  if (isDeleteCornerMode) exitDeleteCornerMode();
+
+  isTextMode = true;
+  const topBtn = $("btnTextModeToggle");
+  if (topBtn) {
+    topBtn.className = "btn-secondary btn-chart-ctrl py-1 px-2 sm:px-2.5 text-xs bg-blue-600 text-white border-blue-600 hover:bg-blue-700 shadow-sm";
+    if ($("btnTextModeToggleText")) $("btnTextModeToggleText").textContent = "Cancel Text";
+  }
+  const sideBtn = $("btnTextTool");
+  if (sideBtn) {
+    sideBtn.className = "flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl border-2 border-blue-600 bg-blue-600 text-white transition cursor-pointer select-none text-[11px] font-bold shadow-sm";
+    if ($("btnTextToolText")) $("btnTextToolText").textContent = "Cancel Text";
+  }
+  if ($("textModeBanner")) $("textModeBanner").classList.remove("hidden");
+  if ($("net")) $("net").style.cursor = "crosshair";
+  if (net) {
+    net.setOptions({ interaction: { dragView: false, dragNodes: false } });
+  }
+}
+
+function exitTextMode() {
+  isTextMode = false;
+  isDrawingLiveText = false;
+  textDrawStartCanvasPos = null;
+  textDrawCurrentCanvasPos = null;
+
+  const topBtn = $("btnTextModeToggle");
+  if (topBtn) {
+    topBtn.className = "btn-secondary btn-chart-ctrl py-1 px-2 sm:px-2.5 text-xs";
+    if ($("btnTextModeToggleText")) $("btnTextModeToggleText").textContent = "Text Box";
+  }
+  const sideBtn = $("btnTextTool");
+  if (sideBtn) {
+    sideBtn.className = "flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl border-2 border-black/20 bg-white hover:border-blue-600 hover:bg-blue-50/50 transition cursor-pointer select-none text-[11px] font-bold text-black shadow-sm";
+    if ($("btnTextToolText")) $("btnTextToolText").textContent = "Text Box";
+  }
+  if ($("textModeBanner")) $("textModeBanner").classList.add("hidden");
+  if ($("net")) $("net").style.cursor = "";
+  if (net) {
+    net.setOptions({ interaction: { dragView: true, dragNodes: true } });
+    net.redraw();
+  }
+}
+
+function toggleTextMode() {
+  if (isTextMode) {
+    exitTextMode();
+  } else {
+    enterTextMode();
   }
 }
 
@@ -3467,10 +3987,14 @@ function initNet() {
       return;
     }
 
-    // Double click group box (header tag, border, or inside box) to open edit modal
+    // Double click box to open edit modal (text box modal if type === 'text', group box modal otherwise)
     const canvasPos = net.DOMtoCanvas(params.pointer.DOM);
     const hitBox = findBoxAt(canvasPos);
     if (hitBox) {
+      if (hitBox.type === "text") {
+        openEditTextModal(hitBox.id);
+        return;
+      }
       if (!clickedNodeId || findBoxHeaderOrBorderAt(canvasPos)) {
         openEditBoxModal(hitBox.id);
         return;
@@ -3714,6 +4238,11 @@ function initNet() {
       drawLiveBoxPreview(ctx, boxDrawStartCanvasPos, boxDrawCurrentCanvasPos);
     }
 
+    // 0c. Render live text box preview while drawing
+    if (isDrawingLiveText && textDrawStartCanvasPos && textDrawCurrentCanvasPos) {
+      drawLiveTextPreview(ctx, textDrawStartCanvasPos, textDrawCurrentCanvasPos);
+    }
+
     if (!isDrawingLiveLine || !liveLineSourceId) return;
 
     let targetPos = liveLineCurrentCanvasPos;
@@ -3904,7 +4433,7 @@ function initNet() {
     if (ev.button !== 0) return; // Left click only
 
     // 0. If user clicks a resize handle on the currently selected box -> start resizing immediately!
-    if (selectedBoxId && data.boxes && !isBoxMode && !isLinkMode && !isCornerMode) {
+    if (selectedBoxId && data.boxes && !isBoxMode && !isTextMode && !isLinkMode && !isCornerMode) {
       const selBox = data.boxes.find(x => x.id === selectedBoxId);
       if (selBox) {
         const rect = container.getBoundingClientRect();
@@ -3934,6 +4463,19 @@ function initNet() {
       isDrawingLiveBox = true;
       boxDrawStartCanvasPos = net.DOMtoCanvas(domPos);
       boxDrawCurrentCanvasPos = boxDrawStartCanvasPos;
+      net.redraw();
+      return;
+    }
+
+    // 1b. Text Box Mode: click & drag or single click to draw a text box
+    if (isTextMode) {
+      ev.stopPropagation();
+      ev.preventDefault();
+      const rect = container.getBoundingClientRect();
+      const domPos = { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
+      isDrawingLiveText = true;
+      textDrawStartCanvasPos = net.DOMtoCanvas(domPos);
+      textDrawCurrentCanvasPos = textDrawStartCanvasPos;
       net.redraw();
       return;
     }
@@ -3986,7 +4528,7 @@ function initNet() {
       }
     }
 
-    // 3. Normal Mode: select box when clicked, or drag box by clicking on its header badge or border
+    // 3. Normal Mode: select box when clicked, or drag box by clicking on its header badge or border (or anywhere on text box)
     if (!isCornerMode && !isDeleteCornerMode) {
       const rect = container.getBoundingClientRect();
       const domPos = { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
@@ -4006,7 +4548,7 @@ function initNet() {
             net.redraw();
           }
 
-          const boxToMove = findBoxHeaderOrBorderAt(cPos);
+          const boxToMove = (hitBox.type === "text") ? hitBox : findBoxHeaderOrBorderAt(cPos);
           if (boxToMove) {
             isDraggingBox = true;
             draggingBoxId = boxToMove.id;
@@ -4091,7 +4633,18 @@ function initNet() {
       return;
     }
 
-    // 2. Dragging/moving an existing Group Box
+    // 1b. Updating Live Text Box drawing
+    if (isDrawingLiveText && net) {
+      ev.stopPropagation();
+      ev.preventDefault();
+      const rect = container.getBoundingClientRect();
+      const domPos = { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
+      textDrawCurrentCanvasPos = net.DOMtoCanvas(domPos);
+      net.redraw();
+      return;
+    }
+
+    // 2. Dragging/moving an existing Group Box or Text Box
     if (isDraggingBox && net) {
       ev.stopPropagation();
       ev.preventDefault();
@@ -4114,7 +4667,7 @@ function initNet() {
     }
 
     // Cursor management on hover (resize handles, box header/border move)
-    if (!isDrawingLiveLine && !isDrawingLiveBox && !isDraggingBox && !isResizingBox && !isBoxMode && !isLinkMode) {
+    if (!isDrawingLiveLine && !isDrawingLiveBox && !isDrawingLiveText && !isDraggingBox && !isResizingBox && !isBoxMode && !isTextMode && !isLinkMode) {
       const rect = container.getBoundingClientRect();
       const domPos = { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
       const cPos = net.DOMtoCanvas(domPos);
@@ -4128,10 +4681,12 @@ function initNet() {
         }
       }
 
-      const hoverBox = findBoxHeaderOrBorderAt(cPos);
+      const hoverBox = findBoxAt(cPos);
       if (hoverBox && !net.getNodeAt(domPos)) {
-        container.style.cursor = "move";
-        return;
+        if (hoverBox.type === "text" || findBoxHeaderOrBorderAt(cPos)) {
+          container.style.cursor = "move";
+          return;
+        }
       }
       container.style.cursor = "";
     }
@@ -4173,7 +4728,7 @@ function initNet() {
       resizeBoxInitial = null;
       resizeStartPointer = null;
       if (net) {
-        net.setOptions({ interaction: { dragNodes: !isLinkMode && !isBoxMode, dragView: !isLinkMode && !isBoxMode } });
+        net.setOptions({ interaction: { dragNodes: !isLinkMode && !isBoxMode && !isTextMode, dragView: !isLinkMode && !isBoxMode && !isTextMode } });
         net.redraw();
       }
       queueSave();
@@ -4235,14 +4790,82 @@ function initNet() {
       return;
     }
 
-    // 2. Releasing dragged Group Box
+    // 1b. Completing Live Text Box drawing
+    if (isDrawingLiveText) {
+      ev.stopPropagation();
+      ev.preventDefault();
+
+      if (textDrawStartCanvasPos && textDrawCurrentCanvasPos) {
+        let x = Math.min(textDrawStartCanvasPos.x, textDrawCurrentCanvasPos.x);
+        let y = Math.min(textDrawStartCanvasPos.y, textDrawCurrentCanvasPos.y);
+        let w = Math.abs(textDrawCurrentCanvasPos.x - textDrawStartCanvasPos.x);
+        let h = Math.abs(textDrawCurrentCanvasPos.y - textDrawStartCanvasPos.y);
+
+        // If single click without drag, create standard sized text box centered at click
+        if (w < 20 || h < 20) {
+          w = 180;
+          h = 80;
+          x = Math.round(textDrawStartCanvasPos.x - w / 2);
+          y = Math.round(textDrawStartCanvasPos.y - h / 2);
+        }
+
+        if (!data.boxes) data.boxes = [];
+        const newTextBox = {
+          id: "box_" + uid(),
+          type: "text",
+          text: "",
+          x: Math.round(x),
+          y: Math.round(y),
+          w: Math.round(w),
+          h: Math.round(h),
+          fontSize: 14,
+          fontWeight: "normal",
+          textAlign: "left",
+          fontColor: "#000000",
+          borderColor: "#2563eb",
+          borderWidth: 1,
+          borderStyle: "solid",
+          bgColor: "#ffffff",
+          bgOpacity: 0
+        };
+        data.boxes.push(newTextBox);
+        if (nodes && !nodes.get(newTextBox.id)) {
+          nodes.add({
+            id: newTextBox.id,
+            x: Math.round(newTextBox.x + newTextBox.w / 2),
+            y: Math.round(newTextBox.y + newTextBox.h / 2),
+            shape: "dot",
+            size: 0.1,
+            color: {
+              background: "rgba(0,0,0,0)",
+              border: "rgba(0,0,0,0)",
+              highlight: { background: "rgba(0,0,0,0)", border: "rgba(0,0,0,0)" },
+              hover: { background: "rgba(0,0,0,0)", border: "rgba(0,0,0,0)" }
+            },
+            physics: false,
+            fixed: true,
+            font: { size: 0, color: "rgba(0,0,0,0)", strokeWidth: 0 }
+          });
+        }
+        selectedBoxId = newTextBox.id; // Automatically select newly drawn text box
+        queueSave();
+        exitTextMode();
+        openEditTextModal(newTextBox.id); // Open modal immediately for text entry
+        return;
+      }
+
+      exitTextMode();
+      return;
+    }
+
+    // 2. Releasing dragged Group Box or Text Box
     if (isDraggingBox) {
       ev.stopPropagation();
       ev.preventDefault();
       isDraggingBox = false;
       draggingBoxId = null;
       if (net) {
-        net.setOptions({ interaction: { dragNodes: !isLinkMode && !isBoxMode, dragView: !isLinkMode && !isBoxMode } });
+        net.setOptions({ interaction: { dragNodes: !isLinkMode && !isBoxMode && !isTextMode, dragView: !isLinkMode && !isBoxMode && !isTextMode } });
         net.redraw();
       }
       queueSave();
@@ -4279,7 +4902,7 @@ function initNet() {
     liveLineHoverTargetId = null;
 
     if (net) {
-      net.setOptions({ interaction: { dragNodes: !isLinkMode && !isBoxMode, dragView: !isLinkMode && !isBoxMode } });
+      net.setOptions({ interaction: { dragNodes: !isLinkMode && !isBoxMode && !isTextMode, dragView: !isLinkMode && !isBoxMode && !isTextMode } });
       net.redraw();
     }
 
@@ -5042,6 +5665,11 @@ function enterLinkMode(fromNodeId = null) {
     return;
   }
 
+  if (isBoxMode) exitBoxMode();
+  if (isTextMode) exitTextMode();
+  if (isCornerMode) exitCornerMode();
+  if (isDeleteCornerMode) exitDeleteCornerMode();
+
   isLinkMode = true;
   linkingSourceId = fromNodeId || null;
 
@@ -5200,6 +5828,17 @@ if ($("cancelBoxModeBtn")) {
   $("cancelBoxModeBtn").onclick = exitBoxMode;
 }
 
+// Text Box Tool Button events
+if ($("btnTextTool")) {
+  $("btnTextTool").onclick = toggleTextMode;
+}
+if ($("btnTextModeToggle")) {
+  $("btnTextModeToggle").onclick = toggleTextMode;
+}
+if ($("cancelTextModeBtn")) {
+  $("cancelTextModeBtn").onclick = exitTextMode;
+}
+
 /* ---------- Corner to a Link (Add & Delete) Feature ---------- */
 let isCornerMode = false;
 let isDeleteCornerMode = false;
@@ -5228,6 +5867,8 @@ function enterCornerMode() {
   }
 
   if (isLinkMode) exitLinkMode();
+  if (isBoxMode) exitBoxMode();
+  if (isTextMode) exitTextMode();
   if (isDeleteCornerMode) exitDeleteCornerMode();
   isCornerMode = true;
 
@@ -5296,6 +5937,8 @@ function enterDeleteCornerMode() {
   }
 
   if (isLinkMode) exitLinkMode();
+  if (isBoxMode) exitBoxMode();
+  if (isTextMode) exitTextMode();
   if (isCornerMode) exitCornerMode();
   isDeleteCornerMode = true;
 
@@ -5359,9 +6002,11 @@ window.addEventListener("keydown", e => {
     }
     if (isLinkMode) exitLinkMode();
     if (isBoxMode) exitBoxMode();
+    if (isTextMode) exitTextMode();
     if (isCornerMode) exitCornerMode();
     if (isDeleteCornerMode) exitDeleteCornerMode();
     closeEditBoxModal();
+    closeEditTextModal();
     if (selectedBoxId || selectedLinkId || selectedCornerNodeId) {
       selectedBoxId = null;
       selectedLinkId = null;
