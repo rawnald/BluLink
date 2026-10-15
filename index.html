@@ -1227,7 +1227,7 @@
 
               <!-- Upload & Remove controls -->
               <div class="flex-1 min-w-0 space-y-1">
-                <input id="sImgFileInput" type="file" accept="image/*" class="hidden">
+                <input id="sImgFileInput" type="file" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml,image/*,.gif" class="hidden">
                 <div class="flex items-center gap-1.5">
                   <button id="sBtnUploadImg" type="button" class="btn-secondary py-1 px-2.5 text-[11px] font-bold">
                     <i class="fi fi-rr-picture text-xs"></i>
@@ -1238,7 +1238,7 @@
                     <i class="fi fi-rr-trash text-xs"></i>
                   </button>
                 </div>
-                <p class="text-[10px] text-black/60 truncate">Replaces the default icon on chart & map</p>
+                <p class="text-[10px] text-black/60 truncate">Supports PNG, JPG, GIF & WebP on chart & map</p>
               </div>
             </div>
           </div>
@@ -2740,17 +2740,50 @@ async function openApp() {
   }, 250);
 }
 
-/* ---------- Entity Image Helpers ---------- */
+/* ---------- Entity Image Helpers & GIF Support ---------- */
+const TRANSPARENT_1PX_PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+
+function isGifUrl(url) {
+  if (!url || typeof url !== "string") return false;
+  return url.startsWith("data:image/gif") || 
+         /\.gif($|\?)/i.test(url) || 
+         url.includes("image/gif");
+}
+
 function getEntityIcon(e) {
   if (!e) return ENTITY_ICONS.Male;
   return e.customImage || e.icon || ENTITY_ICONS[e.type] || ENTITY_ICONS[e.name] || ENTITY_ICONS.Male;
 }
 
 function processUploadedImage(file, callback) {
-  if (!file || !file.type.startsWith("image/")) {
-    alert("Please select a valid image file.");
+  if (!file) return;
+  const isGif = file.type === "image/gif" || (file.name && file.name.toLowerCase().endsWith(".gif"));
+  const isImage = file.type.startsWith("image/") || isGif;
+  if (!isImage) {
+    alert("Please select a valid image file (PNG, JPG, GIF, WebP, SVG).");
     return;
   }
+
+  // Preserve animated GIF and SVG binary data directly without downscaling
+  if (isGif || file.type === "image/svg+xml") {
+    const maxLimit = isGif ? 8 * 1024 * 1024 : 2 * 1024 * 1024; // 8MB for GIF, 2MB for SVG
+    if (file.size > maxLimit) {
+      alert(`File is too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Please select a file under ${Math.round(maxLimit / 1024 / 1024)}MB for optimal performance.`);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = ev => {
+      let dataUri = ev.target.result;
+      if (isGif && !dataUri.startsWith("data:image/gif") && dataUri.startsWith("data:")) {
+        dataUri = dataUri.replace(/^data:[^;]+;/, "data:image/gif;");
+      }
+      callback(dataUri);
+    };
+    reader.readAsDataURL(file);
+    return;
+  }
+
+  // For static raster images (PNG, JPG, WebP), scale to max 160x160 to keep project lightweight
   const reader = new FileReader();
   reader.onload = ev => {
     const img = new Image();
@@ -2775,9 +2808,127 @@ function processUploadedImage(file, callback) {
       const dataUri = canvas.toDataURL("image/png", 0.9);
       callback(dataUri);
     };
+    img.onerror = () => {
+      callback(ev.target.result);
+    };
     img.src = ev.target.result;
   };
   reader.readAsDataURL(file);
+}
+
+/* ---------- Workspace Animated GIF DOM Overlay Engine ---------- */
+function getOrCreateGifOverlay() {
+  let overlay = $("netGifOverlay");
+  const container = $("net");
+  if (!overlay && container) {
+    overlay = document.createElement("div");
+    overlay.id = "netGifOverlay";
+    overlay.className = "absolute inset-0 pointer-events-none overflow-hidden";
+    overlay.style.position = "absolute";
+    overlay.style.top = "0";
+    overlay.style.left = "0";
+    overlay.style.width = "100%";
+    overlay.style.height = "100%";
+    overlay.style.pointerEvents = "none";
+    overlay.style.overflow = "hidden";
+    overlay.style.zIndex = "5";
+    container.style.position = "relative";
+    container.appendChild(overlay);
+  }
+  return overlay;
+}
+
+function rebuildGifOverlay() {
+  const overlay = getOrCreateGifOverlay();
+  if (!overlay) return;
+
+  const activeGifIds = new Set();
+  if (data && data.entities) {
+    data.entities.forEach(e => {
+      const iconUri = getEntityIcon(e);
+      if (isGifUrl(iconUri)) {
+        activeGifIds.add(e.id);
+        let img = document.getElementById("gif_overlay_" + e.id);
+        if (!img) {
+          img = document.createElement("img");
+          img.id = "gif_overlay_" + e.id;
+          img.className = "absolute pointer-events-none select-none object-contain";
+          img.alt = "";
+          img.style.position = "absolute";
+          img.style.pointerEvents = "none";
+          img.style.userSelect = "none";
+          img.style.zIndex = "5";
+          overlay.appendChild(img);
+        }
+        if (img.src !== iconUri) {
+          img.src = iconUri;
+        }
+      }
+    });
+  }
+
+  // Clean up any leftover overlay images that no longer have GIF icons
+  Array.from(overlay.children).forEach(child => {
+    if (child.id && child.id.startsWith("gif_overlay_")) {
+      const eid = child.id.replace("gif_overlay_", "");
+      if (!activeGifIds.has(eid)) {
+        overlay.removeChild(child);
+      }
+    }
+  });
+
+  updateGifOverlayPositions();
+}
+
+function updateGifOverlayPositions() {
+  if (!net || !data || !data.entities) return;
+  const overlay = $("netGifOverlay");
+  if (!overlay) return;
+
+  const containerW = overlay.clientWidth || 800;
+  const containerH = overlay.clientHeight || 600;
+
+  data.entities.forEach(e => {
+    const iconUri = getEntityIcon(e);
+    if (!isGifUrl(iconUri)) return;
+    const img = document.getElementById("gif_overlay_" + e.id);
+    if (!img) return;
+
+    let pos = null;
+    try {
+      pos = net.getPosition(e.id);
+    } catch (err) {}
+    if (!pos || pos.x == null || pos.y == null || isNaN(pos.x) || isNaN(pos.y)) {
+      pos = { x: e.x || 0, y: e.y || 0 };
+    }
+
+    try {
+      const p1 = net.canvasToDOM({ x: pos.x - 24, y: pos.y - 24 });
+      const p2 = net.canvasToDOM({ x: pos.x + 24, y: pos.y + 24 });
+      const w = Math.round(p2.x - p1.x);
+      const h = Math.round(p2.y - p1.y);
+      const left = Math.round(p1.x);
+      const top = Math.round(p1.y);
+
+      // Frustum culling: hide if completely outside visible container
+      if (left + w < -50 || left > containerW + 50 || top + h < -50 || top > containerH + 50 || w <= 0 || h <= 0) {
+        img.style.display = "none";
+      } else {
+        img.style.display = "block";
+        img.style.left = left + "px";
+        img.style.top = top + "px";
+        img.style.width = w + "px";
+        img.style.height = h + "px";
+      }
+
+      const isSel = (e.id === selected) || (typeof multiSelectedEntityIds !== "undefined" && multiSelectedEntityIds && multiSelectedEntityIds.includes(e.id));
+      if (isSel) {
+        img.style.filter = "drop-shadow(0 0 6px rgba(37, 99, 235, 0.95)) drop-shadow(0 0 2px #2563eb)";
+      } else {
+        img.style.filter = "";
+      }
+    } catch (err) {}
+  });
 }
 
 /* ---------- MGRS Coordinate Helpers ---------- */
@@ -4135,8 +4286,10 @@ function initNet() {
   };
 
   net = new vis.Network(container, { nodes, edges }, options);
+  getOrCreateGifOverlay();
 
-  // Synchronized node selection on click
+  // Synchronize GIF overlay on zoom
+  net.on("zoom", () => updateGifOverlayPositions());
   net.on("selectNode", p => {
     selectedLinkId = null;
     const nid = p.nodes[0];
@@ -4254,6 +4407,7 @@ function initNet() {
     if (p.nodes && p.nodes.length && !isDrawingLiveLine) {
       clampNodesToWorkspace(p.nodes);
       updateAllBoxAnchors();
+      updateGifOverlayPositions();
     }
   });
 
@@ -4285,6 +4439,7 @@ function initNet() {
       });
       queueSave();
       updateAllBoxAnchors();
+      updateGifOverlayPositions();
     }
   });
 
@@ -4664,6 +4819,9 @@ function initNet() {
 
   // Source & target highlights during live dragging and selected box handles (afterDrawing)
   net.on("afterDrawing", ctx => {
+    // Keep GIF overlay images synchronized with vis.js canvas positions
+    updateGifOverlayPositions();
+
     // Draw 8 resize handles for the selected group box
     if (selectedBoxId && data.boxes) {
       const selBox = data.boxes.find(x => x.id === selectedBoxId);
@@ -5362,11 +5520,12 @@ function render(fitAll = false) {
     byId[e.id] = e;
     const isSel = e.id === selected;
     const iconUri = getEntityIcon(e);
+    const isGif = isGifUrl(iconUri);
 
     const n = {
       id: e.id,
       shape: "image",
-      image: iconUri,
+      image: isGif ? TRANSPARENT_1PX_PNG : iconUri,
       label: getEntityNodeLabel(e),
       size: 24,
       borderWidth: 14,
@@ -5599,6 +5758,7 @@ function render(fitAll = false) {
 
   renderList();
   renderInspector();
+  rebuildGifOverlay();
 
   if (fitAll && mappedCount > 0) {
     const pts = data.entities.filter(e => e.lat != null && e.lng != null).map(e => [e.lat, e.lng]);
@@ -5637,6 +5797,8 @@ function updateMapSelection() {
       });
     }
   });
+
+  updateGifOverlayPositions();
 }
 
 function updateEdgeVisuals() {
@@ -5720,7 +5882,8 @@ function renderInspector() {
   if ($("sImgPreview")) $("sImgPreview").src = iconUri;
   if ($("sImgStatus")) {
     if (e.customImage) {
-      $("sImgStatus").textContent = "Custom Image";
+      const isGif = isGifUrl(e.customImage);
+      $("sImgStatus").textContent = isGif ? "Custom GIF" : "Custom Image";
       $("sImgStatus").className = "text-[10px] text-blue-600 font-bold";
     } else {
       $("sImgStatus").textContent = "Default Icon";
