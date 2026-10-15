@@ -1292,48 +1292,106 @@
         <span class="text-[10px] text-blue-600 font-semibold border-l border-blue-200 pl-1.5 sm:pl-2 hidden xl:inline whitespace-nowrap">Work Station</span>
       </div>
 
-      <!-- Chart Control Buttons (Responsive Toolbar) -->
-      <div class="chart-ctrl-bar pointer-events-auto ml-auto">
-        <button id="btnLinkModeToggle" title="Draw Relationship Link: Drag from one entity to another (or hold Shift on chart)" class="btn-secondary btn-chart-ctrl py-1 px-2 sm:px-2.5 text-xs">
-          <i class="fi fi-rr-link-alt text-xs"></i>
-          <span id="btnLinkModeToggleText">Draw Link</span>
-        </button>
-        <button id="btnBoxModeToggle" title="Draw Box: Click and drag anywhere on chart to draw a container box inside or outside entities" class="btn-secondary btn-chart-ctrl py-1 px-2 sm:px-2.5 text-xs">
-          <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-none stroke-current" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke-dasharray="3 2"/>
-          </svg>
-          <span id="btnBoxModeToggleText">Draw Box</span>
-        </button>
-        <button id="btnTextModeToggle" title="Draw Text Box: Click or drag on chart to place a text box and input text" class="btn-secondary btn-chart-ctrl py-1 px-2 sm:px-2.5 text-xs">
-          <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-none stroke-current" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="4 7 4 4 20 4 20 7"/>
-            <line x1="9" y1="20" x2="15" y2="20"/>
-            <line x1="12" y1="4" x2="12" y2="20"/>
-          </svg>
-          <span id="btnTextModeToggleText">Text Box</span>
-        </button>
-        <button id="btnCornerModeToggle" title="Add Corner to Link: Click any link to insert a draggable diamond handle" class="btn-secondary btn-chart-ctrl py-1 px-2 sm:px-2.5 text-xs">
-          <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
-            <line x1="2" y1="12" x2="8.5" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-            <polygon points="12,7 16,12 12,17 8,12" fill="currentColor"/>
-            <line x1="15.5" y1="12" x2="22" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-          </svg>
-          <span id="btnCornerModeToggleText">Add Corner</span>
-        </button>
-        <button id="btnFitNet" title="Fit All Nodes" class="btn-secondary btn-chart-ctrl py-1 px-2 sm:px-2.5 text-xs">
-          <i class="fi fi-rr-expand text-xs"></i>
-          <span id="btnFitNetText">Fit View</span>
-        </button>
-        <!-- Full Screen View Button (Replaced Stabilize) -->
-        <button id="btnFullscreenNet" title="Full Screen View (Esc to exit)" class="btn-secondary btn-chart-ctrl py-1 px-2 sm:px-2.5 text-xs">
-          <svg id="iconEnterFullscreenNet" viewBox="0 0 24 24" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
-          </svg>
-          <svg id="iconExitFullscreenNet" viewBox="0 0 24 24" class="w-3.5 h-3.5 hidden" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 14h6m0 0v6m0-6L3 21m17-7h-6m0 0v6m0-6l7 7M14 4h6m-6 0v6m0-6l7-7M4 10h6m0 0V4m0 6L3 3"/>
-          </svg>
-          <span id="btnFullscreenNetText">Full Screen</span>
-        </button>
+      <!-- Chart Control Buttons (Responsive Toolbar with Dropdowns) -->
+      <div class="chart-ctrl-bar pointer-events-auto ml-auto flex items-center gap-1.5 sm:gap-2">
+        <!-- 1. Draw Tools Dropdown -->
+        <div class="relative" id="drawToolsDropdownContainer">
+          <button id="btnDrawToolsDropdown" type="button" title="Drawing Tools: Draw Link, Draw Box, Text Box, Add Corner, Delete Corner"
+            class="btn-secondary btn-chart-ctrl py-1.5 px-2.5 sm:px-3 text-xs flex items-center gap-1.5 sm:gap-2 font-bold transition shadow-sm cursor-pointer">
+            <svg id="drawToolsDropdownIcon" viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-none stroke-current" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 20h9"/>
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+            </svg>
+            <span id="drawToolsDropdownLabel">Draw Tools</span>
+            <svg viewBox="0 0 20 20" class="w-3 h-3 fill-current opacity-70 shrink-0" aria-hidden="true">
+              <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/>
+            </svg>
+          </button>
+
+          <!-- Draw Tools Dropdown Menu -->
+          <div id="drawToolsMenu" class="hidden absolute right-0 sm:left-0 sm:right-auto top-full mt-1.5 w-52 bg-white border-2 border-black rounded-xl shadow-2xl p-1.5 z-50 space-y-1">
+            <button id="btnLinkModeToggle" type="button" title="Draw Relationship Link: Drag from one entity to another (or hold Shift on chart)"
+              class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer text-left">
+              <div class="flex items-center gap-2.5">
+                <i class="fi fi-rr-link-alt text-xs text-blue-600 shrink-0"></i>
+                <span id="btnLinkModeToggleText">Draw Link</span>
+              </div>
+            </button>
+            <button id="btnBoxModeToggle" type="button" title="Draw Box: Click and drag anywhere on chart to draw a container box"
+              class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer text-left">
+              <div class="flex items-center gap-2.5">
+                <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-none stroke-current text-blue-600 shrink-0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke-dasharray="3 2"/>
+                </svg>
+                <span id="btnBoxModeToggleText">Draw Box</span>
+              </div>
+            </button>
+            <button id="btnTextModeToggle" type="button" title="Draw Text Box: Click or drag on chart to place a text box"
+              class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer text-left">
+              <div class="flex items-center gap-2.5">
+                <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-none stroke-current text-blue-600 shrink-0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="4 7 4 4 20 4 20 7"/>
+                  <line x1="9" y1="20" x2="15" y2="20"/>
+                  <line x1="12" y1="4" x2="12" y2="20"/>
+                </svg>
+                <span id="btnTextModeToggleText">Text Box</span>
+              </div>
+            </button>
+            <div class="border-t border-black/10 my-1"></div>
+            <button id="btnCornerModeToggle" type="button" title="Add Corner to Link: Click any link to insert a draggable diamond handle"
+              class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer text-left">
+              <div class="flex items-center gap-2.5">
+                <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current text-blue-600 shrink-0">
+                  <line x1="2" y1="12" x2="8.5" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                  <polygon points="12,7 16,12 12,17 8,12" fill="currentColor"/>
+                  <line x1="15.5" y1="12" x2="22" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                </svg>
+                <span id="btnCornerModeToggleText">Add Corner</span>
+              </div>
+            </button>
+            <button id="btnDeleteCornerModeToggle" type="button" title="Delete Corner: Click button then click any diamond handle on chart"
+              class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold text-red-600 hover:bg-red-50 hover:text-red-700 transition cursor-pointer text-left">
+              <div class="flex items-center gap-2.5">
+                <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-none stroke-current text-red-600 shrink-0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                </svg>
+                <span id="btnDeleteCornerModeToggleText">Delete Corner</span>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- 2. View Dropdown (Fit View & Full Screen) -->
+        <div class="relative" id="viewDropdownContainer">
+          <button id="btnViewDropdown" type="button" title="View Options: Fit View & Full Screen"
+            class="btn-secondary btn-chart-ctrl py-1.5 px-2.5 sm:px-3 text-xs flex items-center gap-1.5 sm:gap-2 font-bold transition shadow-sm cursor-pointer">
+            <i class="fi fi-rr-eye text-xs"></i>
+            <span id="viewDropdownLabel">View</span>
+            <svg viewBox="0 0 20 20" class="w-3 h-3 fill-current opacity-70 shrink-0" aria-hidden="true">
+              <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/>
+            </svg>
+          </button>
+
+          <!-- View Dropdown Menu -->
+          <div id="viewMenu" class="hidden absolute right-0 top-full mt-1.5 w-44 bg-white border-2 border-black rounded-xl shadow-2xl p-1.5 z-50 space-y-1">
+            <button id="btnFitNet" type="button" title="Fit All Nodes"
+              class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer text-left">
+              <i class="fi fi-rr-expand text-xs text-blue-600 shrink-0"></i>
+              <span id="btnFitNetText">Fit View</span>
+            </button>
+            <button id="btnFullscreenNet" type="button" title="Full Screen View (Esc to exit)"
+              class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer text-left">
+              <svg id="iconEnterFullscreenNet" viewBox="0 0 24 24" class="w-3.5 h-3.5 text-blue-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+              </svg>
+              <svg id="iconExitFullscreenNet" viewBox="0 0 24 24" class="w-3.5 h-3.5 text-blue-600 shrink-0 hidden" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 14h6m0 0v6m0-6L3 21m17-7h-6m0 0v6m0-6l7 7M14 4h6m-6 0v6m0-6l7-7M4 10h6m0 0V4m0 6L3 3"/>
+              </svg>
+              <span id="btnFullscreenNetText">Full Screen</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -3148,6 +3206,17 @@ function findResizeHandleAt(canvasPos, box) {
   return null;
 }
 
+function isClickOnTextEditButton(cPos, b) {
+  if (!b || b.type !== "text") return false;
+  const scale = (net && net.getScale) ? net.getScale() : 1;
+  const btnW = 74 / scale;
+  const btnH = 22 / scale;
+  const btnX = b.x + b.w - btnW;
+  const btnY = b.y - btnH - 6 / scale;
+  return (cPos.x >= btnX - 4 / scale && cPos.x <= btnX + btnW + 4 / scale &&
+          cPos.y >= btnY - 4 / scale && cPos.y <= btnY + btnH + 4 / scale);
+}
+
 function drawBoxResizeHandles(ctx, b) {
   const scale = (net && net.getScale) ? net.getScale() : 1;
   const size = Math.max(7, 8.5 / scale);
@@ -3169,6 +3238,41 @@ function drawBoxResizeHandles(ctx, b) {
     ctx.fillRect(h.x - size / 2, h.y - size / 2, size, size);
     ctx.strokeRect(h.x - size / 2, h.y - size / 2, size, size);
   });
+
+  // If Text Box, draw a dedicated "✎ Edit Text" pill button
+  if (b.type === "text") {
+    const btnW = 74 / scale;
+    const btnH = 22 / scale;
+    const btnX = b.x + b.w - btnW;
+    const btnY = b.y - btnH - 6 / scale;
+
+    ctx.save();
+    ctx.setLineDash([]);
+    ctx.fillStyle = "#2563eb";
+    ctx.shadowColor = "rgba(0,0,0,0.2)";
+    ctx.shadowBlur = 4 / scale;
+    ctx.shadowOffsetY = 2 / scale;
+    ctx.beginPath();
+    if (ctx.roundRect) {
+      ctx.roundRect(btnX, btnY, btnW, btnH, 5 / scale);
+    } else {
+      ctx.rect(btnX, btnY, btnW, btnH);
+    }
+    ctx.fill();
+
+    ctx.shadowColor = "transparent";
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = Math.max(1, 1.2 / scale);
+    ctx.stroke();
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = `bold ${Math.round(11 / scale)}px "DM Sans", -apple-system, sans-serif`;
+    ctx.textBaseline = "middle";
+    ctx.textAlign = "center";
+    ctx.fillText("✎ Edit Text", btnX + btnW / 2, btnY + btnH / 2);
+    ctx.restore();
+  }
+
   ctx.restore();
 }
 
@@ -3452,8 +3556,9 @@ function findBoxAt(canvasPos) {
   if (!data.boxes || !data.boxes.length) return null;
   for (let i = data.boxes.length - 1; i >= 0; i--) {
     const b = data.boxes[i];
-    if (canvasPos.x >= b.x && canvasPos.x <= b.x + b.w &&
-        canvasPos.y >= b.y - 12 && canvasPos.y <= b.y + b.h) {
+    const topMargin = b.type === "text" ? 34 : 16;
+    if (canvasPos.x >= b.x - 4 && canvasPos.x <= b.x + b.w + 4 &&
+        canvasPos.y >= b.y - topMargin && canvasPos.y <= b.y + b.h + 4) {
       return b;
     }
   }
@@ -3630,6 +3735,80 @@ function updateAllBoxAnchors() {
   }
 }
 
+/* ---------- Link Chart Top Toolbar Dropdown Controllers ---------- */
+function toggleDrawToolsMenu(e) {
+  if (e) e.stopPropagation();
+  if ($("viewMenu")) $("viewMenu").classList.add("hidden");
+  if ($("drawToolsMenu")) $("drawToolsMenu").classList.toggle("hidden");
+}
+
+function closeDrawToolsMenu() {
+  if ($("drawToolsMenu")) $("drawToolsMenu").classList.add("hidden");
+}
+
+function toggleViewMenu(e) {
+  if (e) e.stopPropagation();
+  if ($("drawToolsMenu")) $("drawToolsMenu").classList.add("hidden");
+  if ($("viewMenu")) $("viewMenu").classList.toggle("hidden");
+}
+
+function closeViewMenu() {
+  if ($("viewMenu")) $("viewMenu").classList.add("hidden");
+}
+
+function updateDrawToolsDropdownState() {
+  const trigger = $("btnDrawToolsDropdown");
+  const label = $("drawToolsDropdownLabel");
+  if (!trigger || !label) return;
+
+  let activeModeName = null;
+  let isDanger = false;
+
+  if (isLinkMode) {
+    activeModeName = "Draw Link";
+  } else if (isBoxMode) {
+    activeModeName = "Draw Box";
+  } else if (isTextMode) {
+    activeModeName = "Text Box";
+  } else if (isCornerMode) {
+    activeModeName = "Add Corner";
+  } else if (isDeleteCornerMode) {
+    activeModeName = "Delete Corner";
+    isDanger = true;
+  }
+
+  if (activeModeName) {
+    const bgClass = isDanger ? "bg-red-600 text-white border-red-600 hover:bg-red-700" : "bg-blue-600 text-white border-blue-600 hover:bg-blue-700";
+    trigger.className = `btn-secondary btn-chart-ctrl py-1.5 px-2.5 sm:px-3 text-xs flex items-center gap-1.5 sm:gap-2 font-bold transition shadow-sm cursor-pointer ${bgClass}`;
+    label.textContent = `${activeModeName}`;
+  } else {
+    trigger.className = "btn-secondary btn-chart-ctrl py-1.5 px-2.5 sm:px-3 text-xs flex items-center gap-1.5 sm:gap-2 font-bold transition shadow-sm cursor-pointer";
+    label.textContent = "Draw Tools";
+  }
+
+  const items = [
+    { el: $("btnLinkModeToggle"), active: isLinkMode, textEl: $("btnLinkModeToggleText"), base: "Draw Link" },
+    { el: $("btnBoxModeToggle"), active: isBoxMode, textEl: $("btnBoxModeToggleText"), base: "Draw Box" },
+    { el: $("btnTextModeToggle"), active: isTextMode, textEl: $("btnTextModeToggleText"), base: "Text Box" },
+    { el: $("btnCornerModeToggle"), active: isCornerMode, textEl: $("btnCornerModeToggleText"), base: "Add Corner" },
+    { el: $("btnDeleteCornerModeToggle"), active: isDeleteCornerMode, textEl: $("btnDeleteCornerModeToggleText"), base: "Delete Corner" }
+  ];
+
+  items.forEach(it => {
+    if (!it.el) return;
+    if (it.active) {
+      it.el.className = "w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold text-white bg-blue-600 shadow-sm transition cursor-pointer text-left";
+      if (it.textEl) it.textEl.textContent = `${it.base} (Active - click to cancel)`;
+    } else {
+      const isDel = it.el.id === "btnDeleteCornerModeToggle";
+      it.el.className = isDel
+        ? "w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold text-red-600 hover:bg-red-50 hover:text-red-700 transition cursor-pointer text-left"
+        : "w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer text-left";
+      if (it.textEl) it.textEl.textContent = it.base;
+    }
+  });
+}
+
 function enterBoxMode() {
   if (!currentProjectId) {
     showNoProjectError();
@@ -3641,11 +3820,7 @@ function enterBoxMode() {
   if (isDeleteCornerMode) exitDeleteCornerMode();
 
   isBoxMode = true;
-  const topBtn = $("btnBoxModeToggle");
-  if (topBtn) {
-    topBtn.className = "btn-secondary btn-chart-ctrl py-1 px-2 sm:px-2.5 text-xs bg-blue-600 text-white border-blue-600 hover:bg-blue-700 shadow-sm";
-    if ($("btnBoxModeToggleText")) $("btnBoxModeToggleText").textContent = "Cancel Box";
-  }
+  updateDrawToolsDropdownState();
   const sideBtn = $("btnBoxTool");
   if (sideBtn) {
     sideBtn.className = "flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl border-2 border-blue-600 bg-blue-600 text-white transition cursor-pointer select-none text-[11px] font-bold shadow-sm";
@@ -3664,11 +3839,7 @@ function exitBoxMode() {
   boxDrawStartCanvasPos = null;
   boxDrawCurrentCanvasPos = null;
 
-  const topBtn = $("btnBoxModeToggle");
-  if (topBtn) {
-    topBtn.className = "btn-secondary btn-chart-ctrl py-1 px-2 sm:px-2.5 text-xs";
-    if ($("btnBoxModeToggleText")) $("btnBoxModeToggleText").textContent = "Draw Box";
-  }
+  updateDrawToolsDropdownState();
   const sideBtn = $("btnBoxTool");
   if (sideBtn) {
     sideBtn.className = "flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl border-2 border-black/20 bg-white hover:border-blue-600 hover:bg-blue-50/50 transition cursor-pointer select-none text-[11px] font-bold text-black shadow-sm";
@@ -3701,11 +3872,7 @@ function enterTextMode() {
   if (isDeleteCornerMode) exitDeleteCornerMode();
 
   isTextMode = true;
-  const topBtn = $("btnTextModeToggle");
-  if (topBtn) {
-    topBtn.className = "btn-secondary btn-chart-ctrl py-1 px-2 sm:px-2.5 text-xs bg-blue-600 text-white border-blue-600 hover:bg-blue-700 shadow-sm";
-    if ($("btnTextModeToggleText")) $("btnTextModeToggleText").textContent = "Cancel Text";
-  }
+  updateDrawToolsDropdownState();
   const sideBtn = $("btnTextTool");
   if (sideBtn) {
     sideBtn.className = "flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl border-2 border-blue-600 bg-blue-600 text-white transition cursor-pointer select-none text-[11px] font-bold shadow-sm";
@@ -3724,11 +3891,7 @@ function exitTextMode() {
   textDrawStartCanvasPos = null;
   textDrawCurrentCanvasPos = null;
 
-  const topBtn = $("btnTextModeToggle");
-  if (topBtn) {
-    topBtn.className = "btn-secondary btn-chart-ctrl py-1 px-2 sm:px-2.5 text-xs";
-    if ($("btnTextModeToggleText")) $("btnTextModeToggleText").textContent = "Text Box";
-  }
+  updateDrawToolsDropdownState();
   const sideBtn = $("btnTextTool");
   if (sideBtn) {
     sideBtn.className = "flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl border-2 border-black/20 bg-white hover:border-blue-600 hover:bg-blue-50/50 transition cursor-pointer select-none text-[11px] font-bold text-black shadow-sm";
@@ -4432,13 +4595,43 @@ function initNet() {
   container.addEventListener("pointerdown", ev => {
     if (ev.button !== 0) return; // Left click only
 
-    // 0. If user clicks a resize handle on the currently selected box -> start resizing immediately!
+    // 0a. Double click detection (ev.detail === 2) to open edit modal immediately
+    if (ev.detail === 2 && !isBoxMode && !isTextMode && !isLinkMode && !isCornerMode && !isDeleteCornerMode) {
+      const rect = container.getBoundingClientRect();
+      const domPos = { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
+      const cPos = net.DOMtoCanvas(domPos);
+      const hitBox = findBoxAt(cPos);
+      if (hitBox) {
+        if (hitBox.type === "text") {
+          openEditTextModal(hitBox.id);
+          ev.stopPropagation();
+          ev.preventDefault();
+          return;
+        } else if (findBoxHeaderOrBorderAt(cPos)) {
+          openEditBoxModal(hitBox.id);
+          ev.stopPropagation();
+          ev.preventDefault();
+          return;
+        }
+      }
+    }
+
+    // 0b. If user clicks a resize handle or "✎ Edit Text" pill on the currently selected box
     if (selectedBoxId && data.boxes && !isBoxMode && !isTextMode && !isLinkMode && !isCornerMode) {
       const selBox = data.boxes.find(x => x.id === selectedBoxId);
       if (selBox) {
         const rect = container.getBoundingClientRect();
         const domPos = { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
         const cPos = net.DOMtoCanvas(domPos);
+
+        // Click on "✎ Edit Text" pill button
+        if (selBox.type === "text" && isClickOnTextEditButton(cPos, selBox)) {
+          openEditTextModal(selBox.id);
+          ev.stopPropagation();
+          ev.preventDefault();
+          return;
+        }
+
         const handle = findResizeHandleAt(cPos, selBox);
         if (handle) {
           isResizingBox = true;
@@ -4565,6 +4758,27 @@ function initNet() {
     }
   }, true);
 
+  // Native double-click event listener on canvas container for instant editing
+  container.addEventListener("dblclick", ev => {
+    const rect = container.getBoundingClientRect();
+    const domPos = { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
+    const cPos = net.DOMtoCanvas(domPos);
+    const hitBox = findBoxAt(cPos);
+    if (hitBox) {
+      if (hitBox.type === "text") {
+        openEditTextModal(hitBox.id);
+        ev.stopPropagation();
+        ev.preventDefault();
+        return;
+      } else if (findBoxHeaderOrBorderAt(cPos)) {
+        openEditBoxModal(hitBox.id);
+        ev.stopPropagation();
+        ev.preventDefault();
+        return;
+      }
+    }
+  });
+
   window.addEventListener("pointermove", ev => {
     // 0. Resizing the selected Group Box
     if (isResizingBox && net) {
@@ -4674,10 +4888,16 @@ function initNet() {
 
       if (selectedBoxId && data.boxes) {
         const selBox = data.boxes.find(x => x.id === selectedBoxId);
-        const handle = findResizeHandleAt(cPos, selBox);
-        if (handle) {
-          container.style.cursor = handle.cursor;
-          return;
+        if (selBox) {
+          if (selBox.type === "text" && isClickOnTextEditButton(cPos, selBox)) {
+            container.style.cursor = "pointer";
+            return;
+          }
+          const handle = findResizeHandleAt(cPos, selBox);
+          if (handle) {
+            container.style.cursor = handle.cursor;
+            return;
+          }
         }
       }
 
@@ -5672,6 +5892,7 @@ function enterLinkMode(fromNodeId = null) {
 
   isLinkMode = true;
   linkingSourceId = fromNodeId || null;
+  updateDrawToolsDropdownState();
 
   // In Link Mode, freeze both node dragging and view panning so entities never move while linking
   if (net) {
@@ -5682,11 +5903,6 @@ function enterLinkMode(fromNodeId = null) {
   if (btn) {
     btn.className = "w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border-2 border-blue-600 bg-blue-100 text-blue-900 shadow-sm transition cursor-pointer select-none text-xs font-bold ring-2 ring-blue-400";
     if ($("btnLinkToolText")) $("btnLinkToolText").textContent = "Link Mode Active (Drag line)";
-  }
-  const topBtn = $("btnLinkModeToggle");
-  if (topBtn) {
-    topBtn.className = "btn-secondary btn-chart-ctrl py-1 px-2 sm:px-2.5 text-xs bg-blue-600 text-white border-blue-600 hover:bg-blue-700 shadow-sm";
-    if ($("btnLinkModeToggleText")) $("btnLinkModeToggleText").textContent = "Cancel Link";
   }
   if ($("linkToolBadge")) {
     $("linkToolBadge").className = "text-[10px] text-white font-bold bg-blue-600 px-2 py-0.5 rounded border border-blue-600";
@@ -5709,6 +5925,7 @@ function exitLinkMode() {
   isDrawingLiveLine = false;
   liveLineSourceId = null;
   liveLineHoverTargetId = null;
+  updateDrawToolsDropdownState();
 
   // Re-enable normal dragging and view panning for regular mode
   if (net) {
@@ -5724,11 +5941,6 @@ function exitLinkMode() {
   if (btn) {
     btn.className = "w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border-2 border-black/20 bg-white hover:border-blue-600 hover:bg-blue-50/50 transition cursor-pointer select-none text-xs font-bold text-black shadow-sm";
     if ($("btnLinkToolText")) $("btnLinkToolText").textContent = "Draw Link (Connect Entities)";
-  }
-  const topBtn = $("btnLinkModeToggle");
-  if (topBtn) {
-    topBtn.className = "btn-secondary btn-chart-ctrl py-1 px-2 sm:px-2.5 text-xs";
-    if ($("btnLinkModeToggleText")) $("btnLinkModeToggleText").textContent = "Draw Link";
   }
   if ($("linkToolBadge")) {
     $("linkToolBadge").className = "text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-200";
@@ -5811,7 +6023,10 @@ if ($("btnLinkTool")) {
   $("btnLinkTool").onclick = toggleLinkMode;
 }
 if ($("btnLinkModeToggle")) {
-  $("btnLinkModeToggle").onclick = toggleLinkMode;
+  $("btnLinkModeToggle").onclick = () => {
+    closeDrawToolsMenu();
+    toggleLinkMode();
+  };
 }
 
 // Cancel link mode button & Esc key
@@ -5822,7 +6037,10 @@ if ($("btnBoxTool")) {
   $("btnBoxTool").onclick = toggleBoxMode;
 }
 if ($("btnBoxModeToggle")) {
-  $("btnBoxModeToggle").onclick = toggleBoxMode;
+  $("btnBoxModeToggle").onclick = () => {
+    closeDrawToolsMenu();
+    toggleBoxMode();
+  };
 }
 if ($("cancelBoxModeBtn")) {
   $("cancelBoxModeBtn").onclick = exitBoxMode;
@@ -5833,7 +6051,10 @@ if ($("btnTextTool")) {
   $("btnTextTool").onclick = toggleTextMode;
 }
 if ($("btnTextModeToggle")) {
-  $("btnTextModeToggle").onclick = toggleTextMode;
+  $("btnTextModeToggle").onclick = () => {
+    closeDrawToolsMenu();
+    toggleTextMode();
+  };
 }
 if ($("cancelTextModeBtn")) {
   $("cancelTextModeBtn").onclick = exitTextMode;
@@ -5871,16 +6092,12 @@ function enterCornerMode() {
   if (isTextMode) exitTextMode();
   if (isDeleteCornerMode) exitDeleteCornerMode();
   isCornerMode = true;
+  updateDrawToolsDropdownState();
 
   const btn = $("btnCornerTool");
   if (btn) {
     btn.className = "flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl border-2 border-blue-600 bg-blue-100 text-blue-900 shadow-sm transition cursor-pointer select-none text-[11px] font-bold ring-2 ring-blue-400";
     if ($("btnCornerToolText")) $("btnCornerToolText").textContent = "Active";
-  }
-  const topBtn = $("btnCornerModeToggle");
-  if (topBtn) {
-    topBtn.className = "btn-secondary btn-chart-ctrl py-1 px-2 sm:px-2.5 text-xs bg-blue-600 text-white border-blue-600 hover:bg-blue-700 shadow-sm";
-    if ($("btnCornerModeToggleText")) $("btnCornerModeToggleText").textContent = "Cancel Corner";
   }
   if ($("linkToolBadge")) {
     $("linkToolBadge").className = "text-[10px] text-white font-bold bg-blue-600 px-2 py-0.5 rounded border border-blue-600";
@@ -5899,16 +6116,12 @@ function enterCornerMode() {
 
 function exitCornerMode() {
   isCornerMode = false;
+  updateDrawToolsDropdownState();
 
   const btn = $("btnCornerTool");
   if (btn) {
     btn.className = "flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl border-2 border-black/20 bg-white hover:border-blue-600 hover:bg-blue-50/50 transition cursor-pointer select-none text-[11px] font-bold text-black shadow-sm";
     if ($("btnCornerToolText")) $("btnCornerToolText").textContent = "Add Corner";
-  }
-  const topBtn = $("btnCornerModeToggle");
-  if (topBtn) {
-    topBtn.className = "btn-secondary btn-chart-ctrl py-1 px-2 sm:px-2.5 text-xs";
-    if ($("btnCornerModeToggleText")) $("btnCornerModeToggleText").textContent = "Add Corner";
   }
   if ($("linkToolBadge")) {
     $("linkToolBadge").className = "text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-200";
@@ -5941,6 +6154,7 @@ function enterDeleteCornerMode() {
   if (isTextMode) exitTextMode();
   if (isCornerMode) exitCornerMode();
   isDeleteCornerMode = true;
+  updateDrawToolsDropdownState();
 
   const btn = $("btnDeleteCornerTool");
   if (btn) {
@@ -5964,6 +6178,7 @@ function enterDeleteCornerMode() {
 
 function exitDeleteCornerMode() {
   isDeleteCornerMode = false;
+  updateDrawToolsDropdownState();
 
   const btn = $("btnDeleteCornerTool");
   if (btn) {
@@ -5987,11 +6202,24 @@ function toggleDeleteCornerMode() {
 
 // Corner Mode button bindings
 if ($("btnCornerTool")) $("btnCornerTool").onclick = toggleCornerMode;
-if ($("btnCornerModeToggle")) $("btnCornerModeToggle").onclick = toggleCornerMode;
+if ($("btnCornerModeToggle")) {
+  $("btnCornerModeToggle").onclick = () => {
+    closeDrawToolsMenu();
+    toggleCornerMode();
+  };
+}
 if ($("btnDeleteCornerTool")) $("btnDeleteCornerTool").onclick = toggleDeleteCornerMode;
+if ($("btnDeleteCornerModeToggle")) {
+  $("btnDeleteCornerModeToggle").onclick = () => {
+    closeDrawToolsMenu();
+    toggleDeleteCornerMode();
+  };
+}
 
 window.addEventListener("keydown", e => {
   if (e.key === "Escape") {
+    closeDrawToolsMenu();
+    closeViewMenu();
     if (isFullscreenNet) {
       exitFullscreenNet();
       return;
@@ -6247,13 +6475,42 @@ function toggleFullscreenMap() {
 }
 
 /* ---------- Network Tools (Fit & Full Screen) ---------- */
-$("btnFitNet").onclick = () => {
-  if (net) net.fit({ animation: { duration: 600, easingFunction: "easeInOutQuad" } });
-};
+if ($("btnFitNet")) {
+  $("btnFitNet").onclick = () => {
+    closeViewMenu();
+    if (net) net.fit({ animation: { duration: 600, easingFunction: "easeInOutQuad" } });
+  };
+}
 
-if ($("btnFullscreenNet")) $("btnFullscreenNet").onclick = toggleFullscreenNet;
+if ($("btnFullscreenNet")) {
+  $("btnFullscreenNet").onclick = () => {
+    closeViewMenu();
+    toggleFullscreenNet();
+  };
+}
 if ($("btnExitFullscreenNet")) $("btnExitFullscreenNet").onclick = exitFullscreenNet;
 if ($("btnExitFullscreenMap")) $("btnExitFullscreenMap").onclick = exitFullscreenMap;
+
+// Dropdown triggers & outside click listener
+if ($("btnDrawToolsDropdown")) $("btnDrawToolsDropdown").onclick = toggleDrawToolsMenu;
+if ($("btnViewDropdown")) $("btnViewDropdown").onclick = toggleViewMenu;
+
+window.addEventListener("click", e => {
+  const drawToolsMenu = $("drawToolsMenu");
+  const btnDrawToolsDropdown = $("btnDrawToolsDropdown");
+  if (drawToolsMenu && !drawToolsMenu.classList.contains("hidden")) {
+    if (!drawToolsMenu.contains(e.target) && (!btnDrawToolsDropdown || !btnDrawToolsDropdown.contains(e.target))) {
+      closeDrawToolsMenu();
+    }
+  }
+  const viewMenu = $("viewMenu");
+  const btnViewDropdown = $("btnViewDropdown");
+  if (viewMenu && !viewMenu.classList.contains("hidden")) {
+    if (!viewMenu.contains(e.target) && (!btnViewDropdown || !btnViewDropdown.contains(e.target))) {
+      closeViewMenu();
+    }
+  }
+});
 
 // Auto-save on page exit
 window.addEventListener("beforeunload", () => {
