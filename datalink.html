@@ -680,6 +680,13 @@
             <i class="fi fi-rr-check text-xs"></i>
             <span>Save Changes</span>
           </button>
+          <button id="btnDuplicateEditBox" type="button" title="Duplicate Box (Ctrl+C, Ctrl+V, or Ctrl+D)" class="btn-secondary py-2 text-xs text-black border-black/30 hover:border-blue-600 hover:text-blue-600 flex items-center justify-center gap-1 transition">
+            <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-none stroke-current" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            <span>Duplicate</span>
+          </button>
           <button id="btnDeleteEditBox" type="button" class="btn-secondary py-2 text-xs text-red-600 border-red-300 hover:border-red-600 hover:bg-red-50">
             <i class="fi fi-rr-trash text-xs"></i>
             <span>Delete Box</span>
@@ -829,6 +836,13 @@
           <button id="btnSaveEditTextBox" type="button" class="flex-1 btn-primary py-2 text-xs">
             <i class="fi fi-rr-check text-xs"></i>
             <span>Save Text</span>
+          </button>
+          <button id="btnDuplicateEditTextBox" type="button" title="Duplicate Text Box (Ctrl+C, Ctrl+V, or Ctrl+D)" class="btn-secondary py-2 text-xs text-black border-black/30 hover:border-blue-600 hover:text-blue-600 flex items-center justify-center gap-1 transition">
+            <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-none stroke-current" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            <span>Duplicate</span>
           </button>
           <button id="btnDeleteEditTextBox" type="button" class="btn-secondary py-2 text-xs text-red-600 border-red-300 hover:border-red-600 hover:bg-red-50">
             <i class="fi fi-rr-trash text-xs"></i>
@@ -1262,11 +1276,18 @@
             <div id="sLinksList" class="space-y-1.5 max-h-48 overflow-y-auto"></div>
           </div>
 
-          <!-- Delete Action -->
-          <div class="pt-2 border-t border-black/10">
-            <button id="delE" class="w-full btn-secondary py-2 text-xs text-black border-black/30 hover:border-red-500 hover:text-red-600">
+          <!-- Duplicate & Delete Actions -->
+          <div class="pt-2 border-t border-black/10 flex items-center gap-2">
+            <button id="sBtnDuplicate" type="button" title="Duplicate Entity (Ctrl+C, Ctrl+V, or Ctrl+D)" class="flex-1 btn-secondary py-2 text-xs font-bold text-black border-black/30 hover:border-blue-600 hover:text-blue-600 flex items-center justify-center gap-1.5 transition">
+              <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-none stroke-current" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>
+              <span>Duplicate</span>
+            </button>
+            <button id="delE" type="button" title="Delete Entity (Delete/Backspace)" class="flex-1 btn-secondary py-2 text-xs text-black border-black/30 hover:border-red-500 hover:text-red-600 flex items-center justify-center gap-1.5 transition">
               <i class="fi fi-rr-trash text-xs"></i>
-              <span>Delete Entity & Relationships</span>
+              <span>Delete</span>
             </button>
           </div>
         </div>
@@ -1299,6 +1320,16 @@
 
       <!-- Chart Control Buttons (Responsive Toolbar with Dropdowns) -->
       <div class="chart-ctrl-bar pointer-events-auto ml-auto flex items-center gap-1.5 sm:gap-2">
+        <!-- Undo Button -->
+        <button id="btnUndo" type="button" title="Undo Last Action (Ctrl+Z)"
+          class="btn-secondary btn-chart-ctrl py-1.5 px-2.5 sm:px-3 text-xs flex items-center gap-1.5 sm:gap-2 font-bold transition shadow-sm cursor-pointer hover:border-blue-600 hover:text-blue-600">
+          <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-none stroke-current" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="1 4 1 10 7 10"/>
+            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+          </svg>
+          <span class="hidden sm:inline">Undo</span>
+        </button>
+
         <!-- 1. Draw Tools Dropdown -->
         <div class="relative" id="drawToolsDropdownContainer">
           <button id="btnDrawToolsDropdown" type="button" title="Drawing Tools: Draw Link, Draw Box, Text Box, Add Corner, Delete Corner"
@@ -1574,6 +1605,34 @@ let dragBoxStartPointer = null, dragBoxInitialX = 0, dragBoxInitialY = 0;
 let selectedBoxId = null, isResizingBox = false, activeResizeHandle = null;
 let resizeBoxInitial = null, resizeStartPointer = null;
 let selectedLinkId = null, selectedCornerNodeId = null;
+
+/* ---------- Undo / Redo & Clipboard State ---------- */
+const undoStack = [];
+const redoStack = [];
+const MAX_UNDO_STEPS = 60;
+let blulinkClipboard = null;
+let pasteOffsetCount = 1;
+
+function pushUndoSnapshot() {
+  if (!data) return;
+  try {
+    const stateStr = JSON.stringify({
+      entities: data.entities || [],
+      links: data.links || [],
+      boxes: data.boxes || []
+    });
+    if (undoStack.length > 0 && undoStack[undoStack.length - 1] === stateStr) {
+      return;
+    }
+    undoStack.push(stateStr);
+    if (undoStack.length > MAX_UNDO_STEPS) {
+      undoStack.shift();
+    }
+    redoStack.length = 0;
+  } catch (err) {
+    console.error("Undo snapshot error:", err);
+  }
+}
 
 /* ---------- Interactive Dot-Network (Constellation) Canvas ---------- */
 let particleAnimId = null;
@@ -2023,6 +2082,11 @@ async function selectProject(projectId) {
   localStorage.setItem("blulink_active_project", projectId);
   renderProjectSelect();
 
+  undoStack.length = 0;
+  redoStack.length = 0;
+  blulinkClipboard = null;
+  pasteOffsetCount = 1;
+
   setStatus("Loading Project from R2…");
   try {
     const res = await fetch(`/api/projects/${projectId}`, {
@@ -2325,6 +2389,7 @@ function createEntityFromPalette(typeKey, x = null, y = null, extraProps = {}) {
     ...extraProps
   };
 
+  pushUndoSnapshot();
   data.entities.push(newEntity);
   selected = newEntity.id;
   render(false);
@@ -2964,6 +3029,7 @@ if ($("btnSaveEditLink")) {
     const l = data.links.find(x => x.id === editingLinkId);
     if (!l) return;
 
+    pushUndoSnapshot();
     l.label = $("editLinkLabel").value.trim();
     l.color = $("editLinkColor").value || "#000000";
     l.strength = $("editLinkStrength").value || "Confirmed";
@@ -2981,6 +3047,7 @@ if ($("btnDeleteEditLink")) {
   $("btnDeleteEditLink").onclick = () => {
     if (!editingLinkId) return;
     if (!confirm("Are you sure you want to delete this relationship link?")) return;
+    pushUndoSnapshot();
     if (selectedLinkId === editingLinkId) selectedLinkId = null;
     data.links = data.links.filter(x => x.id !== editingLinkId);
     closeEditLinkModal();
@@ -3056,6 +3123,7 @@ if ($("btnSaveEditBox")) {
     const b = data.boxes.find(x => x.id === editingBoxId);
     if (!b) return;
 
+    pushUndoSnapshot();
     b.label = $("editBoxLabel").value.trim();
     b.borderColor = $("editBoxBorderColor").value || "#2563eb";
     b.borderStyle = $("editBoxBorderStyle").value || "dashed";
@@ -3078,10 +3146,20 @@ if ($("btnSaveEditBox")) {
   };
 }
 
+if ($("btnDuplicateEditBox")) {
+  $("btnDuplicateEditBox").onclick = () => {
+    if (!editingBoxId || !data.boxes) return;
+    selectedBoxId = editingBoxId;
+    closeEditBoxModal();
+    duplicateSelected();
+  };
+}
+
 if ($("btnDeleteEditBox")) {
   $("btnDeleteEditBox").onclick = () => {
     if (!editingBoxId || !data.boxes) return;
     if (!confirm("Are you sure you want to delete this group box? (Entities inside will NOT be deleted)")) return;
+    pushUndoSnapshot();
     const boxId = editingBoxId;
     if (selectedBoxId === boxId) selectedBoxId = null;
     data.boxes = data.boxes.filter(x => x.id !== boxId);
@@ -3177,6 +3255,7 @@ if ($("btnSaveEditTextBox")) {
     const b = data.boxes.find(x => x.id === editingTextBoxId);
     if (!b) return;
 
+    pushUndoSnapshot();
     if ($("editTextBoxContent")) b.text = $("editTextBoxContent").value;
     if ($("editTextBoxFontSize")) b.fontSize = parseInt($("editTextBoxFontSize").value) || 14;
     if ($("editTextBoxFontWeight")) b.fontWeight = $("editTextBoxFontWeight").value || "normal";
@@ -3194,10 +3273,20 @@ if ($("btnSaveEditTextBox")) {
   };
 }
 
+if ($("btnDuplicateEditTextBox")) {
+  $("btnDuplicateEditTextBox").onclick = () => {
+    if (!editingTextBoxId || !data.boxes) return;
+    selectedBoxId = editingTextBoxId;
+    closeEditTextModal();
+    duplicateSelected();
+  };
+}
+
 if ($("btnDeleteEditTextBox")) {
   $("btnDeleteEditTextBox").onclick = () => {
     if (!editingTextBoxId || !data.boxes) return;
     if (!confirm("Are you sure you want to delete this text box?")) return;
+    pushUndoSnapshot();
     const boxId = editingTextBoxId;
     if (selectedBoxId === boxId) selectedBoxId = null;
     data.boxes = data.boxes.filter(x => x.id !== boxId);
@@ -3245,6 +3334,19 @@ function isClickOnTextEditButton(cPos, b) {
           cPos.y >= btnY - 4 / scale && cPos.y <= btnY + btnH + 4 / scale);
 }
 
+function isClickOnTextDuplicateButton(cPos, b) {
+  if (!b || b.type !== "text") return false;
+  const scale = (net && net.getScale) ? net.getScale() : 1;
+  const btnW = 74 / scale;
+  const btnH = 22 / scale;
+  const btnX = b.x + b.w - btnW;
+  const dupBtnW = 76 / scale;
+  const dupBtnX = btnX - dupBtnW - 6 / scale;
+  const btnY = b.y - btnH - 6 / scale;
+  return (cPos.x >= dupBtnX - 4 / scale && cPos.x <= dupBtnX + dupBtnW + 4 / scale &&
+          cPos.y >= btnY - 4 / scale && cPos.y <= btnY + btnH + 4 / scale);
+}
+
 function drawBoxResizeHandles(ctx, b) {
   const scale = (net && net.getScale) ? net.getScale() : 1;
   const size = Math.max(7, 8.5 / scale);
@@ -3267,13 +3369,17 @@ function drawBoxResizeHandles(ctx, b) {
     ctx.strokeRect(h.x - size / 2, h.y - size / 2, size, size);
   });
 
-  // If Text Box, draw a dedicated "✎ Edit Text" pill button
+  // If Text Box, draw dedicated "✎ Edit Text" and "⎘ Duplicate" pill buttons
   if (b.type === "text") {
     const btnW = 74 / scale;
     const btnH = 22 / scale;
     const btnX = b.x + b.w - btnW;
     const btnY = b.y - btnH - 6 / scale;
 
+    const dupBtnW = 76 / scale;
+    const dupBtnX = btnX - dupBtnW - 6 / scale;
+
+    // 1. Edit Text pill
     ctx.save();
     ctx.setLineDash([]);
     ctx.fillStyle = "#2563eb";
@@ -3281,11 +3387,8 @@ function drawBoxResizeHandles(ctx, b) {
     ctx.shadowBlur = 4 / scale;
     ctx.shadowOffsetY = 2 / scale;
     ctx.beginPath();
-    if (ctx.roundRect) {
-      ctx.roundRect(btnX, btnY, btnW, btnH, 5 / scale);
-    } else {
-      ctx.rect(btnX, btnY, btnW, btnH);
-    }
+    if (ctx.roundRect) ctx.roundRect(btnX, btnY, btnW, btnH, 5 / scale);
+    else ctx.rect(btnX, btnY, btnW, btnH);
     ctx.fill();
 
     ctx.shadowColor = "transparent";
@@ -3298,6 +3401,30 @@ function drawBoxResizeHandles(ctx, b) {
     ctx.textBaseline = "middle";
     ctx.textAlign = "center";
     ctx.fillText("✎ Edit Text", btnX + btnW / 2, btnY + btnH / 2);
+    ctx.restore();
+
+    // 2. Duplicate pill
+    ctx.save();
+    ctx.setLineDash([]);
+    ctx.fillStyle = "#ffffff";
+    ctx.shadowColor = "rgba(0,0,0,0.2)";
+    ctx.shadowBlur = 4 / scale;
+    ctx.shadowOffsetY = 2 / scale;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(dupBtnX, btnY, dupBtnW, btnH, 5 / scale);
+    else ctx.rect(dupBtnX, btnY, dupBtnW, btnH);
+    ctx.fill();
+
+    ctx.shadowColor = "transparent";
+    ctx.strokeStyle = "#2563eb";
+    ctx.lineWidth = Math.max(1, 1.2 / scale);
+    ctx.stroke();
+
+    ctx.fillStyle = "#2563eb";
+    ctx.font = `bold ${Math.round(11 / scale)}px "DM Sans", -apple-system, sans-serif`;
+    ctx.textBaseline = "middle";
+    ctx.textAlign = "center";
+    ctx.fillText("⎘ Duplicate", dupBtnX + dupBtnW / 2, btnY + btnH / 2);
     ctx.restore();
   }
 
@@ -4115,6 +4242,13 @@ function initNet() {
     }
   }
 
+  // Snapshot state before dragging starts for Undo support
+  net.on("dragStart", p => {
+    if (p.nodes && p.nodes.length && !isDrawingLiveLine) {
+      pushUndoSnapshot();
+    }
+  });
+
   // Real-time clamping and box border anchor tracking while dragging nodes
   net.on("dragging", p => {
     if (p.nodes && p.nodes.length && !isDrawingLiveLine) {
@@ -4660,8 +4794,17 @@ function initNet() {
           return;
         }
 
+        // Click on "⎘ Duplicate" pill button
+        if (selBox.type === "text" && isClickOnTextDuplicateButton(cPos, selBox)) {
+          duplicateSelected();
+          ev.stopPropagation();
+          ev.preventDefault();
+          return;
+        }
+
         const handle = findResizeHandleAt(cPos, selBox);
         if (handle) {
+          pushUndoSnapshot();
           isResizingBox = true;
           activeResizeHandle = handle.type;
           resizeBoxInitial = { x: selBox.x, y: selBox.y, w: selBox.w, h: selBox.h };
@@ -4771,6 +4914,7 @@ function initNet() {
 
           const boxToMove = (hitBox.type === "text") ? hitBox : findBoxHeaderOrBorderAt(cPos);
           if (boxToMove) {
+            pushUndoSnapshot();
             isDraggingBox = true;
             draggingBoxId = boxToMove.id;
             dragBoxStartPointer = cPos;
@@ -4917,7 +5061,7 @@ function initNet() {
       if (selectedBoxId && data.boxes) {
         const selBox = data.boxes.find(x => x.id === selectedBoxId);
         if (selBox) {
-          if (selBox.type === "text" && isClickOnTextEditButton(cPos, selBox)) {
+          if (selBox.type === "text" && (isClickOnTextEditButton(cPos, selBox) || isClickOnTextDuplicateButton(cPos, selBox))) {
             container.style.cursor = "pointer";
             return;
           }
@@ -5010,6 +5154,7 @@ function initNet() {
             bgOpacity: 0,
             labelPos: "top-left"
           };
+          pushUndoSnapshot();
           data.boxes.push(newBox);
           if (nodes && !nodes.get(newBox.id)) {
             nodes.add({
@@ -5076,6 +5221,7 @@ function initNet() {
           bgColor: "#ffffff",
           bgOpacity: 0
         };
+        pushUndoSnapshot();
         data.boxes.push(newTextBox);
         if (nodes && !nodes.get(newTextBox.id)) {
           nodes.add({
@@ -5767,6 +5913,7 @@ if ($("sBtnClearCoords")) {
   $("sBtnClearCoords").onclick = () => {
     const e = data.entities.find(x => x.id === selected);
     if (e) {
+      pushUndoSnapshot();
       delete e.lat;
       delete e.lng;
       delete e.mgrs;
@@ -5786,6 +5933,7 @@ let inputDebounceTimer = null;
 ["sName", "sSubName", "sType", "sNote", "sMgrs"].forEach(id => {
   const el = $(id);
   if (el) {
+    el.onfocus = () => pushUndoSnapshot();
     el.onchange = () => updateSelectedFromForm(false);
     el.onblur = () => updateSelectedFromForm(false);
     el.oninput = () => {
@@ -5804,6 +5952,7 @@ if ($("sBtnUploadImg") && $("sImgFileInput")) {
     const e = data.entities.find(x => x.id === selected);
     if (!e) return;
     processUploadedImage(file, dataUri => {
+      pushUndoSnapshot();
       e.customImage = dataUri;
       render(false);
       queueSave();
@@ -5816,6 +5965,7 @@ if ($("sBtnRemoveImg")) {
   $("sBtnRemoveImg").onclick = () => {
     const e = data.entities.find(x => x.id === selected);
     if (!e) return;
+    pushUndoSnapshot();
     delete e.customImage;
     render(false);
     queueSave();
@@ -5830,6 +5980,7 @@ $("delE").onclick = () => {
   const displayName = getEntityDisplayName(e);
   if (!confirm(`Permanently delete "${displayName}" and all associated links?`)) return;
 
+  pushUndoSnapshot();
   data.entities = data.entities.filter(x => x.id !== e.id);
   data.links = data.links.filter(l => l.from !== e.id && l.to !== e.id);
   selected = null;
@@ -5837,6 +5988,10 @@ $("delE").onclick = () => {
   queueSave();
   switchTab("list");
 };
+
+if ($("sBtnDuplicate")) {
+  $("sBtnDuplicate").onclick = duplicateSelected;
+}
 
 $("sPickBtn").onclick = () => {
   if (picking) { stopPick(); return; }
@@ -6016,6 +6171,7 @@ function createLinkBetween(fromId, toId) {
     width: 1,
     arrows: "none"
   };
+  pushUndoSnapshot();
   data.links.push(newLink);
 
   // Update border anchor nodes for group boxes
@@ -6112,6 +6268,7 @@ function deleteCorner(linkId, cornerIdx = null) {
   const l = data.links.find(x => x.id === linkId);
   if (!l || !l.corners || l.corners.length === 0) return;
 
+  pushUndoSnapshot();
   if (cornerIdx != null && cornerIdx >= 0 && cornerIdx < l.corners.length) {
     l.corners.splice(cornerIdx, 1);
   } else {
@@ -6260,6 +6417,336 @@ if ($("btnDeleteCornerModeToggle")) {
   };
 }
 
+/* ---------- Clipboard, Duplicate & Undo/Redo Engine ---------- */
+function isUserTyping() {
+  const el = document.activeElement;
+  if (!el) return false;
+  const tag = el.tagName ? el.tagName.toLowerCase() : "";
+  if (tag === "input" || tag === "textarea" || tag === "select") return true;
+  if (el.isContentEditable || el.getAttribute("contenteditable") === "true") return true;
+  return false;
+}
+
+function getSelectedEntityIds() {
+  if (net && net.getSelectedNodes) {
+    const selNodes = net.getSelectedNodes();
+    if (selNodes && selNodes.length > 0) {
+      return selNodes.filter(id => typeof id === "string" && !id.startsWith("corner_") && !id.startsWith("box_") && !id.startsWith("box_anchor_"));
+    }
+  }
+  if (selected) return [selected];
+  return [];
+}
+
+function copySelected() {
+  // 1. Entities
+  const entIds = getSelectedEntityIds();
+  if (entIds.length > 0 && data.entities) {
+    const ents = data.entities.filter(x => entIds.includes(x.id));
+    if (ents.length > 0) {
+      const internalLinks = data.links ? data.links.filter(l => entIds.includes(l.from) && entIds.includes(l.to)) : [];
+      blulinkClipboard = {
+        kind: "entities",
+        data: {
+          entities: JSON.parse(JSON.stringify(ents)),
+          links: JSON.parse(JSON.stringify(internalLinks))
+        }
+      };
+      pasteOffsetCount = 1;
+      const desc = ents.length === 1 ? `"${getEntityDisplayName(ents[0])}"` : `${ents.length} entities`;
+      setStatus(`Copied ${desc} to clipboard (Ctrl+C)`);
+      return true;
+    }
+  }
+
+  // 2. Group Box or Text Box
+  if (selectedBoxId && data.boxes) {
+    const b = data.boxes.find(x => x.id === selectedBoxId);
+    if (b) {
+      blulinkClipboard = {
+        kind: "box",
+        data: JSON.parse(JSON.stringify(b))
+      };
+      pasteOffsetCount = 1;
+      const label = b.type === "text"
+        ? (b.text ? `"${b.text.slice(0, 15)}..."` : "Text Box")
+        : (b.label || "Group Box");
+      setStatus(`Copied ${label} to clipboard (Ctrl+C)`);
+      return true;
+    }
+  }
+
+  // 3. Link
+  if (selectedLinkId && data.links) {
+    const l = data.links.find(x => x.id === selectedLinkId);
+    if (l) {
+      blulinkClipboard = {
+        kind: "link",
+        data: JSON.parse(JSON.stringify(l))
+      };
+      pasteOffsetCount = 1;
+      setStatus(`Copied link "${l.label || 'link'}" to clipboard (Ctrl+C)`);
+      return true;
+    }
+  }
+
+  setStatus("Nothing selected to copy. Select an entity, text box, or box first.", true);
+  return false;
+}
+
+function cutSelected() {
+  if (!selected && !selectedBoxId && !selectedLinkId && (!net || !net.getSelectedNodes || net.getSelectedNodes().length === 0)) {
+    setStatus("Nothing selected to cut. Select an entity, text box, or box first.", true);
+    return;
+  }
+
+  const ok = copySelected();
+  if (!ok) return;
+
+  pushUndoSnapshot();
+
+  // Delete copied entities
+  if (blulinkClipboard && (blulinkClipboard.kind === "entities" || blulinkClipboard.kind === "entity")) {
+    const srcList = blulinkClipboard.kind === "entities" ? blulinkClipboard.data.entities : [blulinkClipboard.data];
+    const cutIds = srcList.map(x => x.id);
+    data.entities = data.entities.filter(x => !cutIds.includes(x.id));
+    data.links = data.links.filter(l => !cutIds.includes(l.from) && !cutIds.includes(l.to));
+    selected = null;
+    if (net) net.unselectAll();
+    render(false);
+    renderInspector();
+    renderList();
+    queueSave();
+    switchTab("list");
+    const desc = cutIds.length === 1 ? "entity" : `${cutIds.length} entities`;
+    setStatus(`Cut ${desc} to clipboard (Ctrl+X)`);
+    return;
+  }
+
+  // Delete box
+  if (blulinkClipboard && blulinkClipboard.kind === "box") {
+    const bId = blulinkClipboard.data.id;
+    data.boxes = data.boxes.filter(x => x.id !== bId);
+    data.links = data.links.filter(l => l.from !== bId && l.to !== bId);
+    selectedBoxId = null;
+    render(false);
+    queueSave();
+    setStatus("Cut box to clipboard (Ctrl+X)");
+    return;
+  }
+
+  // Delete link
+  if (blulinkClipboard && blulinkClipboard.kind === "link") {
+    const lId = blulinkClipboard.data.id;
+    data.links = data.links.filter(x => x.id !== lId);
+    selectedLinkId = null;
+    render(false);
+    queueSave();
+    setStatus("Cut link to clipboard (Ctrl+X)");
+    return;
+  }
+}
+
+function pasteClipboard() {
+  if (!blulinkClipboard || !blulinkClipboard.data) {
+    setStatus("Clipboard is empty. Copy or cut an item first (Ctrl+C or Ctrl+X).", true);
+    return;
+  }
+
+  pushUndoSnapshot();
+
+  const offset = pasteOffsetCount * 30;
+  pasteOffsetCount++;
+
+  if (blulinkClipboard.kind === "entities" || blulinkClipboard.kind === "entity") {
+    const srcList = blulinkClipboard.kind === "entities" ? blulinkClipboard.data.entities : [blulinkClipboard.data];
+    const srcLinks = (blulinkClipboard.kind === "entities" && blulinkClipboard.data.links) ? blulinkClipboard.data.links : [];
+
+    const idMap = {};
+    const newlyPasted = [];
+
+    srcList.forEach(src => {
+      const newEnt = JSON.parse(JSON.stringify(src));
+      const oldId = newEnt.id;
+      newEnt.id = uid();
+      idMap[oldId] = newEnt.id;
+
+      newEnt.name = src.name ? `${src.name} (Copy)` : "Entity Copy";
+
+      if (newEnt.x != null && newEnt.y != null) {
+        newEnt.x = Math.round(newEnt.x + offset);
+        newEnt.y = Math.round(newEnt.y + offset);
+      } else if (net) {
+        const view = net.getViewPosition();
+        newEnt.x = Math.round(view.x + offset);
+        newEnt.y = Math.round(view.y + offset);
+      }
+
+      if (newEnt.lat != null && newEnt.lng != null) {
+        newEnt.lat = parseFloat((newEnt.lat + 0.00015 * pasteOffsetCount).toFixed(6));
+        newEnt.lng = parseFloat((newEnt.lng + 0.00015 * pasteOffsetCount).toFixed(6));
+        newEnt.mgrs = toMgrs(newEnt.lat, newEnt.lng) || newEnt.mgrs;
+      }
+
+      if (!data.entities) data.entities = [];
+      data.entities.push(newEnt);
+      newlyPasted.push(newEnt);
+    });
+
+    srcLinks.forEach(srcLink => {
+      if (idMap[srcLink.from] && idMap[srcLink.to]) {
+        const newL = JSON.parse(JSON.stringify(srcLink));
+        newL.id = uid();
+        newL.from = idMap[srcLink.from];
+        newL.to = idMap[srcLink.to];
+        if (newL.corners && newL.corners.length > 0) {
+          newL.corners = newL.corners.map(c => ({
+            x: Math.round(c.x + offset),
+            y: Math.round(c.y + offset)
+          }));
+        }
+        if (!data.links) data.links = [];
+        data.links.push(newL);
+      }
+    });
+
+    if (newlyPasted.length > 0) {
+      selected = newlyPasted[0].id;
+      selectedBoxId = null;
+      selectedLinkId = null;
+      if (net) {
+        net.selectNodes(newlyPasted.map(x => x.id));
+      }
+    }
+
+    render(false);
+    renderInspector();
+    renderList();
+    queueSave();
+    switchTab("inspect");
+
+    const desc = newlyPasted.length === 1 ? `"${getEntityDisplayName(newlyPasted[0])}"` : `${newlyPasted.length} entities`;
+    setStatus(`Pasted ${desc} (Ctrl+V)`);
+    return;
+  }
+
+  if (blulinkClipboard.kind === "box") {
+    const src = blulinkClipboard.data;
+    const newBox = JSON.parse(JSON.stringify(src));
+    newBox.id = "box_" + uid();
+
+    if (newBox.type === "text") {
+      newBox.x = Math.round((newBox.x || 0) + offset);
+      newBox.y = Math.round((newBox.y || 0) + offset);
+    } else {
+      newBox.label = src.label ? `${src.label} (Copy)` : "Group Box Copy";
+      newBox.x = Math.round((newBox.x || 0) + offset);
+      newBox.y = Math.round((newBox.y || 0) + offset);
+    }
+
+    if (!data.boxes) data.boxes = [];
+    data.boxes.push(newBox);
+
+    selectedBoxId = newBox.id;
+    selected = null;
+    selectedLinkId = null;
+    if (net) net.unselectAll();
+
+    render(false);
+    queueSave();
+
+    const label = newBox.type === "text" ? "Text Box" : `Group Box "${newBox.label}"`;
+    setStatus(`Pasted ${label} (Ctrl+V)`);
+    return;
+  }
+}
+
+function duplicateSelected() {
+  if (copySelected()) {
+    pasteClipboard();
+  }
+}
+
+function performUndo() {
+  if (!undoStack.length) {
+    setStatus("Nothing to undo", true);
+    return;
+  }
+  try {
+    const currentState = JSON.stringify({
+      entities: data.entities || [],
+      links: data.links || [],
+      boxes: data.boxes || []
+    });
+    redoStack.push(currentState);
+    const prevStateStr = undoStack.pop();
+    const parsed = JSON.parse(prevStateStr);
+    data.entities = parsed.entities || [];
+    data.links = parsed.links || [];
+    data.boxes = parsed.boxes || [];
+
+    if (selected && !data.entities.some(e => e.id === selected)) {
+      selected = null;
+    }
+    if (selectedBoxId && !data.boxes.some(b => b.id === selectedBoxId)) {
+      selectedBoxId = null;
+    }
+    if (selectedLinkId && !data.links.some(l => l.id === selectedLinkId)) {
+      selectedLinkId = null;
+    }
+
+    render(false);
+    renderInspector();
+    renderList();
+    queueSave();
+    setStatus("Undo performed (Ctrl+Z)");
+  } catch (err) {
+    console.error("Perform undo error:", err);
+  }
+}
+
+function performRedo() {
+  if (!redoStack.length) {
+    setStatus("Nothing to redo", true);
+    return;
+  }
+  try {
+    const currentState = JSON.stringify({
+      entities: data.entities || [],
+      links: data.links || [],
+      boxes: data.boxes || []
+    });
+    undoStack.push(currentState);
+    const nextStateStr = redoStack.pop();
+    const parsed = JSON.parse(nextStateStr);
+    data.entities = parsed.entities || [];
+    data.links = parsed.links || [];
+    data.boxes = parsed.boxes || [];
+
+    if (selected && !data.entities.some(e => e.id === selected)) {
+      selected = null;
+    }
+    if (selectedBoxId && !data.boxes.some(b => b.id === selectedBoxId)) {
+      selectedBoxId = null;
+    }
+    if (selectedLinkId && !data.links.some(l => l.id === selectedLinkId)) {
+      selectedLinkId = null;
+    }
+
+    render(false);
+    renderInspector();
+    renderList();
+    queueSave();
+    setStatus("Redo performed (Ctrl+Y)");
+  } catch (err) {
+    console.error("Perform redo error:", err);
+  }
+}
+
+if ($("btnUndo")) {
+  $("btnUndo").onclick = () => performUndo();
+}
+
 window.addEventListener("keydown", e => {
   if (e.key === "Escape") {
     closeDrawToolsMenu();
@@ -6292,15 +6779,66 @@ window.addEventListener("keydown", e => {
     return;
   }
 
+  const isCtrl = e.ctrlKey || e.metaKey;
+  if (isCtrl && !isUserTyping()) {
+    const key = e.key.toLowerCase();
+
+    // Ctrl + Z: Undo (or Redo if Shift pressed)
+    if (key === "z") {
+      e.preventDefault();
+      if (e.shiftKey) {
+        performRedo();
+      } else {
+        performUndo();
+      }
+      return;
+    }
+
+    // Ctrl + Y: Redo
+    if (key === "y") {
+      e.preventDefault();
+      performRedo();
+      return;
+    }
+
+    // Ctrl + C: Copy
+    if (key === "c") {
+      e.preventDefault();
+      copySelected();
+      return;
+    }
+
+    // Ctrl + X: Cut
+    if (key === "x") {
+      e.preventDefault();
+      cutSelected();
+      return;
+    }
+
+    // Ctrl + V: Paste
+    if (key === "v") {
+      e.preventDefault();
+      pasteClipboard();
+      return;
+    }
+
+    // Ctrl + D: Duplicate
+    if (key === "d") {
+      e.preventDefault();
+      duplicateSelected();
+      return;
+    }
+  }
+
   // Delete or Backspace key deletes selected diamond corner handle, group box, relationship link, or entity
   if (e.key === "Delete" || e.key === "Backspace") {
     // Only if not currently typing in an input or textarea
-    const activeEl = document.activeElement;
-    if (activeEl && (activeEl.tagName === "INPUT" || activeEl.tagName === "TEXTAREA" || activeEl.isContentEditable)) return;
+    if (isUserTyping()) return;
 
     // 1. Delete selected Corner handle
     if (selectedCornerNodeId && typeof selectedCornerNodeId === "string" && selectedCornerNodeId.startsWith("corner_")) {
       e.preventDefault();
+      pushUndoSnapshot();
       const parts = selectedCornerNodeId.split("_");
       deleteCorner(parts[1], parseInt(parts[2]) || 0);
       selectedCornerNodeId = null;
@@ -6310,6 +6848,7 @@ window.addEventListener("keydown", e => {
     // 2. Delete selected Group Box (and connected links)
     if (selectedBoxId && data.boxes) {
       e.preventDefault();
+      pushUndoSnapshot();
       const bId = selectedBoxId;
       data.boxes = data.boxes.filter(x => x.id !== bId);
       data.links = data.links.filter(l => l.from !== bId && l.to !== bId);
@@ -6322,6 +6861,7 @@ window.addEventListener("keydown", e => {
     // 3. Delete selected Relationship Link
     if (selectedLinkId && data.links) {
       e.preventDefault();
+      pushUndoSnapshot();
       data.links = data.links.filter(x => x.id !== selectedLinkId);
       selectedLinkId = null;
       render(false);
@@ -6332,6 +6872,7 @@ window.addEventListener("keydown", e => {
     // 4. Delete selected Entity Node (and connected links)
     if (selected && data.entities) {
       e.preventDefault();
+      pushUndoSnapshot();
       const entId = selected;
       data.entities = data.entities.filter(x => x.id !== entId);
       data.links = data.links.filter(l => l.from !== entId && l.to !== entId);
