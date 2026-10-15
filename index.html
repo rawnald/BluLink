@@ -1190,6 +1190,11 @@
           </div>
 
           <div>
+            <label class="block text-[11px] font-bold text-black uppercase tracking-wide mb-1">Sub-Name <span class="text-black/50 font-normal lowercase">(optional)</span></label>
+            <input id="sSubName" placeholder="e.g. Alias, Rank, Call Sign, Unit, Plate..." class="w-full px-3 py-2 rounded-lg bg-white border border-black/30 text-black text-xs focus:outline-none focus:border-blue-600">
+          </div>
+
+          <div>
             <label class="block text-[11px] font-bold text-black uppercase tracking-wide mb-1">Type</label>
             <select id="sType" class="w-full px-2.5 py-2 rounded-lg bg-white border border-black/30 text-black text-xs focus:outline-none focus:border-blue-600"></select>
           </div>
@@ -1526,6 +1531,28 @@ if (window.ALL_ENTITIES_DATA && Array.isArray(window.ALL_ENTITIES_DATA)) {
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const uid = () => Math.random().toString(36).slice(2, 10);
+
+function formatEntitySubLabel(sub) {
+  if (!sub) return "";
+  const s = String(sub).trim();
+  if (!s) return "";
+  return (s.startsWith("(") && s.endsWith(")")) ? s : `(${s})`;
+}
+
+function getEntityDisplayName(e) {
+  if (!e) return "Unknown";
+  if (e.label != null && e.w != null) return e.label || "Group Box";
+  const name = e.name || e.type || "Entity";
+  const sub = formatEntitySubLabel(e.subName);
+  return sub ? `${name} ${sub}` : name;
+}
+
+function getEntityNodeLabel(e) {
+  if (!e) return "";
+  const name = e.name || e.type || "Entity";
+  const sub = formatEntitySubLabel(e.subName);
+  return sub ? `${esc(name)}\n${esc(sub)}` : esc(name);
+}
 
 /* ---------- State ---------- */
 let cfToken = localStorage.getItem("blulink_cf_token") || null;
@@ -2290,6 +2317,7 @@ function createEntityFromPalette(typeKey, x = null, y = null, extraProps = {}) {
   const newEntity = {
     id: uid(),
     name: defaultName,
+    subName: "",
     type: typeKey,
     note: "",
     x: x,
@@ -2850,7 +2878,7 @@ function openEditLinkModal(linkId) {
       $("editLinkFromDisplay").innerHTML = `<span class="inline-flex items-center gap-1 text-blue-600 font-bold"><svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-none stroke-current inline" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke-dasharray="3 2"/></svg><span>${esc(a.label || 'Group Box')}</span></span>`;
     } else {
       const aIcon = getEntityIcon(a);
-      $("editLinkFromDisplay").innerHTML = `<img src="${aIcon}" class="w-4 h-4 object-contain inline-block mr-1"><span>${esc(a ? a.name : 'Unknown')}</span>`;
+      $("editLinkFromDisplay").innerHTML = `<img src="${aIcon}" class="w-4 h-4 object-contain inline-block mr-1"><span>${esc(getEntityDisplayName(a))}</span>`;
     }
   }
   if ($("editLinkToDisplay")) {
@@ -2858,7 +2886,7 @@ function openEditLinkModal(linkId) {
       $("editLinkToDisplay").innerHTML = `<span class="inline-flex items-center gap-1 text-blue-600 font-bold"><svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-none stroke-current inline" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke-dasharray="3 2"/></svg><span>${esc(b.label || 'Group Box')}</span></span>`;
     } else {
       const bIcon = getEntityIcon(b);
-      $("editLinkToDisplay").innerHTML = `<img src="${bIcon}" class="w-4 h-4 object-contain inline-block mr-1"><span>${esc(b ? b.name : 'Unknown')}</span>`;
+      $("editLinkToDisplay").innerHTML = `<img src="${bIcon}" class="w-4 h-4 object-contain inline-block mr-1"><span>${esc(getEntityDisplayName(b))}</span>`;
     }
   }
 
@@ -4283,7 +4311,7 @@ function initNet() {
         linkingSourceId = clickedId;
         const a = data.entities.find(x => x.id === clickedId);
         const aBox = !a && data.boxes ? data.boxes.find(x => x.id === clickedId) : null;
-        const aName = a ? a.name : (aBox ? aBox.label : 'Item');
+        const aName = a ? getEntityDisplayName(a) : (aBox ? aBox.label : 'Item');
         if ($("linkModeBannerText")) {
           $("linkModeBannerText").textContent = `Selected 1st: "${aName}" ➔ Click or drag to 2nd entity or box`;
         }
@@ -4712,7 +4740,7 @@ function initNet() {
           $("linkModeBanner").classList.remove("hidden");
           const a = data.entities.find(x => x.id === startNode);
           const aBox = !a && data.boxes ? data.boxes.find(x => x.id === startNode) : null;
-          const aName = a ? a.name : (aBox ? aBox.label : 'Item');
+          const aName = a ? getEntityDisplayName(a) : (aBox ? aBox.label : 'Item');
           if ($("linkModeBannerText")) {
             $("linkModeBannerText").textContent = `Connecting from "${aName}" ➔ Release on target entity or box`;
           }
@@ -5193,7 +5221,7 @@ function render(fitAll = false) {
       id: e.id,
       shape: "image",
       image: iconUri,
-      label: esc(e.name),
+      label: getEntityNodeLabel(e),
       size: 24,
       borderWidth: 14,
       borderWidthSelected: 14,
@@ -5249,13 +5277,17 @@ function render(fitAll = false) {
         html: pinHtml
       });
 
-      const marker = L.marker([e.lat, e.lng], { icon, title: e.name }).addTo(markerLayer);
+      const marker = L.marker([e.lat, e.lng], { icon, title: getEntityDisplayName(e) }).addTo(markerLayer);
       markersByEntityId[e.id] = marker;
+      const subHtml = e.subName && e.subName.trim() ? `<div class="text-[11px] font-semibold text-black/60 italic leading-tight">${esc(formatEntitySubLabel(e.subName))}</div>` : '';
       marker.bindPopup(`
         <div class="p-1 min-w-[150px]">
           <div class="flex items-center gap-2 font-bold text-sm text-black mb-1">
-            <img src="${iconUri}" class="w-4 h-4 object-contain" alt="">
-            <span>${esc(e.name)}</span>
+            <img src="${iconUri}" class="w-4 h-4 object-contain shrink-0" alt="">
+            <div>
+              <span>${esc(e.name)}</span>
+              ${subHtml}
+            </div>
           </div>
           <div class="text-[11px] font-bold text-blue-600 mb-1.5">${esc(e.type)}</div>
           ${e.note ? `<div class="text-xs text-black/80 border-t border-black/10 pt-1 leading-snug">${esc(e.note)}</div>` : ''}
@@ -5397,15 +5429,15 @@ function render(fitAll = false) {
       }).addTo(lineLayer);
       linesByLinkId[l.id] = poly;
 
-      poly.bindTooltip(`${esc(a.name)} → [${esc(l.label || "linked")}] → ${esc(b.name)}`, {
+      poly.bindTooltip(`${esc(getEntityDisplayName(a))} → [${esc(l.label || "linked")}] → ${esc(getEntityDisplayName(b))}`, {
         sticky: true
       });
     }
   });
 
   if ($("lFrom") && $("lTo")) {
-    const sortedEntities = [...data.entities].sort((x, y) => x.name.localeCompare(y.name));
-    const optionsHtml = sortedEntities.map(e => `<option value="${e.id}">${esc(e.name)} (${esc(e.type)})</option>`).join("");
+    const sortedEntities = [...data.entities].sort((x, y) => (x.name || "").localeCompare(y.name || ""));
+    const optionsHtml = sortedEntities.map(e => `<option value="${e.id}">${esc(getEntityDisplayName(e))} (${esc(e.type)})</option>`).join("");
     const currFrom = $("lFrom").value;
     const currTo = $("lTo").value;
     $("lFrom").innerHTML = optionsHtml;
@@ -5558,6 +5590,9 @@ function renderInspector() {
   if (document.activeElement !== $("sName")) {
     $("sName").value = e.name != null ? e.name : "";
   }
+  if ($("sSubName") && document.activeElement !== $("sSubName")) {
+    $("sSubName").value = e.subName != null ? e.subName : "";
+  }
   if (document.activeElement !== $("sType")) {
     const curVal = e.type || "Male";
     if ($("sType") && !$("sType").querySelector(`option[value="${curVal}"]`)) {
@@ -5597,7 +5632,7 @@ function renderInspector() {
       const otherId = isOutgoing ? l.to : l.from;
       const other = data.entities.find(x => x.id === otherId);
       const otherBox = !other && data.boxes ? data.boxes.find(x => x.id === otherId) : null;
-      const otherName = other ? other.name : (otherBox ? otherBox.label : "Unknown");
+      const otherName = other ? getEntityDisplayName(other) : (otherBox ? otherBox.label : "Unknown");
       const otherIconHtml = other
         ? `<img src="${getEntityIcon(other)}" class="w-3.5 h-3.5 object-contain" alt="">`
         : `<svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-none stroke-current text-blue-600 inline" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke-dasharray="3 2"/></svg>`;
@@ -5649,6 +5684,7 @@ function updateSelectedFromForm(isLiveTyping = false) {
   if (!e) return;
 
   e.name = $("sName").value;
+  if ($("sSubName")) e.subName = $("sSubName").value;
   e.type = $("sType").value;
   if (window.ALL_ENTITIES_DATA) {
     const item = window.ALL_ENTITIES_DATA.find(x => x.name === e.type);
@@ -5695,7 +5731,7 @@ function updateSelectedFromForm(isLiveTyping = false) {
     if (nodes && nodes.get(e.id)) {
       nodes.update({
         id: e.id,
-        label: esc(e.name || e.type)
+        label: getEntityNodeLabel(e)
       });
     }
     // Update badge icon/type
@@ -5747,7 +5783,7 @@ if ($("sBtnClearCoords")) {
 }
 
 let inputDebounceTimer = null;
-["sName", "sType", "sNote", "sMgrs"].forEach(id => {
+["sName", "sSubName", "sType", "sNote", "sMgrs"].forEach(id => {
   const el = $(id);
   if (el) {
     el.onchange = () => updateSelectedFromForm(false);
@@ -5791,7 +5827,8 @@ $("sBtnDeselect").onclick = () => select(null);
 $("delE").onclick = () => {
   const e = data.entities.find(x => x.id === selected);
   if (!e) return;
-  if (!confirm(`Permanently delete "${e.name}" and all associated links?`)) return;
+  const displayName = getEntityDisplayName(e);
+  if (!confirm(`Permanently delete "${displayName}" and all associated links?`)) return;
 
   data.entities = data.entities.filter(x => x.id !== e.id);
   data.links = data.links.filter(l => l.from !== e.id && l.to !== e.id);
@@ -5811,7 +5848,10 @@ function renderList() {
   const q = ($("listSearch").value || "").toLowerCase().trim();
   const filtered = data.entities.filter(e => {
     if (!q) return true;
-    return e.name.toLowerCase().includes(q) || e.type.toLowerCase().includes(q) || (e.note && e.note.toLowerCase().includes(q));
+    return (e.name && e.name.toLowerCase().includes(q)) ||
+           (e.subName && e.subName.toLowerCase().includes(q)) ||
+           (e.type && e.type.toLowerCase().includes(q)) ||
+           (e.note && e.note.toLowerCase().includes(q));
   });
 
   if (!filtered.length) {
@@ -5823,13 +5863,17 @@ function renderList() {
     const isSel = e.id === selected;
     const isMapped = e.lat != null && e.lng != null;
     const iconUri = getEntityIcon(e);
+    const subLabel = (e.subName || "").trim();
     return `
       <div data-id="${e.id}" class="flex items-center gap-2.5 p-2 rounded-lg cursor-pointer transition border ${isSel ? 'bg-blue-50 border-blue-600 shadow-sm' : 'bg-white border-black/15 hover:border-blue-500 hover:bg-blue-50/50'}">
         <div class="w-6 h-6 flex items-center justify-center shrink-0">
           <img src="${iconUri}" class="w-5 h-5 object-contain" alt="">
         </div>
         <div class="flex-1 min-w-0">
-          <div class="text-xs font-bold text-black truncate">${esc(e.name)}</div>
+          <div class="text-xs font-bold text-black truncate flex items-baseline gap-1">
+            <span class="truncate">${esc(e.name)}</span>
+            ${subLabel ? `<span class="text-[10px] text-black/50 font-semibold italic shrink-0">(${esc(subLabel)})</span>` : ''}
+          </div>
           <div class="text-[10px] text-black/60 font-medium">${esc(e.type)}</div>
         </div>
         ${isMapped ? `<span class="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase bg-blue-100 text-blue-700">Map</span>` : ''}
@@ -6011,7 +6055,7 @@ function createLinkBetween(fromId, toId) {
       opacity: 0.9
     }).addTo(lineLayer);
     linesByLinkId[newLink.id] = poly;
-    poly.bindTooltip(`${esc(a.name)} → [linked] → ${esc(b.name)}`, { sticky: true });
+    poly.bindTooltip(`${esc(getEntityDisplayName(a))} → [linked] → ${esc(getEntityDisplayName(b))}`, { sticky: true });
   }
 
   if ($("statLinks")) $("statLinks").textContent = data.links.length;
