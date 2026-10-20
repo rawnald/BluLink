@@ -1161,21 +1161,12 @@
       </div>
   </div>
 
-  <!-- Header Right (User & Actions) -->
+  <!-- Header Right (Actions & Status) -->
   <div class="flex items-center gap-3">
     <!-- Autosave Status Dot (Minimal) -->
     <div id="statusContainer" class="hidden items-center gap-1.5 text-xs">
       <span id="statusDot" class="w-2 h-2 rounded-full bg-blue-600"></span>
       <span id="status" class="text-black font-semibold text-[11px]"></span>
-    </div>
-
-    <!-- User identity / Sign out -->
-    <div id="userSection" class="flex items-center gap-2 border-l border-black/15 pl-3">
-      <span id="who" class="text-xs text-black/80 font-medium max-w-[160px] truncate" title=""></span>
-      <button id="logout" class="btn-secondary py-1 px-2.5 text-xs">
-        <i class="fi fi-rr-sign-out-alt text-xs"></i>
-        <span>Sign out</span>
-      </button>
     </div>
   </div>
 </header>
@@ -2138,7 +2129,7 @@ async function performLogout() {
   location.reload();
 }
 
-$("logout").onclick = performLogout;
+if ($("logout")) $("logout").onclick = performLogout;
 if ($("btnLogoutSettings")) {
   $("btnLogoutSettings").onclick = performLogout;
 }
@@ -3239,8 +3230,10 @@ async function openApp() {
   $("auth").classList.add("hidden");
   $("app").classList.remove("hidden");
   $("app").classList.add("flex");
-  $("who").textContent = user.email || "Authenticated User";
-  $("who").title = user.email || "";
+  if ($("who")) {
+    $("who").textContent = user.email || "Authenticated User";
+    $("who").title = user.email || "";
+  }
   const whoSet = $("whoSettings");
   if (whoSet) {
     whoSet.textContent = user.email || "Authenticated User";
