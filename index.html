@@ -925,6 +925,70 @@
   </div>
 </div>
 
+<!-- ==================== IMPORT PROJECT MODAL ==================== -->
+<div id="importProjectModal" class="hidden fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+  <div class="w-full max-w-md bg-white border-2 border-black rounded-2xl p-6 shadow-2xl space-y-4 relative z-10">
+    <div class="flex items-center justify-between border-b border-black/15 pb-3">
+      <div class="flex items-center gap-2.5">
+        <div class="w-7 h-7 rounded-lg bg-blue-50 border border-blue-600 flex items-center justify-center text-blue-600 text-sm">
+          <i class="fi fi-rr-upload text-xs"></i>
+        </div>
+        <div>
+          <h3 class="text-sm font-bold text-black uppercase tracking-wider">
+            Import Project
+          </h3>
+          <p class="text-[10px] text-black/60">Upload a project file (.json) to import into your account</p>
+        </div>
+      </div>
+      <button id="btnCloseImportModal" class="text-black/60 hover:text-black font-bold text-sm">✕</button>
+    </div>
+
+    <!-- Drop zone / File selector -->
+    <div id="importDropZone" class="border-2 border-dashed border-black/30 hover:border-blue-600 hover:bg-blue-50/40 rounded-xl p-5 text-center cursor-pointer transition flex flex-col items-center justify-center gap-2">
+      <input id="importFileInput" type="file" accept=".json,.blulink,application/json" class="hidden">
+      <div class="w-11 h-11 rounded-full bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center text-lg shadow-sm">
+        <i class="fi fi-rr-document text-base"></i>
+      </div>
+      <div>
+        <p class="text-xs font-bold text-black">Click to choose a project file or drag & drop</p>
+        <p class="text-[10px] text-black/50 mt-0.5">Supports BluLink project files (.json)</p>
+      </div>
+      <span id="importFileBadge" class="hidden text-[11px] font-bold text-blue-700 bg-blue-100 border border-blue-300 px-3 py-1 rounded-full mt-1 max-w-[90%] truncate"></span>
+    </div>
+
+    <!-- Project Details (Visible once file is parsed) -->
+    <div id="importDetailsSection" class="hidden space-y-3 border-t border-black/10 pt-3">
+      <!-- Data summary stats -->
+      <div id="importStatsBadge" class="p-2.5 rounded-lg bg-blue-50 border border-blue-200 text-xs text-blue-900 flex items-center justify-between">
+        <span class="font-bold flex items-center gap-1.5"><i class="fi fi-rr-check text-xs text-blue-600"></i> Project Validated</span>
+        <span id="importStatsCounts" class="text-[11px] font-semibold text-black/70">0 entities • 0 links</span>
+      </div>
+
+      <div>
+        <label for="importProjectName" class="block text-xs font-bold text-black uppercase tracking-wider mb-1">Project Name</label>
+        <input id="importProjectName" placeholder="Project name"
+          class="w-full px-3 py-2 rounded-lg bg-white border-2 border-black/30 text-black text-sm focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600">
+      </div>
+
+      <div>
+        <label for="importProjectDesc" class="block text-xs font-bold text-black uppercase tracking-wider mb-1">Description (Optional)</label>
+        <input id="importProjectDesc" placeholder="e.g. Imported link chart intelligence analysis"
+          class="w-full px-3 py-2 rounded-lg bg-white border-2 border-black/30 text-black text-sm focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600">
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2 pt-2">
+      <button id="btnImportProjectSubmit" disabled class="flex-1 btn-primary py-2 text-xs opacity-50 cursor-not-allowed">
+        <i class="fi fi-rr-upload text-xs"></i>
+        <span>Import & Open Project</span>
+      </button>
+      <button id="btnCancelImportModal" class="btn-secondary py-2 text-xs">
+        <span>Cancel</span>
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- ==================== ALL ENTITIES MODAL ==================== -->
 <div id="allEntitiesModal" class="hidden fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-sm">
   <div class="w-full max-w-5xl h-[88vh] max-h-[850px] bg-white border-2 border-black rounded-2xl shadow-2xl flex flex-col overflow-hidden relative z-10">
@@ -1025,6 +1089,13 @@
         <span>New Project</span>
       </button>
 
+      <!-- Standalone Import Project Button (Shown when user has 0 projects) -->
+      <button id="btnInitialImportProject" type="button" title="Import Project from File (.json)"
+        class="hidden btn-secondary py-1.5 px-3 text-xs flex items-center gap-1.5 border-black/30 hover:border-blue-600 hover:text-blue-600 hover:bg-blue-50 transition cursor-pointer">
+        <i class="fi fi-rr-upload text-xs text-blue-600"></i>
+        <span>Import Project</span>
+      </button>
+
       <!-- Project Dropdown (Shown once projects exist, with '+ New Project' inside dropdown) -->
       <div id="projectDropdownContainer" class="hidden items-center gap-2">
         <div class="relative">
@@ -1033,6 +1104,20 @@
             <option value="">Loading Projects…</option>
           </select>
         </div>
+
+        <!-- Download / Export Project Button -->
+        <button id="btnExportProject" type="button" title="Download Active Project (.json)"
+          class="btn-secondary py-1 px-2 sm:px-2.5 text-xs text-black border-black/30 hover:border-blue-600 hover:text-blue-600 hover:bg-blue-50 transition cursor-pointer flex items-center gap-1.5">
+          <i class="fi fi-rr-download text-xs text-blue-600"></i>
+          <span class="hidden sm:inline font-bold">Export</span>
+        </button>
+
+        <!-- Import Project Button -->
+        <button id="btnImportProject" type="button" title="Import Project from File (.json)"
+          class="btn-secondary py-1 px-2 sm:px-2.5 text-xs text-black border-black/30 hover:border-blue-600 hover:text-blue-600 hover:bg-blue-50 transition cursor-pointer flex items-center gap-1.5">
+          <i class="fi fi-rr-upload text-xs text-blue-600"></i>
+          <span class="hidden sm:inline font-bold">Import</span>
+        </button>
 
         <button id="btnDeleteProject" title="Delete Active Project"
           class="btn-secondary py-1 px-2.5 text-xs text-black border-black/30 hover:border-red-600 hover:text-red-600 hover:bg-red-50 transition cursor-pointer">
@@ -2047,11 +2132,17 @@ function renderProjectSelect() {
   const initialBtn = $("btnInitialNewProject");
   const dropdownContainer = $("projectDropdownContainer");
 
+  const initialImportBtn = $("btnInitialImportProject");
+
   if (!projects || projects.length === 0) {
-    // When there is NO project yet: show only the standalone New Project button
+    // When there is NO project yet: show standalone New Project and Import Project buttons
     if (initialBtn) {
       initialBtn.classList.remove("hidden");
       initialBtn.classList.add("flex");
+    }
+    if (initialImportBtn) {
+      initialImportBtn.classList.remove("hidden");
+      initialImportBtn.classList.add("flex");
     }
     if (dropdownContainer) {
       dropdownContainer.classList.add("hidden");
@@ -2061,17 +2152,21 @@ function renderProjectSelect() {
     return;
   }
 
-  // When projects exist: hide standalone button, show dropdown container
+  // When projects exist: hide standalone buttons, show dropdown container
   if (initialBtn) {
     initialBtn.classList.add("hidden");
     initialBtn.classList.remove("flex");
+  }
+  if (initialImportBtn) {
+    initialImportBtn.classList.add("hidden");
+    initialImportBtn.classList.remove("flex");
   }
   if (dropdownContainer) {
     dropdownContainer.classList.remove("hidden");
     dropdownContainer.classList.add("flex");
   }
 
-  // Populate dropdown with projects + '+ New Project' action at bottom
+  // Populate dropdown with projects + '+ New Project' and Import/Export actions
   let html = projects.map(p => `
     <option value="${p.id}" ${p.id === currentProjectId ? "selected" : ""}>
       📁 ${esc(p.name)}
@@ -2079,6 +2174,8 @@ function renderProjectSelect() {
   `).join("");
 
   html += `<option value="__NEW_PROJECT__" class="font-bold text-blue-600 bg-blue-50">+ New Project…</option>`;
+  html += `<option value="__IMPORT_PROJECT__" class="font-bold text-blue-600 bg-blue-50">⤒ Import Project…</option>`;
+  html += `<option value="__EXPORT_PROJECT__" class="font-semibold text-black/70">⤓ Download Active Project…</option>`;
   if (sel) sel.innerHTML = html;
 }
 
@@ -2123,15 +2220,261 @@ async function selectProject(projectId) {
 $("projectSelect").onchange = e => {
   const pid = e.target.value;
   if (pid === "__NEW_PROJECT__") {
-    // Re-select current project in UI while modal is open
     renderProjectSelect();
     openNewProjectModal();
+    return;
+  }
+  if (pid === "__IMPORT_PROJECT__") {
+    renderProjectSelect();
+    openImportProjectModal();
+    return;
+  }
+  if (pid === "__EXPORT_PROJECT__") {
+    renderProjectSelect();
+    exportCurrentProject();
     return;
   }
   if (pid && pid !== currentProjectId) {
     selectProject(pid);
   }
 };
+
+/* ---------- Download / Export Project (.json) ---------- */
+function exportCurrentProject() {
+  if (!currentProjectId) {
+    alert("Please select or open a project first to export.");
+    return;
+  }
+  const current = projects.find(p => p.id === currentProjectId);
+  const projName = current ? current.name : "BluLink Project";
+  const projDesc = current ? current.description : "";
+
+  // Prepare comprehensive export package containing entities, links, and group/text boxes
+  const exportPayload = {
+    blulink_version: "1.0",
+    exported_at: new Date().toISOString(),
+    project: {
+      name: projName,
+      description: projDesc
+    },
+    data: {
+      entities: (data && Array.isArray(data.entities)) ? data.entities : [],
+      links: (data && Array.isArray(data.links)) ? data.links : [],
+      boxes: (data && Array.isArray(data.boxes)) ? data.boxes : []
+    }
+  };
+
+  const jsonStr = JSON.stringify(exportPayload, null, 2);
+  const blob = new Blob([jsonStr], { type: "application/json;charset=utf-8" });
+
+  // Generate clean filename with sanitized project name and date
+  const safeName = projName.replace(/[^a-z0-9_-]/gi, "_").toLowerCase() || "project";
+  const dateStr = new Date().toISOString().split("T")[0];
+  const filename = `blulink_${safeName}_${dateStr}.json`;
+
+  // Trigger browser download
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+  setStatus(`Project "${projName}" downloaded`);
+}
+
+/* ---------- Import Project (.json) Engine ---------- */
+let pendingImportData = null;
+
+function openImportProjectModal() {
+  pendingImportData = null;
+  const fileInput = $("importFileInput");
+  if (fileInput) fileInput.value = "";
+  const badge = $("importFileBadge");
+  if (badge) { badge.classList.add("hidden"); badge.textContent = ""; }
+  const details = $("importDetailsSection");
+  if (details) details.classList.add("hidden");
+  const submitBtn = $("btnImportProjectSubmit");
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.className = "flex-1 btn-primary py-2 text-xs opacity-50 cursor-not-allowed";
+  }
+  $("importProjectName").value = "";
+  $("importProjectDesc").value = "";
+  $("importProjectModal").classList.remove("hidden");
+}
+
+function closeImportProjectModal() {
+  $("importProjectModal").classList.add("hidden");
+  pendingImportData = null;
+}
+
+function processImportedFile(file) {
+  if (!file) return;
+  const badge = $("importFileBadge");
+  if (badge) {
+    badge.textContent = file.name;
+    badge.classList.remove("hidden");
+  }
+
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const text = ev.target.result;
+      const parsed = JSON.parse(text);
+
+      let extractedData = null;
+      let extractedName = "";
+      let extractedDesc = "";
+
+      // Support BluLink export package format: { blulink_version, project: { name, description }, data: { entities, links, boxes } }
+      if (parsed.data && (Array.isArray(parsed.data.entities) || Array.isArray(parsed.data.links))) {
+        extractedData = parsed.data;
+        extractedName = (parsed.project && parsed.project.name) || parsed.name || "";
+        extractedDesc = (parsed.project && parsed.project.description) || parsed.description || "";
+      } else if (Array.isArray(parsed.entities) || Array.isArray(parsed.links)) {
+        // Direct raw data format: { entities, links, boxes }
+        extractedData = parsed;
+        extractedName = parsed.name || "";
+        extractedDesc = parsed.description || "";
+      } else {
+        alert("The selected file does not contain valid BluLink project data (missing entities list).");
+        return;
+      }
+
+      // Ensure arrays exist
+      if (!Array.isArray(extractedData.entities)) extractedData.entities = [];
+      if (!Array.isArray(extractedData.links)) extractedData.links = [];
+      if (!Array.isArray(extractedData.boxes)) extractedData.boxes = [];
+
+      // Fallback name to filename without .json
+      if (!extractedName || !extractedName.trim()) {
+        extractedName = file.name.replace(/\.[^/.]+$/, "").replace(/^blulink[_-]/i, "");
+        if (!extractedName) extractedName = "Imported Project";
+      }
+
+      pendingImportData = extractedData;
+
+      // Update UI
+      $("importProjectName").value = extractedName;
+      $("importProjectDesc").value = extractedDesc;
+      const stats = $("importStatsCounts");
+      if (stats) {
+        stats.textContent = `${extractedData.entities.length} entities • ${extractedData.links.length} links • ${extractedData.boxes.length} boxes`;
+      }
+      const details = $("importDetailsSection");
+      if (details) details.classList.remove("hidden");
+
+      const submitBtn = $("btnImportProjectSubmit");
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.className = "flex-1 btn-primary py-2 text-xs";
+      }
+    } catch (err) {
+      alert("Failed to parse project file: " + err.message + "\nPlease ensure it is a valid JSON file.");
+    }
+  };
+  reader.onerror = () => {
+    alert("Could not read file: " + reader.error);
+  };
+  reader.readAsText(file);
+}
+
+// Wire Import & Export UI triggers
+if ($("btnExportProject")) {
+  $("btnExportProject").onclick = exportCurrentProject;
+}
+if ($("btnImportProject")) {
+  $("btnImportProject").onclick = openImportProjectModal;
+}
+if ($("btnInitialImportProject")) {
+  $("btnInitialImportProject").onclick = openImportProjectModal;
+}
+if ($("btnCloseImportModal")) {
+  $("btnCloseImportModal").onclick = closeImportProjectModal;
+}
+if ($("btnCancelImportModal")) {
+  $("btnCancelImportModal").onclick = closeImportProjectModal;
+}
+
+// Drag & drop on Import Drop Zone
+const dropZone = $("importDropZone");
+const fileInput = $("importFileInput");
+if (dropZone && fileInput) {
+  dropZone.onclick = () => fileInput.click();
+  fileInput.onchange = ev => {
+    const file = ev.target.files && ev.target.files[0];
+    if (file) processImportedFile(file);
+  };
+
+  dropZone.ondragover = ev => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    dropZone.classList.add("border-blue-600", "bg-blue-50/60");
+  };
+  dropZone.ondragleave = ev => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    dropZone.classList.remove("border-blue-600", "bg-blue-50/60");
+  };
+  dropZone.ondrop = ev => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    dropZone.classList.remove("border-blue-600", "bg-blue-50/60");
+    const file = ev.dataTransfer.files && ev.dataTransfer.files[0];
+    if (file) processImportedFile(file);
+  };
+}
+
+// Submit Import
+if ($("btnImportProjectSubmit")) {
+  $("btnImportProjectSubmit").onclick = async () => {
+    if (!pendingImportData) {
+      alert("Please select a project file first.");
+      return;
+    }
+    const name = $("importProjectName").value.trim() || "Imported Project";
+    const description = $("importProjectDesc").value.trim();
+
+    setStatus("Importing project…");
+    const submitBtn = $("btnImportProjectSubmit");
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fi fi-rr-spinner animate-spin text-xs"></i><span>Importing…</span>';
+
+    try {
+      const res = await fetch("/api/projects", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${cfToken}`
+        },
+        body: JSON.stringify({
+          name,
+          description,
+          data: pendingImportData
+        })
+      });
+      const body = await res.json();
+      if (!res.ok) {
+        alert(body.error || "Failed to import project");
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fi fi-rr-upload text-xs"></i><span>Import & Open Project</span>';
+        return;
+      }
+
+      closeImportProjectModal();
+      projects.unshift(body.project);
+      await selectProject(body.project.id);
+      setStatus(`Project "${name}" imported successfully`);
+    } catch (e) {
+      alert("Error importing project: " + e.message);
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<i class="fi fi-rr-upload text-xs"></i><span>Import & Open Project</span>';
+    }
+  };
+}
 
 function openNewProjectModal() {
   $("newProjectName").value = "";

@@ -94,7 +94,17 @@ export async function onRequestPost({ request, env }) {
     const name = (body.name || "Untitled Project").trim();
     const description = (body.description || "").trim();
     const projectId = "proj_" + randomHex(8);
-    const initialData = { entities: [], links: [] };
+    let initialData = { entities: [], links: [], boxes: [] };
+    if (body.data) {
+      if (typeof body.data === "string") {
+        try { initialData = JSON.parse(body.data); } catch (e) {}
+      } else if (typeof body.data === "object" && body.data !== null) {
+        initialData = body.data;
+      }
+    }
+    if (!Array.isArray(initialData.entities)) initialData.entities = [];
+    if (!Array.isArray(initialData.links)) initialData.links = [];
+    if (!Array.isArray(initialData.boxes)) initialData.boxes = [];
     const dataString = JSON.stringify(initialData);
 
     // Save to D1
