@@ -1105,7 +1105,7 @@
       </button>
 
       <!-- Project Dropdown (Shown once projects exist, with '+ New Project' inside dropdown) -->
-      <div id="projectDropdownContainer" class="hidden items-center gap-2">
+      <div id="projectDropdownContainer" class="hidden items-center gap-1.5 sm:gap-2">
         <div class="relative">
           <span class="absolute -top-2 left-2 px-1 bg-white text-[9px] font-bold text-blue-600 tracking-tight leading-none select-none pointer-events-none z-10">Project Name</span>
           <select id="projectSelect" class="bg-white border-2 border-blue-600 hover:border-blue-400 rounded-lg px-2.5 py-1 text-xs font-bold text-black focus:outline-none focus:ring-1 focus:ring-blue-600 transition cursor-pointer max-w-[170px] sm:max-w-[210px] truncate">
@@ -1113,26 +1113,37 @@
           </select>
         </div>
 
-        <!-- Download / Export Project Button -->
-        <button id="btnExportProject" type="button" title="Download Active Project (.json)"
-          class="btn-secondary py-1 px-2 sm:px-2.5 text-xs text-black border-black/30 hover:border-blue-600 hover:text-blue-600 hover:bg-blue-50 transition cursor-pointer flex items-center gap-1.5">
-          <i class="fi fi-rr-download text-xs text-blue-600"></i>
-          <span class="hidden sm:inline font-bold">Export</span>
-        </button>
+        <!-- Project Settings & Actions Dropdown -->
+        <div class="relative" id="projectSettingsDropdownContainer">
+          <button id="btnProjectSettings" type="button" title="Project Settings & Actions (Export, Import, Delete)"
+            class="btn-secondary py-1 px-2.5 text-xs text-black border-black/30 hover:border-blue-600 hover:text-blue-600 hover:bg-blue-50 transition cursor-pointer flex items-center gap-1 shadow-sm">
+            <i class="fi fi-rr-settings text-xs text-black/70 hover:text-blue-600"></i>
+            <svg viewBox="0 0 20 20" class="w-3 h-3 fill-current opacity-70 shrink-0" aria-hidden="true">
+              <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/>
+            </svg>
+          </button>
 
-        <!-- Import Project Button -->
-        <button id="btnImportProject" type="button" title="Import Project from File (.json)"
-          class="btn-secondary py-1 px-2 sm:px-2.5 text-xs text-black border-black/30 hover:border-blue-600 hover:text-blue-600 hover:bg-blue-50 transition cursor-pointer flex items-center gap-1.5">
-          <i class="fi fi-rr-upload text-xs text-blue-600"></i>
-          <span class="hidden sm:inline font-bold">Import</span>
-        </button>
-
-        <button id="btnDeleteProject" title="Delete Active Project"
-          class="btn-secondary py-1 px-2.5 text-xs text-black border-black/30 hover:border-red-600 hover:text-red-600 hover:bg-red-50 transition cursor-pointer">
-          <i class="fi fi-rr-trash text-xs"></i>
-        </button>
+          <!-- Settings Dropdown Menu -->
+          <div id="projectSettingsMenu" class="hidden absolute left-0 sm:left-auto sm:right-0 top-full mt-1.5 w-48 bg-white border-2 border-black rounded-xl shadow-2xl p-1.5 z-50 space-y-1">
+            <button id="btnExportProject" type="button" title="Download Active Project (.json)"
+              class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer text-left">
+              <i class="fi fi-rr-download text-xs text-blue-600 shrink-0"></i>
+              <span>Export Project</span>
+            </button>
+            <button id="btnImportProject" type="button" title="Import Project from File (.json)"
+              class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer text-left">
+              <i class="fi fi-rr-upload text-xs text-blue-600 shrink-0"></i>
+              <span>Import Project</span>
+            </button>
+            <div class="border-t border-black/10 my-1"></div>
+            <button id="btnDeleteProject" type="button" title="Delete Active Project"
+              class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold text-red-600 hover:bg-red-50 hover:text-red-700 transition cursor-pointer text-left">
+              <i class="fi fi-rr-trash text-xs text-red-600 shrink-0"></i>
+              <span>Delete Project</span>
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
   </div>
 
   <!-- Header Right (User & Actions) -->
@@ -2182,8 +2193,6 @@ function renderProjectSelect() {
   `).join("");
 
   html += `<option value="__NEW_PROJECT__" class="font-bold text-blue-600 bg-blue-50">+ New Project…</option>`;
-  html += `<option value="__IMPORT_PROJECT__" class="font-bold text-blue-600 bg-blue-50">⤒ Import Project…</option>`;
-  html += `<option value="__EXPORT_PROJECT__" class="font-semibold text-black/70">⤓ Download Active Project…</option>`;
   if (sel) sel.innerHTML = html;
 }
 
@@ -2230,16 +2239,6 @@ $("projectSelect").onchange = e => {
   if (pid === "__NEW_PROJECT__") {
     renderProjectSelect();
     openNewProjectModal();
-    return;
-  }
-  if (pid === "__IMPORT_PROJECT__") {
-    renderProjectSelect();
-    openImportProjectModal();
-    return;
-  }
-  if (pid === "__EXPORT_PROJECT__") {
-    renderProjectSelect();
-    exportCurrentProject();
     return;
   }
   if (pid && pid !== currentProjectId) {
@@ -2458,12 +2457,36 @@ function processImportedFile(file) {
   reader.readAsText(file);
 }
 
+/* ---------- Project Settings Dropdown Menu ---------- */
+function toggleProjectSettingsMenu() {
+  const menu = $("projectSettingsMenu");
+  if (menu) menu.classList.toggle("hidden");
+}
+
+function closeProjectSettingsMenu() {
+  const menu = $("projectSettingsMenu");
+  if (menu) menu.classList.add("hidden");
+}
+
+if ($("btnProjectSettings")) {
+  $("btnProjectSettings").onclick = e => {
+    e.stopPropagation();
+    toggleProjectSettingsMenu();
+  };
+}
+
 // Wire Import & Export UI triggers
 if ($("btnExportProject")) {
-  $("btnExportProject").onclick = exportCurrentProject;
+  $("btnExportProject").onclick = () => {
+    closeProjectSettingsMenu();
+    exportCurrentProject();
+  };
 }
 if ($("btnImportProject")) {
-  $("btnImportProject").onclick = openImportProjectModal;
+  $("btnImportProject").onclick = () => {
+    closeProjectSettingsMenu();
+    openImportProjectModal();
+  };
 }
 if ($("btnInitialImportProject")) {
   $("btnInitialImportProject").onclick = openImportProjectModal;
@@ -2654,6 +2677,7 @@ $("newProjectName").onkeydown = e => {
 
 // Delete active project
 $("btnDeleteProject").onclick = async () => {
+  closeProjectSettingsMenu();
   if (!currentProjectId) return;
   const current = projects.find(p => p.id === currentProjectId);
   const projName = current ? current.name : "this project";
@@ -7769,6 +7793,14 @@ window.addEventListener("click", e => {
   if (viewMenu && !viewMenu.classList.contains("hidden")) {
     if (!viewMenu.contains(e.target) && (!btnViewDropdown || !btnViewDropdown.contains(e.target))) {
       closeViewMenu();
+    }
+  }
+
+  const projectSettingsMenu = $("projectSettingsMenu");
+  const btnProjectSettings = $("btnProjectSettings");
+  if (projectSettingsMenu && !projectSettingsMenu.classList.contains("hidden")) {
+    if (!projectSettingsMenu.contains(e.target) && (!btnProjectSettings || !btnProjectSettings.contains(e.target))) {
+      closeProjectSettingsMenu();
     }
   }
 });
