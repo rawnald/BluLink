@@ -1124,7 +1124,7 @@
           </button>
 
           <!-- Settings Dropdown Menu -->
-          <div id="projectSettingsMenu" class="hidden absolute left-0 sm:left-auto sm:right-0 top-full mt-1.5 w-48 bg-white border-2 border-black rounded-xl shadow-2xl p-1.5 z-50 space-y-1">
+          <div id="projectSettingsMenu" class="hidden absolute left-0 sm:left-auto sm:right-0 top-full mt-1.5 w-56 bg-white border-2 border-black rounded-xl shadow-2xl p-1.5 z-50 space-y-1">
             <button id="btnExportProject" type="button" title="Download Active Project (.json)"
               class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer text-left">
               <i class="fi fi-rr-download text-xs text-blue-600 shrink-0"></i>
@@ -1140,6 +1140,21 @@
               class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold text-red-600 hover:bg-red-50 hover:text-red-700 transition cursor-pointer text-left">
               <i class="fi fi-rr-trash text-xs text-red-600 shrink-0"></i>
               <span>Delete Project</span>
+            </button>
+            <div class="border-t border-black/10 my-1"></div>
+            <!-- Account Info -->
+            <div class="px-3 py-1.5 bg-neutral-50 rounded-lg border border-black/10 select-none">
+              <div class="text-[9px] font-bold text-black/50 uppercase tracking-wider">Account</div>
+              <div class="flex items-center gap-1.5 mt-0.5 min-w-0">
+                <i class="fi fi-rr-envelope text-xs text-blue-600 shrink-0"></i>
+                <span id="whoSettings" class="text-xs font-bold text-black truncate" title="">User</span>
+              </div>
+            </div>
+            <!-- Sign out Button in Settings -->
+            <button id="btnLogoutSettings" type="button" title="Sign out"
+              class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-red-50 hover:text-red-600 transition cursor-pointer text-left">
+              <i class="fi fi-rr-sign-out-alt text-xs text-black/70 hover:text-red-600 shrink-0"></i>
+              <span>Sign out</span>
             </button>
           </div>
         </div>
@@ -2108,7 +2123,8 @@ $("btnResendCode").onclick = async () => {
 };
 
 /* ---------- Logout ---------- */
-$("logout").onclick = async () => {
+async function performLogout() {
+  if (typeof closeProjectSettingsMenu === "function") closeProjectSettingsMenu();
   if (cfToken) {
     try {
       await fetch("/api/auth/logout", {
@@ -2120,7 +2136,12 @@ $("logout").onclick = async () => {
     cfToken = null;
   }
   location.reload();
-};
+}
+
+$("logout").onclick = performLogout;
+if ($("btnLogoutSettings")) {
+  $("btnLogoutSettings").onclick = performLogout;
+}
 
 /* ---------- Cloudflare R2 Multi-Project Persistence ---------- */
 async function loadProjectsList() {
@@ -3220,6 +3241,11 @@ async function openApp() {
   $("app").classList.add("flex");
   $("who").textContent = user.email || "Authenticated User";
   $("who").title = user.email || "";
+  const whoSet = $("whoSettings");
+  if (whoSet) {
+    whoSet.textContent = user.email || "Authenticated User";
+    whoSet.title = user.email || "";
+  }
 
   // Populate Selected Inspector Type Dropdown with all categories & types
   populateInspectorTypes();
