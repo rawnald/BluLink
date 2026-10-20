@@ -92,6 +92,20 @@ export async function onRequestPost({ request, env }) {
 
     const body = await request.json().catch(() => ({}));
     const name = (body.name || "Untitled Project").trim();
+    if (!name) {
+      return error("Project name is required.", 400);
+    }
+
+    // Check if a project with this name already exists for this user (case-insensitive)
+    const existing = await env.DB.prepare(`
+      SELECT id FROM projects 
+      WHERE user_id = ? AND LOWER(TRIM(name)) = LOWER(TRIM(?))
+    `).bind(user.id, name).first();
+
+    if (existing) {
+      return error(`A project named "${name}" already exists. Please choose a different name.`, 400);
+    }
+
     const description = (body.description || "").trim();
     const projectId = "proj_" + randomHex(8);
     let initialData = { entities: [], links: [], boxes: [] };

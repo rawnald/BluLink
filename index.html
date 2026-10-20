@@ -902,6 +902,10 @@
         <label for="newProjectName" class="block text-xs font-bold text-black uppercase tracking-wider mb-1">Project Name</label>
         <input id="newProjectName" placeholder="e.g. Operation Daguma Link Analysis"
           class="w-full px-3 py-2 rounded-lg bg-white border-2 border-black/30 text-black text-sm focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600">
+        <p id="newProjectNameError" class="hidden text-[11px] text-red-600 font-bold mt-1.5 flex items-center gap-1.5">
+          <i class="fi fi-rr-exclamation text-xs"></i>
+          <span id="newProjectNameErrorText">A project with this name already exists.</span>
+        </p>
       </div>
 
       <div>
@@ -968,6 +972,10 @@
         <label for="importProjectName" class="block text-xs font-bold text-black uppercase tracking-wider mb-1">Project Name</label>
         <input id="importProjectName" placeholder="Project name"
           class="w-full px-3 py-2 rounded-lg bg-white border-2 border-black/30 text-black text-sm focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600">
+        <p id="importProjectNameError" class="hidden text-[11px] text-red-600 font-bold mt-1.5 flex items-center gap-1.5">
+          <i class="fi fi-rr-exclamation text-xs"></i>
+          <span id="importProjectNameErrorText">A project with this name already exists.</span>
+        </p>
       </div>
 
       <div>
@@ -2285,6 +2293,64 @@ function exportCurrentProject() {
   setStatus(`Project "${projName}" downloaded`);
 }
 
+/* ---------- Project Name Duplicate Checking Helpers ---------- */
+function projectExists(name, excludeId = null) {
+  if (!name || !projects || !Array.isArray(projects)) return false;
+  const target = name.trim().toLowerCase();
+  return projects.some(p => p.name && p.name.trim().toLowerCase() === target && p.id !== excludeId);
+}
+
+function checkNewProjectNameDuplicate() {
+  const input = $("newProjectName");
+  const errEl = $("newProjectNameError");
+  const errText = $("newProjectNameErrorText");
+  const name = input ? input.value.trim() : "";
+  if (!input || !errEl) return false;
+
+  if (name && projectExists(name)) {
+    input.classList.remove("border-black/30", "focus:border-blue-600", "focus:ring-blue-600");
+    input.classList.add("border-red-500", "focus:border-red-600", "focus:ring-red-600");
+    if (errText) errText.textContent = `A project named "${name}" already exists. Please choose a different name.`;
+    errEl.classList.remove("hidden");
+    return true;
+  } else {
+    input.classList.remove("border-red-500", "focus:border-red-600", "focus:ring-red-600");
+    input.classList.add("border-black/30", "focus:border-blue-600", "focus:ring-blue-600");
+    errEl.classList.add("hidden");
+    return false;
+  }
+}
+
+function checkImportProjectNameDuplicate() {
+  const input = $("importProjectName");
+  const errEl = $("importProjectNameError");
+  const errText = $("importProjectNameErrorText");
+  const submitBtn = $("btnImportProjectSubmit");
+  const name = input ? input.value.trim() : "";
+  if (!input || !errEl) return false;
+
+  if (name && projectExists(name)) {
+    input.classList.remove("border-black/30", "focus:border-blue-600", "focus:ring-blue-600");
+    input.classList.add("border-red-500", "focus:border-red-600", "focus:ring-red-600");
+    if (errText) errText.textContent = `A project named "${name}" already exists. Please choose a different name before importing.`;
+    errEl.classList.remove("hidden");
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.className = "flex-1 btn-primary py-2 text-xs opacity-50 cursor-not-allowed";
+    }
+    return true;
+  } else {
+    input.classList.remove("border-red-500", "focus:border-red-600", "focus:ring-red-600");
+    input.classList.add("border-black/30", "focus:border-blue-600", "focus:ring-blue-600");
+    errEl.classList.add("hidden");
+    if (submitBtn && pendingImportData) {
+      submitBtn.disabled = false;
+      submitBtn.className = "flex-1 btn-primary py-2 text-xs";
+    }
+    return false;
+  }
+}
+
 /* ---------- Import Project (.json) Engine ---------- */
 let pendingImportData = null;
 
@@ -2296,13 +2362,20 @@ function openImportProjectModal() {
   if (badge) { badge.classList.add("hidden"); badge.textContent = ""; }
   const details = $("importDetailsSection");
   if (details) details.classList.add("hidden");
+  const errEl = $("importProjectNameError");
+  if (errEl) errEl.classList.add("hidden");
+  const nameInput = $("importProjectName");
+  if (nameInput) {
+    nameInput.classList.remove("border-red-500", "focus:border-red-600", "focus:ring-red-600");
+    nameInput.classList.add("border-black/30", "focus:border-blue-600", "focus:ring-blue-600");
+    nameInput.value = "";
+  }
+  $("importProjectDesc").value = "";
   const submitBtn = $("btnImportProjectSubmit");
   if (submitBtn) {
     submitBtn.disabled = true;
     submitBtn.className = "flex-1 btn-primary py-2 text-xs opacity-50 cursor-not-allowed";
   }
-  $("importProjectName").value = "";
-  $("importProjectDesc").value = "";
   $("importProjectModal").classList.remove("hidden");
 }
 
@@ -2372,6 +2445,9 @@ function processImportedFile(file) {
         submitBtn.disabled = false;
         submitBtn.className = "flex-1 btn-primary py-2 text-xs";
       }
+
+      // Check immediately if project name already exists
+      checkImportProjectNameDuplicate();
     } catch (err) {
       alert("Failed to parse project file: " + err.message + "\nPlease ensure it is a valid JSON file.");
     }
@@ -2436,6 +2512,15 @@ if ($("btnImportProjectSubmit")) {
       return;
     }
     const name = $("importProjectName").value.trim() || "Imported Project";
+
+    // Validate duplicate project name before submitting
+    if (projectExists(name)) {
+      checkImportProjectNameDuplicate();
+      alert(`A project named "${name}" already exists. Please choose a different name before importing.`);
+      $("importProjectName").focus();
+      return;
+    }
+
     const description = $("importProjectDesc").value.trim();
 
     setStatus("Importing project…");
@@ -2456,9 +2541,16 @@ if ($("btnImportProjectSubmit")) {
           data: pendingImportData
         })
       });
-      const body = await res.json();
+      const body = await res.json().catch(() => ({}));
       if (!res.ok) {
-        alert(body.error || "Failed to import project");
+        const errMsg = body.error || "Failed to import project";
+        alert(errMsg);
+        const errEl = $("importProjectNameError");
+        const errText = $("importProjectNameErrorText");
+        if (errEl && errText) {
+          errText.textContent = errMsg;
+          errEl.classList.remove("hidden");
+        }
         submitBtn.disabled = false;
         submitBtn.innerHTML = '<i class="fi fi-rr-upload text-xs"></i><span>Import & Open Project</span>';
         return;
@@ -2479,6 +2571,13 @@ if ($("btnImportProjectSubmit")) {
 function openNewProjectModal() {
   $("newProjectName").value = "";
   $("newProjectDesc").value = "";
+  const errEl = $("newProjectNameError");
+  if (errEl) errEl.classList.add("hidden");
+  const input = $("newProjectName");
+  if (input) {
+    input.classList.remove("border-red-500", "focus:border-red-600", "focus:ring-red-600");
+    input.classList.add("border-black/30", "focus:border-blue-600", "focus:ring-blue-600");
+  }
   $("newProjectModal").classList.remove("hidden");
   $("newProjectName").focus();
 }
@@ -2493,12 +2592,29 @@ $("btnCancelProjectSubmit").onclick = () => {
   $("newProjectModal").classList.add("hidden");
 };
 
+if ($("newProjectName")) {
+  $("newProjectName").oninput = checkNewProjectNameDuplicate;
+}
+if ($("importProjectName")) {
+  $("importProjectName").oninput = checkImportProjectNameDuplicate;
+}
+
 $("btnCreateProjectSubmit").onclick = async () => {
   const name = $("newProjectName").value.trim();
   if (!name) {
     alert("Please enter a project name.");
+    $("newProjectName").focus();
     return;
   }
+
+  // Validate duplicate project name before creating
+  if (projectExists(name)) {
+    checkNewProjectNameDuplicate();
+    alert(`A project named "${name}" already exists. Please choose a different name.`);
+    $("newProjectName").focus();
+    return;
+  }
+
   const description = $("newProjectDesc").value.trim();
 
   setStatus("Creating project in R2…");
@@ -2511,9 +2627,16 @@ $("btnCreateProjectSubmit").onclick = async () => {
       },
       body: JSON.stringify({ name, description })
     });
-    const body = await res.json();
+    const body = await res.json().catch(() => ({}));
     if (!res.ok) {
-      alert(body.error || "Failed to create project");
+      const errMsg = body.error || "Failed to create project";
+      alert(errMsg);
+      const errEl = $("newProjectNameError");
+      const errText = $("newProjectNameErrorText");
+      if (errEl && errText) {
+        errText.textContent = errMsg;
+        errEl.classList.remove("hidden");
+      }
       return;
     }
     $("newProjectModal").classList.add("hidden");

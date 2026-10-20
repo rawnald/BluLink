@@ -94,6 +94,14 @@ export async function onRequestPost({ request, env, params }) {
     // 2. Update D1 metadata and backup storage
     const updateName = body.name ? body.name.trim() : null;
     if (updateName) {
+      const duplicate = await env.DB.prepare(`
+        SELECT id FROM projects 
+        WHERE user_id = ? AND LOWER(TRIM(name)) = LOWER(TRIM(?)) AND id != ?
+      `).bind(user.id, updateName, projectId).first();
+      if (duplicate) {
+        return error(`A project named "${updateName}" already exists. Please choose a different name.`, 400);
+      }
+
       await env.DB.prepare(`
         UPDATE projects 
         SET name = ?, data = ?, updated_at = datetime('now')
