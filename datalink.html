@@ -124,6 +124,11 @@
   }
 
   /* Collapsible Sidebar Styles */
+  @media (min-width: 1024px) {
+    #app:not(.sidebar-collapsed):not(.fixed) {
+      grid-template-columns: 330px 1fr 1fr !important;
+    }
+  }
   #app.sidebar-collapsed {
     grid-template-columns: 1fr 1fr !important;
   }
@@ -7724,7 +7729,7 @@ function exitFullscreenNet() {
 
   if (app) {
     app.classList.remove("flex", "w-screen", "h-screen", "fixed", "inset-0", "z-[9990]");
-    app.classList.add("lg:grid");
+    app.classList.add("lg:grid", "lg:grid-cols-[330px_1fr_1fr]");
   }
   if (netSec) {
     netSec.classList.remove("w-full", "h-full", "flex-1");
@@ -7808,7 +7813,7 @@ function exitFullscreenMap() {
 
   if (app) {
     app.classList.remove("flex", "w-screen", "h-screen", "fixed", "inset-0", "z-[9990]");
-    app.classList.add("lg:grid");
+    app.classList.add("lg:grid", "lg:grid-cols-[330px_1fr_1fr]");
   }
   if (mapSec) {
     mapSec.classList.remove("w-full", "h-full", "flex-1");
@@ -7847,6 +7852,7 @@ function updateSidebarUI() {
     if (sidebar) sidebar.classList.remove("hidden");
     if (app) {
       app.classList.remove("sidebar-collapsed");
+      app.classList.add("lg:grid", "lg:grid-cols-[330px_1fr_1fr]");
     }
     // Only show button when sidebar is hidden
     if (btnFloating) {
