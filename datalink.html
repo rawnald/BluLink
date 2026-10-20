@@ -1103,7 +1103,7 @@
         <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
         <line x1="9" y1="3" x2="9" y2="21"/>
       </svg>
-      <span id="lblToggleSidebar" class="hidden sm:inline font-bold text-[11px]">Sidebar</span>
+      <span id="lblToggleSidebar" class="font-bold text-[11px]">Hide Sidebar</span>
     </button>
 
     <!-- Project Switcher & Management -->
@@ -1447,22 +1447,10 @@
     <!-- Top Chart Header / Floating Controls (Responsive Layout) -->
     <div class="absolute top-2.5 left-2.5 right-2.5 z-20 flex items-start justify-between gap-1.5 sm:gap-2 pointer-events-none">
       <!-- Network Header Overlay -->
-      <div class="flex items-center gap-1.5 sm:gap-2 pointer-events-auto">
-        <!-- Floating Show Sidebar Button (Shown when sidebar is collapsed) -->
-        <button id="btnFloatingShowSidebar" type="button" title="Show Sidebar (Ctrl+B)"
-          class="hidden items-center gap-1.5 bg-white/95 backdrop-blur border-2 border-black/20 hover:border-blue-600 hover:text-blue-600 rounded-lg px-2.5 py-1 sm:py-1.5 shadow-md font-bold text-xs transition cursor-pointer text-black select-none">
-          <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-none stroke-current" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-            <line x1="9" y1="3" x2="9" y2="21"/>
-          </svg>
-          <span class="text-[11px]">Show Sidebar</span>
-        </button>
-
-        <div class="hidden sm:flex items-center gap-1.5 sm:gap-2 bg-white/95 backdrop-blur border-2 border-blue-600 rounded-lg px-2.5 py-1 sm:py-1.5 shadow-md select-none">
-          <div class="w-2 h-2 rounded-full bg-blue-600 shrink-0"></div>
-          <span class="text-xs font-bold text-black tracking-wide whitespace-nowrap">Link Chart</span>
-          <span class="text-[10px] text-blue-600 font-semibold border-l border-blue-200 pl-1.5 sm:pl-2 hidden xl:inline whitespace-nowrap">Work Station</span>
-        </div>
+      <div class="hidden sm:flex items-center gap-1.5 sm:gap-2 bg-white/95 backdrop-blur border-2 border-blue-600 rounded-lg px-2.5 py-1 sm:py-1.5 shadow-md pointer-events-auto shrink-0 select-none">
+        <div class="w-2 h-2 rounded-full bg-blue-600 shrink-0"></div>
+        <span class="text-xs font-bold text-black tracking-wide whitespace-nowrap">Link Chart</span>
+        <span class="text-[10px] text-blue-600 font-semibold border-l border-blue-200 pl-1.5 sm:pl-2 hidden xl:inline whitespace-nowrap">Work Station</span>
       </div>
 
       <!-- Chart Control Buttons (Responsive Toolbar with Dropdowns) -->
@@ -7700,10 +7688,12 @@ function enterFullscreenNet() {
   const mapSec = $("mapSection");
 
   // Completely hide header, sidebar, and map so link chart occupies 100% full screen
-  if (header) header.classList.add("hidden");
+  if (header) {
+    header.classList.add("hidden");
+    header.style.display = "none";
+  }
   if (sidebar) sidebar.classList.add("hidden");
   if (mapSec) mapSec.classList.add("hidden");
-  if ($("btnFloatingShowSidebar")) $("btnFloatingShowSidebar").classList.add("hidden");
 
   if (app) {
     app.classList.remove("lg:grid", "lg:grid-cols-[330px_1fr_1fr]", "sidebar-collapsed");
@@ -7736,7 +7726,10 @@ function exitFullscreenNet() {
   const mapSec = $("mapSection");
 
   // Restore header and map
-  if (header) header.classList.remove("hidden");
+  if (header) {
+    header.classList.remove("hidden");
+    header.style.display = "";
+  }
   if (mapSec) mapSec.classList.remove("hidden");
 
   if (app) {
@@ -7779,10 +7772,12 @@ function enterFullscreenMap() {
   const mapSec = $("mapSection");
 
   // Completely hide header, sidebar, and link chart so map occupies 100% full screen
-  if (header) header.classList.add("hidden");
+  if (header) {
+    header.classList.add("hidden");
+    header.style.display = "none";
+  }
   if (sidebar) sidebar.classList.add("hidden");
   if (netSec) netSec.classList.add("hidden");
-  if ($("btnFloatingShowSidebar")) $("btnFloatingShowSidebar").classList.add("hidden");
 
   if (app) {
     app.classList.remove("lg:grid", "lg:grid-cols-[330px_1fr_1fr]", "sidebar-collapsed");
@@ -7810,7 +7805,10 @@ function exitFullscreenMap() {
   const mapSec = $("mapSection");
 
   // Restore header and link chart
-  if (header) header.classList.remove("hidden");
+  if (header) {
+    header.classList.remove("hidden");
+    header.style.display = "";
+  }
   if (netSec) netSec.classList.remove("hidden");
 
   if (app) {
@@ -7839,12 +7837,11 @@ function updateSidebarUI() {
   const sidebar = $("sidebarApp");
   const app = $("app");
   const btnToggle = $("btnToggleSidebarHeader");
-  const btnFloating = $("btnFloatingShowSidebar");
+  const lblToggle = $("lblToggleSidebar");
   const viewText = $("btnToggleSidebarViewText");
 
   // If in fullscreen mode, sidebar is forcibly hidden by fullscreen logic
   if (isFullscreenNet || isFullscreenMap) {
-    if (btnFloating) btnFloating.classList.add("hidden");
     return;
   }
 
@@ -7856,8 +7853,9 @@ function updateSidebarUI() {
     if (btnToggle) {
       btnToggle.title = "Hide Sidebar (Ctrl+B)";
       btnToggle.classList.remove("border-blue-600", "bg-blue-50", "text-blue-600");
+      btnToggle.classList.add("text-black", "border-black/30");
     }
-    if (btnFloating) btnFloating.classList.add("hidden");
+    if (lblToggle) lblToggle.textContent = "Hide Sidebar";
     if (viewText) viewText.textContent = "Hide Sidebar";
   } else {
     if (sidebar) sidebar.classList.add("hidden");
@@ -7866,9 +7864,10 @@ function updateSidebarUI() {
     }
     if (btnToggle) {
       btnToggle.title = "Show Sidebar (Ctrl+B)";
+      btnToggle.classList.remove("text-black", "border-black/30");
       btnToggle.classList.add("border-blue-600", "bg-blue-50", "text-blue-600");
     }
-    if (btnFloating) btnFloating.classList.remove("hidden");
+    if (lblToggle) lblToggle.textContent = "Show Sidebar";
     if (viewText) viewText.textContent = "Show Sidebar";
   }
 
@@ -7900,7 +7899,6 @@ function toggleSidebar() {
 
 if ($("btnToggleSidebarHeader")) $("btnToggleSidebarHeader").onclick = () => toggleSidebar();
 if ($("btnCollapseSidebar")) $("btnCollapseSidebar").onclick = () => setSidebarVisible(false);
-if ($("btnFloatingShowSidebar")) $("btnFloatingShowSidebar").onclick = () => setSidebarVisible(true);
 if ($("btnToggleSidebarView")) {
   $("btnToggleSidebarView").onclick = () => {
     closeViewMenu();
