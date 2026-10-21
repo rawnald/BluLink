@@ -272,43 +272,59 @@
     border-top-color: #2563eb !important;
   }
 
-  /* Geospatial Map Link Label Badges (White text inside the link) */
+  /* Geospatial Map Link Label (Same as workspace: clean white text, no background box) */
   .map-link-label-container {
     background: transparent !important;
     border: none !important;
+    box-shadow: none !important;
   }
-  .map-link-label-badge {
+  .map-link-label-text {
     transform: translate(-50%, -50%);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
+    display: inline-block;
     font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.025em;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
     color: #ffffff !important;
-    line-height: 1.1;
-    padding: 2.5px 8px;
-    border-radius: 9999px;
-    border: 1px solid rgba(255, 255, 255, 0.45);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
     white-space: nowrap;
     user-select: none;
     cursor: pointer;
     pointer-events: auto !important;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
-    transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease, border-color 0.12s ease;
+    line-height: 1;
+    text-shadow: 
+      -1px -1px 0 rgba(0, 0, 0, 0.85),
+       1px -1px 0 rgba(0, 0, 0, 0.85),
+      -1px  1px 0 rgba(0, 0, 0, 0.85),
+       1px  1px 0 rgba(0, 0, 0, 0.85),
+       0 1px 3px rgba(0, 0, 0, 0.9);
+    transition: transform 0.12s ease, text-shadow 0.12s ease, color 0.12s ease;
   }
-  .map-link-label-badge:hover {
-    transform: translate(-50%, -50%) scale(1.08);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.7);
+  .map-link-label-text:hover {
+    transform: translate(-50%, -50%) scale(1.1);
+    text-shadow: 
+      -1px -1px 0 #000000,
+       1px -1px 0 #000000,
+      -1px  1px 0 #000000,
+       1px  1px 0 #000000,
+       0 0 6px rgba(0, 0, 0, 1);
     z-index: 9999;
   }
-  .map-link-label-badge.is-selected {
-    background-color: #2563eb !important;
-    border-color: #93c5fd !important;
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.5), 0 3px 8px rgba(0, 0, 0, 0.6) !important;
+  .map-link-label-text.is-selected {
+    color: #ffffff !important;
+    text-shadow: 
+      0 0 8px #2563eb,
+      0 0 4px #2563eb,
+      -1px -1px 0 #1e40af,
+       1px -1px 0 #1e40af,
+      -1px  1px 0 #1e40af,
+       1px  1px 0 #1e40af,
+       0 1px 3px rgba(0, 0, 0, 0.9) !important;
   }
 
   /* Custom Map Pin Icon (White body, Black & Blue accents) */
@@ -1232,7 +1248,7 @@
     <svg viewBox="0 0 24 24" class="w-4 h-4 fill-none stroke-current" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
       <polyline points="9 18 15 12 9 6"/>
     </svg>
-    <span>Show Sidebar</span>
+   
   </button>
 
   <!-- ==================== SIDEBAR / CONTROL PANEL ==================== -->
@@ -6175,18 +6191,15 @@ function renderMapLink(l, byIdMap) {
   poly.on("click", onLinkSelect);
   poly.on("dblclick", onLinkDblClick);
 
-  // Position label badge at midpoint of the link line with white text
+  // Position label at midpoint of the link line with white text (no background box, like workspace)
   const midLat = (a.lat + b.lat) / 2;
   const midLng = (a.lng + b.lng) / 2;
-  const isLight = isLightColor(linkColor);
-  const bgCol = isConnectedToSel ? "#2563eb" : (isLight ? "#18181b" : linkColor);
-  const borderCol = isConnectedToSel ? "#93c5fd" : (isLight ? linkColor : "rgba(255, 255, 255, 0.45)");
 
   const labelIcon = L.divIcon({
     className: "map-link-label-container",
     iconSize: [0, 0],
     iconAnchor: [0, 0],
-    html: `<div class="map-link-label-badge ${isConnectedToSel ? 'is-selected' : ''}" style="background-color: ${bgCol}; border-color: ${borderCol};" title="${tooltipText}">${esc(labelText)}</div>`
+    html: `<span class="map-link-label-text ${isConnectedToSel ? 'is-selected' : ''}" title="${tooltipText}">${esc(labelText)}</span>`
   });
 
   const labelMarker = L.marker([midLat, midLng], {
@@ -6498,17 +6511,12 @@ function updateMapSelection() {
     if (labelM) {
       const el = labelM.getElement();
       if (el) {
-        const badge = el.querySelector(".map-link-label-badge");
-        if (badge) {
-          const isLight = isLightColor(linkColor);
+        const textEl = el.querySelector(".map-link-label-text");
+        if (textEl) {
           if (isConnectedToSel) {
-            badge.classList.add("is-selected");
-            badge.style.backgroundColor = "#2563eb";
-            badge.style.borderColor = "#93c5fd";
+            textEl.classList.add("is-selected");
           } else {
-            badge.classList.remove("is-selected");
-            badge.style.backgroundColor = isLight ? "#18181b" : linkColor;
-            badge.style.borderColor = isLight ? linkColor : "rgba(255, 255, 255, 0.45)";
+            textEl.classList.remove("is-selected");
           }
         }
       }
