@@ -4093,8 +4093,8 @@ function findResizeHandleAt(canvasPos, box) {
   return null;
 }
 
-function isClickOnTextEditButton(cPos, b) {
-  if (!b || b.type !== "text") return false;
+function isClickOnBoxEditButton(cPos, b) {
+  if (!b) return false;
   const scale = (net && net.getScale) ? net.getScale() : 1;
   const btnW = 74 / scale;
   const btnH = 22 / scale;
@@ -4103,9 +4103,10 @@ function isClickOnTextEditButton(cPos, b) {
   return (cPos.x >= btnX - 4 / scale && cPos.x <= btnX + btnW + 4 / scale &&
           cPos.y >= btnY - 4 / scale && cPos.y <= btnY + btnH + 4 / scale);
 }
+const isClickOnTextEditButton = isClickOnBoxEditButton;
 
-function isClickOnTextDuplicateButton(cPos, b) {
-  if (!b || b.type !== "text") return false;
+function isClickOnBoxDuplicateButton(cPos, b) {
+  if (!b) return false;
   const scale = (net && net.getScale) ? net.getScale() : 1;
   const btnW = 74 / scale;
   const btnH = 22 / scale;
@@ -4116,6 +4117,7 @@ function isClickOnTextDuplicateButton(cPos, b) {
   return (cPos.x >= dupBtnX - 4 / scale && cPos.x <= dupBtnX + dupBtnW + 4 / scale &&
           cPos.y >= btnY - 4 / scale && cPos.y <= btnY + btnH + 4 / scale);
 }
+const isClickOnTextDuplicateButton = isClickOnBoxDuplicateButton;
 
 function drawBoxResizeHandles(ctx, b) {
   const scale = (net && net.getScale) ? net.getScale() : 1;
@@ -4139,64 +4141,63 @@ function drawBoxResizeHandles(ctx, b) {
     ctx.strokeRect(h.x - size / 2, h.y - size / 2, size, size);
   });
 
-  // If Text Box, draw dedicated "✎ Edit Text" and "⎘ Duplicate" pill buttons
-  if (b.type === "text") {
-    const btnW = 74 / scale;
-    const btnH = 22 / scale;
-    const btnX = b.x + b.w - btnW;
-    const btnY = b.y - btnH - 6 / scale;
+  // Dedicated "✎ Edit" and "⎘ Duplicate" pill buttons above selected box (works for group boxes and text boxes)
+  const btnW = 74 / scale;
+  const btnH = 22 / scale;
+  const btnX = b.x + b.w - btnW;
+  const btnY = b.y - btnH - 6 / scale;
 
-    const dupBtnW = 76 / scale;
-    const dupBtnX = btnX - dupBtnW - 6 / scale;
+  const dupBtnW = 76 / scale;
+  const dupBtnX = btnX - dupBtnW - 6 / scale;
+  const editLabel = b.type === "text" ? "✎ Edit Text" : "✎ Edit Box";
 
-    // 1. Edit Text pill
-    ctx.save();
-    ctx.setLineDash([]);
-    ctx.fillStyle = "#2563eb";
-    ctx.shadowColor = "rgba(0,0,0,0.2)";
-    ctx.shadowBlur = 4 / scale;
-    ctx.shadowOffsetY = 2 / scale;
-    ctx.beginPath();
-    if (ctx.roundRect) ctx.roundRect(btnX, btnY, btnW, btnH, 5 / scale);
-    else ctx.rect(btnX, btnY, btnW, btnH);
-    ctx.fill();
+  // 1. Edit pill
+  ctx.save();
+  ctx.setLineDash([]);
+  ctx.fillStyle = "#2563eb";
+  ctx.shadowColor = "rgba(0,0,0,0.2)";
+  ctx.shadowBlur = 4 / scale;
+  ctx.shadowOffsetY = 2 / scale;
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(btnX, btnY, btnW, btnH, 5 / scale);
+  else ctx.rect(btnX, btnY, btnW, btnH);
+  ctx.fill();
 
-    ctx.shadowColor = "transparent";
-    ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = Math.max(1, 1.2 / scale);
-    ctx.stroke();
+  ctx.shadowColor = "transparent";
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineWidth = Math.max(1, 1.2 / scale);
+  ctx.stroke();
 
-    ctx.fillStyle = "#ffffff";
-    ctx.font = `bold ${Math.round(11 / scale)}px "DM Sans", -apple-system, sans-serif`;
-    ctx.textBaseline = "middle";
-    ctx.textAlign = "center";
-    ctx.fillText("✎ Edit Text", btnX + btnW / 2, btnY + btnH / 2);
-    ctx.restore();
+  ctx.fillStyle = "#ffffff";
+  ctx.font = `bold ${Math.round(11 / scale)}px "DM Sans", -apple-system, sans-serif`;
+  ctx.textBaseline = "middle";
+  ctx.textAlign = "center";
+  ctx.fillText(editLabel, btnX + btnW / 2, btnY + btnH / 2);
+  ctx.restore();
 
-    // 2. Duplicate pill
-    ctx.save();
-    ctx.setLineDash([]);
-    ctx.fillStyle = "#ffffff";
-    ctx.shadowColor = "rgba(0,0,0,0.2)";
-    ctx.shadowBlur = 4 / scale;
-    ctx.shadowOffsetY = 2 / scale;
-    ctx.beginPath();
-    if (ctx.roundRect) ctx.roundRect(dupBtnX, btnY, dupBtnW, btnH, 5 / scale);
-    else ctx.rect(dupBtnX, btnY, dupBtnW, btnH);
-    ctx.fill();
+  // 2. Duplicate pill
+  ctx.save();
+  ctx.setLineDash([]);
+  ctx.fillStyle = "#ffffff";
+  ctx.shadowColor = "rgba(0,0,0,0.2)";
+  ctx.shadowBlur = 4 / scale;
+  ctx.shadowOffsetY = 2 / scale;
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(dupBtnX, btnY, dupBtnW, btnH, 5 / scale);
+  else ctx.rect(dupBtnX, btnY, dupBtnW, btnH);
+  ctx.fill();
 
-    ctx.shadowColor = "transparent";
-    ctx.strokeStyle = "#2563eb";
-    ctx.lineWidth = Math.max(1, 1.2 / scale);
-    ctx.stroke();
+  ctx.shadowColor = "transparent";
+  ctx.strokeStyle = "#2563eb";
+  ctx.lineWidth = Math.max(1, 1.2 / scale);
+  ctx.stroke();
 
-    ctx.fillStyle = "#2563eb";
-    ctx.font = `bold ${Math.round(11 / scale)}px "DM Sans", -apple-system, sans-serif`;
-    ctx.textBaseline = "middle";
-    ctx.textAlign = "center";
-    ctx.fillText("⎘ Duplicate", dupBtnX + dupBtnW / 2, btnY + btnH / 2);
-    ctx.restore();
-  }
+  ctx.fillStyle = "#2563eb";
+  ctx.font = `bold ${Math.round(11 / scale)}px "DM Sans", -apple-system, sans-serif`;
+  ctx.textBaseline = "middle";
+  ctx.textAlign = "center";
+  ctx.fillText("⎘ Duplicate", dupBtnX + dupBtnW / 2, btnY + btnH / 2);
+  ctx.restore();
 
   ctx.restore();
 }
@@ -4477,39 +4478,105 @@ function drawLiveTextPreview(ctx, startPos, currPos) {
   ctx.restore();
 }
 
+function isPointInBoxHeaderBadge(canvasPos, b) {
+  if (!b || !b.label || !b.label.trim()) return false;
+  const labelText = b.label.trim();
+  const textWidth = Math.max(30, labelText.length * 7.5);
+  const badgeHeight = 20;
+  const badgePad = 8;
+  const badgeWidth = textWidth + badgePad * 2;
+  const pad = 4;
+
+  let badgeX = b.x + 10;
+  let badgeY = b.y - 9;
+
+  if (b.labelPos === "top-center") {
+    badgeX = b.x + (b.w - badgeWidth) / 2;
+  } else if (b.labelPos === "top-right") {
+    badgeX = b.x + b.w - badgeWidth - 10;
+  } else if (b.labelPos === "bottom-left") {
+    badgeY = b.y + b.h - 9;
+  }
+
+  return canvasPos.x >= badgeX - pad && canvasPos.x <= badgeX + badgeWidth + pad &&
+         canvasPos.y >= badgeY - pad && canvasPos.y <= badgeY + badgeHeight + pad;
+}
+
+function isPointOnBoxBorder(canvasPos, b, tol = 12) {
+  if (!b) return false;
+  const nearLeft = Math.abs(canvasPos.x - b.x) <= tol && canvasPos.y >= b.y - tol && canvasPos.y <= b.y + b.h + tol;
+  const nearRight = Math.abs(canvasPos.x - (b.x + b.w)) <= tol && canvasPos.y >= b.y - tol && canvasPos.y <= b.y + b.h + tol;
+  const nearTop = Math.abs(canvasPos.y - b.y) <= tol && canvasPos.x >= b.x - tol && canvasPos.x <= b.x + b.w + tol;
+  const nearBottom = Math.abs(canvasPos.y - (b.y + b.h)) <= tol && canvasPos.x >= b.x - tol && canvasPos.x <= b.x + b.w + tol;
+  return nearLeft || nearRight || nearTop || nearBottom;
+}
+
 function findBoxAt(canvasPos) {
   if (!data.boxes || !data.boxes.length) return null;
-  for (let i = data.boxes.length - 1; i >= 0; i--) {
+  const matches = [];
+  for (let i = 0; i < data.boxes.length; i++) {
     const b = data.boxes[i];
-    const topMargin = b.type === "text" ? 34 : 16;
+    const topMargin = (b.type === "text" || selectedBoxId === b.id) ? 34 : 16;
     if (canvasPos.x >= b.x - 4 && canvasPos.x <= b.x + b.w + 4 &&
         canvasPos.y >= b.y - topMargin && canvasPos.y <= b.y + b.h + 4) {
-      return b;
+      matches.push({ box: b, index: i, area: (b.w || 0) * (b.h || 0) });
     }
   }
-  return null;
+
+  if (matches.length === 0) return null;
+  if (matches.length === 1) return matches[0].box;
+
+  // When multiple boxes contain canvasPos (e.g. 2 or more boxes inside a larger box):
+  // 1. Text boxes take precedence over container group boxes
+  // 2. Smaller/innermost box (smaller area) takes precedence over larger enclosing box
+  // 3. Later drawn box takes precedence if areas match
+  matches.sort((a, b) => {
+    if (a.box.type === "text" && b.box.type !== "text") return -1;
+    if (a.box.type !== "text" && b.box.type === "text") return 1;
+    if (Math.abs(a.area - b.area) > 1) {
+      return a.area - b.area;
+    }
+    return b.index - a.index;
+  });
+
+  return matches[0].box;
 }
 
 function findBoxHeaderOrBorderAt(canvasPos) {
   if (!data.boxes || !data.boxes.length) return null;
   const tol = 12;
-  for (let i = data.boxes.length - 1; i >= 0; i--) {
+
+  const matches = [];
+  for (let i = 0; i < data.boxes.length; i++) {
     const b = data.boxes[i];
-    // Check header tag zone
-    if (canvasPos.x >= b.x - 5 && canvasPos.x <= b.x + b.w + 5 &&
-        canvasPos.y >= b.y - 16 && canvasPos.y <= b.y + 16) {
-      return b;
-    }
-    // Check perimeter borders
-    const nearLeft = Math.abs(canvasPos.x - b.x) <= tol && canvasPos.y >= b.y - tol && canvasPos.y <= b.y + b.h + tol;
-    const nearRight = Math.abs(canvasPos.x - (b.x + b.w)) <= tol && canvasPos.y >= b.y - tol && canvasPos.y <= b.y + b.h + tol;
-    const nearTop = Math.abs(canvasPos.y - b.y) <= tol && canvasPos.x >= b.x - tol && canvasPos.x <= b.x + b.w + tol;
-    const nearBottom = Math.abs(canvasPos.y - (b.y + b.h)) <= tol && canvasPos.x >= b.x - tol && canvasPos.x <= b.x + b.w + tol;
-    if (nearLeft || nearRight || nearTop || nearBottom) {
-      return b;
+    const isHeader = isPointInBoxHeaderBadge(canvasPos, b);
+    const isBorder = isPointOnBoxBorder(canvasPos, b, tol);
+    if (isHeader || isBorder) {
+      matches.push({
+        box: b,
+        index: i,
+        isHeader: isHeader,
+        area: (b.w || 0) * (b.h || 0)
+      });
     }
   }
-  return null;
+
+  if (matches.length === 0) return null;
+  if (matches.length === 1) return matches[0].box;
+
+  // 1. Exact header badge hit beats perimeter border hit
+  // 2. Smaller/innermost box beats larger enclosing box
+  // 3. Later drawn box beats earlier box
+  matches.sort((a, b) => {
+    if (a.isHeader && !b.isHeader) return -1;
+    if (!a.isHeader && b.isHeader) return 1;
+    if (Math.abs(a.area - b.area) > 1) {
+      return a.area - b.area;
+    }
+    return b.index - a.index;
+  });
+
+  return matches[0].box;
 }
 
 // Calculate the exact point on the perimeter border of a group box facing a target coordinate
@@ -5088,13 +5155,14 @@ function initNet() {
 
     // Double click box to open edit modal (text box modal if type === 'text', group box modal otherwise)
     const canvasPos = net.DOMtoCanvas(params.pointer.DOM);
-    const hitBox = findBoxAt(canvasPos);
+    const headerBorderBox = findBoxHeaderOrBorderAt(canvasPos);
+    const hitBox = headerBorderBox || findBoxAt(canvasPos);
     if (hitBox) {
       if (hitBox.type === "text") {
         openEditTextModal(hitBox.id);
         return;
       }
-      if (!clickedNodeId || findBoxHeaderOrBorderAt(canvasPos)) {
+      if (!clickedNodeId || headerBorderBox) {
         openEditBoxModal(hitBox.id);
         return;
       }
@@ -5328,8 +5396,16 @@ function initNet() {
   // Real-time Draggable Display Line Rendering (beforeDrawing - drawn at the back of icons and text)
   net.on("beforeDrawing", ctx => {
     // 0. Render saved group boxes (behind entities and links)
+    // Larger container boxes render first (in the background), smaller/inner boxes on top
     if (data.boxes && data.boxes.length > 0) {
-      data.boxes.forEach(b => drawBoxOnCanvas(ctx, b));
+      const renderBoxes = [...data.boxes].sort((a, b) => {
+        if (a.type === "text" && b.type !== "text") return 1;
+        if (a.type !== "text" && b.type === "text") return -1;
+        const areaA = (a.w || 0) * (a.h || 0);
+        const areaB = (b.w || 0) * (b.h || 0);
+        return areaB - areaA; // Largest area first (background), smallest on top
+      });
+      renderBoxes.forEach(b => drawBoxOnCanvas(ctx, b));
     }
 
     // 0b. Render live box preview while drawing
@@ -5539,14 +5615,16 @@ function initNet() {
       const rect = container.getBoundingClientRect();
       const domPos = { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
       const cPos = net.DOMtoCanvas(domPos);
-      const hitBox = findBoxAt(cPos);
+      const clickedNode = net.getNodeAt(domPos);
+      const headerBorderBox = findBoxHeaderOrBorderAt(cPos);
+      const hitBox = headerBorderBox || findBoxAt(cPos);
       if (hitBox) {
         if (hitBox.type === "text") {
           openEditTextModal(hitBox.id);
           ev.stopPropagation();
           ev.preventDefault();
           return;
-        } else if (findBoxHeaderOrBorderAt(cPos)) {
+        } else if (!clickedNode || headerBorderBox) {
           openEditBoxModal(hitBox.id);
           ev.stopPropagation();
           ev.preventDefault();
@@ -5555,7 +5633,7 @@ function initNet() {
       }
     }
 
-    // 0b. If user clicks a resize handle or "✎ Edit Text" pill on the currently selected box
+    // 0b. If user clicks a resize handle or "✎ Edit" / "⎘ Duplicate" pill on the currently selected box
     if (selectedBoxId && data.boxes && !isBoxMode && !isTextMode && !isLinkMode && !isCornerMode) {
       const selBox = data.boxes.find(x => x.id === selectedBoxId);
       if (selBox) {
@@ -5563,16 +5641,17 @@ function initNet() {
         const domPos = { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
         const cPos = net.DOMtoCanvas(domPos);
 
-        // Click on "✎ Edit Text" pill button
-        if (selBox.type === "text" && isClickOnTextEditButton(cPos, selBox)) {
-          openEditTextModal(selBox.id);
+        // Click on "✎ Edit" pill button
+        if (isClickOnBoxEditButton(cPos, selBox)) {
+          if (selBox.type === "text") openEditTextModal(selBox.id);
+          else openEditBoxModal(selBox.id);
           ev.stopPropagation();
           ev.preventDefault();
           return;
         }
 
         // Click on "⎘ Duplicate" pill button
-        if (selBox.type === "text" && isClickOnTextDuplicateButton(cPos, selBox)) {
+        if (isClickOnBoxDuplicateButton(cPos, selBox)) {
           duplicateSelected();
           ev.stopPropagation();
           ev.preventDefault();
@@ -5677,7 +5756,8 @@ function initNet() {
       const clickedLink = !clickedNode ? findLinkNear(domPos) : null;
       if (!clickedNode && !clickedLink) {
         const cPos = net.DOMtoCanvas(domPos);
-        const hitBox = findBoxAt(cPos);
+        const headerBorderBox = findBoxHeaderOrBorderAt(cPos);
+        const hitBox = headerBorderBox || findBoxAt(cPos);
         if (hitBox) {
           if (selectedBoxId !== hitBox.id) {
             selectedBoxId = hitBox.id;
@@ -5689,7 +5769,7 @@ function initNet() {
             net.redraw();
           }
 
-          const boxToMove = (hitBox.type === "text") ? hitBox : findBoxHeaderOrBorderAt(cPos);
+          const boxToMove = (hitBox.type === "text") ? hitBox : headerBorderBox;
           if (boxToMove) {
             pushUndoSnapshot();
             isDraggingBox = true;
@@ -5712,14 +5792,16 @@ function initNet() {
     const rect = container.getBoundingClientRect();
     const domPos = { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
     const cPos = net.DOMtoCanvas(domPos);
-    const hitBox = findBoxAt(cPos);
+    const clickedNode = net.getNodeAt(domPos);
+    const headerBorderBox = findBoxHeaderOrBorderAt(cPos);
+    const hitBox = headerBorderBox || findBoxAt(cPos);
     if (hitBox) {
       if (hitBox.type === "text") {
         openEditTextModal(hitBox.id);
         ev.stopPropagation();
         ev.preventDefault();
         return;
-      } else if (findBoxHeaderOrBorderAt(cPos)) {
+      } else if (!clickedNode || headerBorderBox) {
         openEditBoxModal(hitBox.id);
         ev.stopPropagation();
         ev.preventDefault();
@@ -5838,7 +5920,7 @@ function initNet() {
       if (selectedBoxId && data.boxes) {
         const selBox = data.boxes.find(x => x.id === selectedBoxId);
         if (selBox) {
-          if (selBox.type === "text" && (isClickOnTextEditButton(cPos, selBox) || isClickOnTextDuplicateButton(cPos, selBox))) {
+          if (isClickOnBoxEditButton(cPos, selBox) || isClickOnBoxDuplicateButton(cPos, selBox)) {
             container.style.cursor = "pointer";
             return;
           }
@@ -5850,9 +5932,10 @@ function initNet() {
         }
       }
 
-      const hoverBox = findBoxAt(cPos);
+      const headerBorderBox = findBoxHeaderOrBorderAt(cPos);
+      const hoverBox = headerBorderBox || findBoxAt(cPos);
       if (hoverBox && !net.getNodeAt(domPos)) {
-        if (hoverBox.type === "text" || findBoxHeaderOrBorderAt(cPos)) {
+        if (hoverBox.type === "text" || headerBorderBox) {
           container.style.cursor = "move";
           return;
         }
@@ -7759,6 +7842,19 @@ window.addEventListener("keydown", e => {
       e.preventDefault();
       duplicateSelected();
       return;
+    }
+  }
+
+  // Enter or F2 opens edit modal for selected group box or text box
+  if ((e.key === "Enter" || e.key === "F2") && !isCtrl && !isUserTyping()) {
+    if (selectedBoxId && data.boxes) {
+      const b = data.boxes.find(x => x.id === selectedBoxId);
+      if (b) {
+        e.preventDefault();
+        if (b.type === "text") openEditTextModal(b.id);
+        else openEditBoxModal(b.id);
+        return;
+      }
     }
   }
 
