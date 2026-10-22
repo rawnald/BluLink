@@ -762,6 +762,14 @@
             </svg>
             <span>Duplicate</span>
           </button>
+          <button id="btnUngroupEditBox" type="button" title="Ungroup Box: Remove container box preserving entities inside (Ctrl+Shift+G)" class="btn-secondary py-2 text-xs text-amber-700 border-amber-300 hover:border-amber-600 hover:bg-amber-50 flex items-center justify-center gap-1 transition">
+            <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-none stroke-current" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7"/>
+              <rect x="14" y="14" width="7" height="7"/>
+              <path d="M14 4h6M4 14h6" stroke-dasharray="2 2"/>
+            </svg>
+            <span>Ungroup</span>
+          </button>
           <button id="btnDeleteEditBox" type="button" class="btn-secondary py-2 text-xs text-red-600 border-red-300 hover:border-red-600 hover:bg-red-50">
             <i class="fi fi-rr-trash text-xs"></i>
             <span>Delete Box</span>
@@ -1561,6 +1569,32 @@
               </div>
             </button>
             <div class="border-t border-black/10 my-1"></div>
+            <button id="btnGroupMenuOption" type="button" title="Group Selected: Group 2 or more selected entities, boxes, or links into a box (Ctrl+G)"
+              class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer text-left">
+              <div class="flex items-center gap-2.5">
+                <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-none stroke-current text-blue-600 shrink-0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="3" width="7" height="7"/>
+                  <rect x="14" y="3" width="7" height="7"/>
+                  <rect x="14" y="14" width="7" height="7"/>
+                  <rect x="3" y="14" width="7" height="7"/>
+                </svg>
+                <span>Group Selected</span>
+              </div>
+              <kbd class="text-[10px] text-black/40 font-mono">Ctrl+G</kbd>
+            </button>
+            <button id="btnUngroupMenuOption" type="button" title="Ungroup: Remove container box preserving entities inside (Ctrl+Shift+G)"
+              class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer text-left">
+              <div class="flex items-center gap-2.5">
+                <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-none stroke-current text-amber-600 shrink-0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="3" width="7" height="7"/>
+                  <rect x="14" y="14" width="7" height="7"/>
+                  <path d="M14 4h6M4 14h6" stroke-dasharray="2 2"/>
+                </svg>
+                <span>Ungroup Box</span>
+              </div>
+              <kbd class="text-[10px] text-black/40 font-mono">Ctrl+⇧+G</kbd>
+            </button>
+            <div class="border-t border-black/10 my-1"></div>
             <button id="btnCornerModeToggle" type="button" title="Add Corner to Link: Click any link to insert a draggable diamond handle"
               class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer text-left">
               <div class="flex items-center gap-2.5">
@@ -1667,6 +1701,29 @@
       <button id="cancelTextModeBtn" type="button" class="btn-secondary py-0.5 px-2.5 text-[11px] bg-white text-black border-white hover:border-blue-300 shrink-0">
         <span>Cancel</span>
       </button>
+    </div>
+
+    <!-- Floating Multi-Selection Action Bar (Group & Ungroup) -->
+    <div id="multiSelectBar" class="hidden absolute top-12 sm:top-14 left-1/2 -translate-x-1/2 z-40 bg-white border-2 border-black rounded-full shadow-2xl px-3 py-1.5 flex items-center gap-2 max-w-[90%] transition-all">
+      <div class="flex items-center gap-1.5 pl-1 shrink-0">
+        <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 text-blue-600 fill-none stroke-current" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7"/>
+          <rect x="14" y="3" width="7" height="7"/>
+          <rect x="14" y="14" width="7" height="7"/>
+          <rect x="3" y="14" width="7" height="7"/>
+        </svg>
+        <span id="multiSelectCount" class="text-xs font-bold text-black">2 items selected</span>
+      </div>
+      <div class="h-4 w-px bg-black/20 shrink-0"></div>
+      <button id="btnGroupSelected" type="button" class="btn-primary py-1 px-3 text-xs flex items-center gap-1.5 rounded-full shadow-sm hover:scale-105 active:scale-95 transition" title="Group selected items into a container box (Ctrl+G)">
+        <span>Group</span>
+        <kbd class="text-[9px] opacity-75 font-mono">Ctrl+G</kbd>
+      </button>
+      <button id="btnUngroupSelected" type="button" class="btn-secondary py-1 px-3 text-xs flex items-center gap-1.5 rounded-full border-black/30 hover:border-amber-600 hover:text-amber-600 transition" title="Ungroup selected box (Ctrl+Shift+G)">
+        <span>Ungroup</span>
+        <kbd class="text-[9px] opacity-75 font-mono">Ctrl+⇧+G</kbd>
+      </button>
+      <button id="btnDeselectMulti" type="button" class="text-black/60 hover:text-black font-bold text-xs px-1.5 py-0.5 rounded-full hover:bg-black/5" title="Clear selection (Esc)">✕</button>
     </div>
 
     <!-- Exit Fullscreen Button (Shown in Fullscreen mode) -->
@@ -1809,6 +1866,8 @@ let textDrawStartCanvasPos = null, textDrawCurrentCanvasPos = null;
 let editingBoxId = null, editingTextBoxId = null, isDraggingBox = false, draggingBoxId = null;
 let dragBoxStartPointer = null, dragBoxInitialX = 0, dragBoxInitialY = 0;
 let selectedBoxId = null, isResizingBox = false, activeResizeHandle = null;
+let multiSelectedEntityIds = [], multiSelectedBoxIds = [], multiSelectedLinkIds = [];
+let isMarqueeSelecting = false, marqueeStartCanvasPos = null, marqueeCurrentCanvasPos = null, isMarqueeMode = false;
 let resizeBoxInitial = null, resizeStartPointer = null;
 let selectedLinkId = null, selectedCornerNodeId = null;
 
@@ -3925,6 +3984,42 @@ if ($("btnDuplicateEditBox")) {
   };
 }
 
+if ($("btnUngroupEditBox")) {
+  $("btnUngroupEditBox").onclick = () => {
+    if (!editingBoxId || !data.boxes) return;
+    const bId = editingBoxId;
+    closeEditBoxModal();
+    ungroupSelected(bId);
+  };
+}
+
+if ($("btnGroupSelected")) $("btnGroupSelected").onclick = groupSelected;
+if ($("btnUngroupSelected")) $("btnUngroupSelected").onclick = () => ungroupSelected();
+if ($("btnGroupMenuOption")) {
+  $("btnGroupMenuOption").onclick = () => {
+    closeDrawToolsMenu();
+    groupSelected();
+  };
+}
+if ($("btnUngroupMenuOption")) {
+  $("btnUngroupMenuOption").onclick = () => {
+    closeDrawToolsMenu();
+    ungroupSelected();
+  };
+}
+if ($("btnDeselectMulti")) {
+  $("btnDeselectMulti").onclick = () => {
+    clearMultiSelection();
+    selected = null;
+    selectedBoxId = null;
+    selectedLinkId = null;
+    if (net) {
+      net.unselectAll();
+      net.redraw();
+    }
+  };
+}
+
 if ($("btnDeleteEditBox")) {
   $("btnDeleteEditBox").onclick = () => {
     if (!editingBoxId || !data.boxes) return;
@@ -3938,6 +4033,334 @@ if ($("btnDeleteEditBox")) {
     render(false);
     queueSave();
   };
+}
+
+/* ---------- Grouping & Ungrouping Operations ---------- */
+function getSelectedItems() {
+  const entities = (multiSelectedEntityIds && multiSelectedEntityIds.length)
+    ? (data.entities || []).filter(e => multiSelectedEntityIds.includes(e.id))
+    : (selected ? (data.entities || []).filter(e => e.id === selected) : []);
+
+  const boxes = (multiSelectedBoxIds && multiSelectedBoxIds.length)
+    ? ((data.boxes || []).filter(b => multiSelectedBoxIds.includes(b.id)))
+    : (selectedBoxId && data.boxes ? data.boxes.filter(b => b.id === selectedBoxId) : []);
+
+  const links = (multiSelectedLinkIds && multiSelectedLinkIds.length)
+    ? ((data.links || []).filter(l => multiSelectedLinkIds.includes(l.id)))
+    : (selectedLinkId && data.links ? data.links.filter(l => l.id === selectedLinkId) : []);
+
+  const totalCount = entities.length + boxes.length + links.length;
+  return { entities, boxes, links, totalCount };
+}
+
+function clearMultiSelection() {
+  multiSelectedEntityIds = [];
+  multiSelectedBoxIds = [];
+  multiSelectedLinkIds = [];
+  updateSelectionUI();
+}
+
+function updateSelectionUI() {
+  const { entities, boxes, links, totalCount } = getSelectedItems();
+  const bar = $("multiSelectBar");
+  const countText = $("multiSelectCount");
+  const btnGroup = $("btnGroupSelected");
+  const btnUngroup = $("btnUngroupSelected");
+  const menuGroup = $("btnGroupMenuOption");
+  const menuUngroup = $("btnUngroupMenuOption");
+
+  // Determine if ungroup is available
+  let canUngroup = false;
+  if (boxes.some(b => b.type !== "text") || (selectedBoxId && data.boxes && data.boxes.some(b => b.id === selectedBoxId && b.type !== "text"))) {
+    canUngroup = true;
+  } else if (entities.length > 0 && data.boxes && data.boxes.length > 0) {
+    canUngroup = data.boxes.some(b => b.type !== "text" && entities.some(e => e.x >= b.x && e.x <= b.x + b.w && e.y >= b.y && e.y <= b.y + b.h));
+  }
+
+  if (bar) {
+    if (totalCount >= 2 || (canUngroup && totalCount >= 1)) {
+      bar.classList.remove("hidden");
+      if (countText) {
+        const parts = [];
+        if (entities.length > 0) parts.push(`${entities.length} ${entities.length === 1 ? 'entity' : 'entities'}`);
+        if (boxes.length > 0) parts.push(`${boxes.length} ${boxes.length === 1 ? 'box' : 'boxes'}`);
+        if (links.length > 0) parts.push(`${links.length} ${links.length === 1 ? 'link' : 'links'}`);
+        countText.textContent = parts.join(", ") || `${totalCount} items selected`;
+      }
+      if (btnGroup) {
+        btnGroup.style.display = totalCount >= 2 ? "inline-flex" : "none";
+      }
+      if (btnUngroup) {
+        btnUngroup.style.display = canUngroup ? "inline-flex" : "none";
+      }
+    } else {
+      bar.classList.add("hidden");
+    }
+  }
+
+  if (menuGroup) {
+    menuGroup.classList.toggle("opacity-40", totalCount < 2);
+    menuGroup.classList.toggle("pointer-events-none", totalCount < 2);
+  }
+  if (menuUngroup) {
+    menuUngroup.classList.toggle("opacity-40", !canUngroup);
+    menuUngroup.classList.toggle("pointer-events-none", !canUngroup);
+  }
+
+  const mapDeselectBtn = $("btnMapDeselect");
+  if (mapDeselectBtn) {
+    if (totalCount > 0 || selected || selectedBoxId || selectedLinkId) {
+      mapDeselectBtn.classList.remove("hidden");
+    } else {
+      mapDeselectBtn.classList.add("hidden");
+    }
+  }
+}
+
+function groupSelected() {
+  const { entities, boxes, links, totalCount } = getSelectedItems();
+  if (totalCount < 2) {
+    setStatus("Select 2 or more entities, boxes, or links to group (hold Shift or Ctrl)", true);
+    return;
+  }
+
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+
+  entities.forEach(e => {
+    let ex = e.x, ey = e.y;
+    if (net && net.getPosition) {
+      try {
+        const p = net.getPosition(e.id);
+        if (p && p.x != null && p.y != null) { ex = p.x; ey = p.y; }
+      } catch (err) {}
+    }
+    if (ex != null && ey != null) {
+      const radius = 32;
+      minX = Math.min(minX, ex - radius);
+      minY = Math.min(minY, ey - radius);
+      maxX = Math.max(maxX, ex + radius);
+      maxY = Math.max(maxY, ey + radius + 16);
+    }
+  });
+
+  boxes.forEach(b => {
+    if (b.x != null && b.y != null && b.w != null && b.h != null) {
+      minX = Math.min(minX, b.x);
+      minY = Math.min(minY, b.y);
+      maxX = Math.max(maxX, b.x + b.w);
+      maxY = Math.max(maxY, b.y + b.h);
+    }
+  });
+
+  links.forEach(l => {
+    const a = (data.entities || []).find(x => x.id === l.from) || (data.boxes ? data.boxes.find(x => x.id === l.from) : null);
+    const b = (data.entities || []).find(x => x.id === l.to) || (data.boxes ? data.boxes.find(x => x.id === l.to) : null);
+    if (a) {
+      minX = Math.min(minX, a.x);
+      minY = Math.min(minY, a.y);
+      maxX = Math.max(maxX, a.x + (a.w || 0));
+      maxY = Math.max(maxY, a.y + (a.h || 0));
+    }
+    if (b) {
+      minX = Math.min(minX, b.x);
+      minY = Math.min(minY, b.y);
+      maxX = Math.max(maxX, b.x + (b.w || 0));
+      maxY = Math.max(maxY, b.y + (b.h || 0));
+    }
+    if (l.corners) {
+      l.corners.forEach(c => {
+        if (c.x != null && c.y != null) {
+          minX = Math.min(minX, c.x);
+          minY = Math.min(minY, c.y);
+          maxX = Math.max(maxX, c.x);
+          maxY = Math.max(maxY, c.y);
+        }
+      });
+    }
+  });
+
+  if (!isFinite(minX) || !isFinite(minY) || !isFinite(maxX) || !isFinite(maxY)) {
+    setStatus("Unable to determine bounding box for selected items", true);
+    return;
+  }
+
+  const pad = 28;
+  const gx = Math.round(minX - pad);
+  const gy = Math.round(minY - pad);
+  const gw = Math.max(100, Math.round((maxX - minX) + pad * 2));
+  const gh = Math.max(70, Math.round((maxY - minY) + pad * 2));
+
+  if (!data.boxes) data.boxes = [];
+  const newBox = {
+    id: "box_" + uid(),
+    label: "Group " + (data.boxes.length + 1),
+    x: gx,
+    y: gy,
+    w: gw,
+    h: gh,
+    borderColor: "#2563eb",
+    borderWidth: 2,
+    borderStyle: "dashed",
+    bgColor: "#2563eb",
+    bgOpacity: 0,
+    labelPos: "top-left"
+  };
+
+  pushUndoSnapshot();
+  data.boxes.push(newBox);
+
+  if (nodes && !nodes.get(newBox.id)) {
+    nodes.add({
+      id: newBox.id,
+      x: Math.round(newBox.x + newBox.w / 2),
+      y: Math.round(newBox.y + newBox.h / 2),
+      shape: "dot",
+      size: 0.1,
+      color: {
+        background: "rgba(0,0,0,0)",
+        border: "rgba(0,0,0,0)",
+        highlight: { background: "rgba(0,0,0,0)", border: "rgba(0,0,0,0)" },
+        hover: { background: "rgba(0,0,0,0)", border: "rgba(0,0,0,0)" }
+      },
+      physics: false,
+      fixed: true,
+      font: { size: 0, color: "rgba(0,0,0,0)", strokeWidth: 0 }
+    });
+  }
+
+  clearMultiSelection();
+  selectedBoxId = newBox.id;
+  selected = null;
+  selectedLinkId = null;
+  selectedCornerNodeId = null;
+
+  if (net) {
+    net.unselectAll();
+    net.redraw();
+  }
+  updateSelectionUI();
+  queueSave();
+  setStatus(`Grouped ${totalCount} items into "${newBox.label}" (Ctrl+G)`);
+}
+
+function ungroupSelected(explicitBoxId) {
+  let boxIdToUngroup = explicitBoxId;
+
+  if (!boxIdToUngroup) {
+    if (selectedBoxId) {
+      boxIdToUngroup = selectedBoxId;
+    } else if (multiSelectedBoxIds && multiSelectedBoxIds.length > 0) {
+      boxIdToUngroup = multiSelectedBoxIds[0];
+    }
+  }
+
+  if (!boxIdToUngroup && data.boxes && data.boxes.length > 0) {
+    const { entities } = getSelectedItems();
+    if (entities.length > 0) {
+      const firstEnt = entities[0];
+      const ex = firstEnt.x, ey = firstEnt.y;
+      const enclosingBoxes = data.boxes.filter(b => {
+        return b.type !== "text" &&
+               ex >= b.x && ex <= b.x + b.w &&
+               ey >= b.y && ey <= b.y + b.h;
+      });
+      if (enclosingBoxes.length > 0) {
+        enclosingBoxes.sort((a, b) => (a.w * a.h) - (b.w * b.h));
+        boxIdToUngroup = enclosingBoxes[0].id;
+      }
+    }
+  }
+
+  if (!boxIdToUngroup || !data.boxes) {
+    setStatus("Select a Group Box to ungroup (Ctrl+Shift+G)", true);
+    return;
+  }
+
+  const targetBox = data.boxes.find(x => x.id === boxIdToUngroup);
+  if (!targetBox) return;
+
+  pushUndoSnapshot();
+
+  const boxLabel = targetBox.label || "Group Box";
+  data.boxes = data.boxes.filter(x => x.id !== boxIdToUngroup);
+  data.links = (data.links || []).filter(l => l.from !== boxIdToUngroup && l.to !== boxIdToUngroup);
+
+  if (nodes && nodes.get(boxIdToUngroup)) {
+    try { nodes.remove(boxIdToUngroup); } catch (err) {}
+  }
+
+  if (selectedBoxId === boxIdToUngroup) selectedBoxId = null;
+  if (multiSelectedBoxIds) multiSelectedBoxIds = multiSelectedBoxIds.filter(id => id !== boxIdToUngroup);
+
+  closeEditBoxModal();
+  updateSelectionUI();
+  if (net) net.redraw();
+  queueSave();
+  setStatus(`Ungrouped "${boxLabel}" (entities inside preserved)`);
+}
+
+function selectAllWorkspace() {
+  multiSelectedEntityIds = (data.entities || []).map(e => e.id);
+  multiSelectedBoxIds = (data.boxes || []).map(b => b.id);
+  multiSelectedLinkIds = (data.links || []).map(l => l.id);
+  selected = multiSelectedEntityIds[0] || null;
+  selectedBoxId = null;
+  selectedLinkId = null;
+  selectedCornerNodeId = null;
+  if (net) {
+    net.selectNodes(multiSelectedEntityIds);
+    net.redraw();
+  }
+  updateSelectionUI();
+  updateEdgeVisuals();
+  const total = multiSelectedEntityIds.length + multiSelectedBoxIds.length + multiSelectedLinkIds.length;
+  setStatus(`Selected all ${total} items in workspace (Ctrl+A)`);
+}
+
+function drawMarqueeSelection(ctx, startPos, currPos) {
+  const x = Math.min(startPos.x, currPos.x);
+  const y = Math.min(startPos.y, currPos.y);
+  const w = Math.abs(currPos.x - startPos.x);
+  const h = Math.abs(currPos.y - startPos.y);
+  if (w <= 2 && h <= 2) return;
+
+  ctx.save();
+  ctx.fillStyle = "rgba(37, 99, 235, 0.12)";
+  ctx.fillRect(x, y, w, h);
+
+  ctx.strokeStyle = "#2563eb";
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([6, 4]);
+  ctx.strokeRect(x, y, w, h);
+
+  let count = 0;
+  if (data.entities) {
+    data.entities.forEach(e => {
+      let ex = e.x, ey = e.y;
+      if (net && net.getPosition) {
+        try { const p = net.getPosition(e.id); if (p) { ex = p.x; ey = p.y; } } catch(err) {}
+      }
+      if (ex >= x && ex <= x + w && ey >= y && ey <= y + h) count++;
+    });
+  }
+  if (data.boxes) {
+    data.boxes.forEach(b => {
+      if (!(b.x > x + w || b.x + b.w < x || b.y > y + h || b.y + b.h < y)) count++;
+    });
+  }
+
+  const tagStr = count > 0 ? `${count} items` : "Select";
+  ctx.setLineDash([]);
+  ctx.font = 'bold 10px "DM Sans", sans-serif';
+  const tagW = ctx.measureText(tagStr).width + 12;
+  ctx.fillStyle = "#2563eb";
+  ctx.fillRect(x + 4, y + 4, tagW, 16);
+  ctx.fillStyle = "#ffffff";
+  ctx.textBaseline = "middle";
+  ctx.textAlign = "center";
+  ctx.fillText(tagStr, x + 4 + tagW / 2, y + 12);
+
+  ctx.restore();
 }
 
 /* ---------- Text Box Operations & Modal ---------- */
@@ -4119,6 +4542,21 @@ function isClickOnBoxDuplicateButton(cPos, b) {
 }
 const isClickOnTextDuplicateButton = isClickOnBoxDuplicateButton;
 
+function isClickOnBoxUngroupButton(cPos, b) {
+  if (!b || b.type === "text") return false;
+  const scale = (net && net.getScale) ? net.getScale() : 1;
+  const btnW = 74 / scale;
+  const btnH = 22 / scale;
+  const btnX = b.x + b.w - btnW;
+  const dupBtnW = 76 / scale;
+  const dupBtnX = btnX - dupBtnW - 6 / scale;
+  const ungrpBtnW = 78 / scale;
+  const ungrpBtnX = dupBtnX - ungrpBtnW - 6 / scale;
+  const btnY = b.y - btnH - 6 / scale;
+  return (cPos.x >= ungrpBtnX - 4 / scale && cPos.x <= ungrpBtnX + ungrpBtnW + 4 / scale &&
+          cPos.y >= btnY - 4 / scale && cPos.y <= btnY + btnH + 4 / scale);
+}
+
 function drawBoxResizeHandles(ctx, b) {
   const scale = (net && net.getScale) ? net.getScale() : 1;
   const size = Math.max(7, 8.5 / scale);
@@ -4141,7 +4579,7 @@ function drawBoxResizeHandles(ctx, b) {
     ctx.strokeRect(h.x - size / 2, h.y - size / 2, size, size);
   });
 
-  // Dedicated "✎ Edit" and "⎘ Duplicate" pill buttons above selected box (works for group boxes and text boxes)
+  // Dedicated "✎ Edit", "⎘ Duplicate", and "🔓 Ungroup" pill buttons above selected box
   const btnW = 74 / scale;
   const btnH = 22 / scale;
   const btnX = b.x + b.w - btnW;
@@ -4149,6 +4587,11 @@ function drawBoxResizeHandles(ctx, b) {
 
   const dupBtnW = 76 / scale;
   const dupBtnX = btnX - dupBtnW - 6 / scale;
+
+  const isGroupBox = b.type !== "text";
+  const ungrpBtnW = 78 / scale;
+  const ungrpBtnX = dupBtnX - ungrpBtnW - 6 / scale;
+
   const editLabel = b.type === "text" ? "✎ Edit Text" : "✎ Edit Box";
 
   // 1. Edit pill
@@ -4198,6 +4641,32 @@ function drawBoxResizeHandles(ctx, b) {
   ctx.textAlign = "center";
   ctx.fillText("⎘ Duplicate", dupBtnX + dupBtnW / 2, btnY + btnH / 2);
   ctx.restore();
+
+  // 3. Ungroup pill (for group boxes)
+  if (isGroupBox) {
+    ctx.save();
+    ctx.setLineDash([]);
+    ctx.fillStyle = "#ffffff";
+    ctx.shadowColor = "rgba(0,0,0,0.2)";
+    ctx.shadowBlur = 4 / scale;
+    ctx.shadowOffsetY = 2 / scale;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(ungrpBtnX, btnY, ungrpBtnW, btnH, 5 / scale);
+    else ctx.rect(ungrpBtnX, btnY, ungrpBtnW, btnH);
+    ctx.fill();
+
+    ctx.shadowColor = "transparent";
+    ctx.strokeStyle = "#d97706";
+    ctx.lineWidth = Math.max(1, 1.2 / scale);
+    ctx.stroke();
+
+    ctx.fillStyle = "#d97706";
+    ctx.font = `bold ${Math.round(11 / scale)}px "DM Sans", -apple-system, sans-serif`;
+    ctx.textBaseline = "middle";
+    ctx.textAlign = "center";
+    ctx.fillText("🔓 Ungroup", ungrpBtnX + ungrpBtnW / 2, btnY + btnH / 2);
+    ctx.restore();
+  }
 
   ctx.restore();
 }
@@ -4964,7 +5433,7 @@ function initNet() {
     },
     interaction: {
       hover: true,
-      multiselect: false,
+      multiselect: true,
       tooltipDelay: 100,
       dragNodes: true,
       dragView: true
@@ -5003,8 +5472,19 @@ function initNet() {
         net.redraw();
       }
       selectedCornerNodeId = null;
-      if (!isLinkMode && !isDrawingLiveLine && !isCornerMode) {
-        select(nid, "net");
+      const realNodeIds = (p.nodes || []).filter(id => typeof id === "string" && !id.startsWith("corner_") && !id.startsWith("box_"));
+      if (realNodeIds.length > 1) {
+        multiSelectedEntityIds = realNodeIds;
+        selected = realNodeIds[0];
+        updateEdgeVisuals();
+        updateSelectionUI();
+        renderInspector();
+      } else {
+        multiSelectedEntityIds = realNodeIds;
+        if (!isLinkMode && !isDrawingLiveLine && !isCornerMode) {
+          select(nid, "net");
+        }
+        updateSelectionUI();
       }
     }
   });
@@ -5012,7 +5492,16 @@ function initNet() {
   net.on("deselectNode", () => {
     if (!isLinkMode && !isDrawingLiveLine && !isCornerMode) {
       selectedCornerNodeId = null;
-      select(null, "net");
+      if (net && net.getSelectedNodes) {
+        const remaining = net.getSelectedNodes().filter(id => typeof id === "string" && !id.startsWith("corner_") && !id.startsWith("box_"));
+        multiSelectedEntityIds = remaining;
+        selected = remaining.length > 0 ? remaining[0] : null;
+      } else {
+        multiSelectedEntityIds = [];
+        selected = null;
+      }
+      updateSelectionUI();
+      select(selected, "net");
     }
   });
 
@@ -5418,6 +5907,11 @@ function initNet() {
       drawLiveTextPreview(ctx, textDrawStartCanvasPos, textDrawCurrentCanvasPos);
     }
 
+    // 0d. Render live marquee selection box
+    if (isMarqueeSelecting && marqueeStartCanvasPos && marqueeCurrentCanvasPos) {
+      drawMarqueeSelection(ctx, marqueeStartCanvasPos, marqueeCurrentCanvasPos);
+    }
+
     if (!isDrawingLiveLine || !liveLineSourceId) return;
 
     let targetPos = liveLineCurrentCanvasPos;
@@ -5517,13 +6011,19 @@ function initNet() {
     // Keep GIF overlay images synchronized with vis.js canvas positions
     updateGifOverlayPositions();
 
-    // Draw 8 resize handles for the selected group box
+    // Draw 8 resize handles and pill buttons for all selected group boxes
+    const boxesToDraw = [];
     if (selectedBoxId && data.boxes) {
-      const selBox = data.boxes.find(x => x.id === selectedBoxId);
-      if (selBox) {
-        drawBoxResizeHandles(ctx, selBox);
-      }
+      const b = data.boxes.find(x => x.id === selectedBoxId);
+      if (b && !boxesToDraw.includes(b)) boxesToDraw.push(b);
     }
+    if (multiSelectedBoxIds && multiSelectedBoxIds.length > 0 && data.boxes) {
+      multiSelectedBoxIds.forEach(id => {
+        const b = data.boxes.find(x => x.id === id);
+        if (b && !boxesToDraw.includes(b)) boxesToDraw.push(b);
+      });
+    }
+    boxesToDraw.forEach(b => drawBoxResizeHandles(ctx, b));
 
     if (!isDrawingLiveLine || !liveLineSourceId) return;
 
@@ -5658,6 +6158,14 @@ function initNet() {
           return;
         }
 
+        // Click on "🔓 Ungroup" pill button
+        if (isClickOnBoxUngroupButton(cPos, selBox)) {
+          ungroupSelected(selBox.id);
+          ev.stopPropagation();
+          ev.preventDefault();
+          return;
+        }
+
         const handle = findResizeHandleAt(cPos, selBox);
         if (handle) {
           pushUndoSnapshot();
@@ -5748,40 +6256,98 @@ function initNet() {
       }
     }
 
-    // 3. Normal Mode: select box when clicked, or drag box by clicking on its header badge or border (or anywhere on text box)
+    // 3. Normal Mode: Unified selection (Single & Multi-Select with Shift/Ctrl) and Marquee Selection
     if (!isCornerMode && !isDeleteCornerMode) {
       const rect = container.getBoundingClientRect();
       const domPos = { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
+      const isMultiKey = ev.shiftKey || ev.ctrlKey || ev.metaKey;
       const clickedNode = net.getNodeAt(domPos);
       const clickedLink = !clickedNode ? findLinkNear(domPos) : null;
-      if (!clickedNode && !clickedLink) {
-        const cPos = net.DOMtoCanvas(domPos);
-        const headerBorderBox = findBoxHeaderOrBorderAt(cPos);
-        const hitBox = headerBorderBox || findBoxAt(cPos);
-        if (hitBox) {
-          if (selectedBoxId !== hitBox.id) {
-            selectedBoxId = hitBox.id;
-            selectedLinkId = null;
-            selectedCornerNodeId = null;
-            select(null, "net");
-            updateEdgeVisuals();
-            net.unselectAll();
-            net.redraw();
-          }
+      const cPos = net.DOMtoCanvas(domPos);
+      const headerBorderBox = (!clickedNode && !clickedLink) ? findBoxHeaderOrBorderAt(cPos) : null;
+      const hitBox = (!clickedNode && !clickedLink) ? (headerBorderBox || findBoxAt(cPos)) : null;
 
-          const boxToMove = (hitBox.type === "text") ? hitBox : headerBorderBox;
-          if (boxToMove) {
-            pushUndoSnapshot();
-            isDraggingBox = true;
-            draggingBoxId = boxToMove.id;
-            dragBoxStartPointer = cPos;
-            dragBoxInitialX = boxToMove.x;
-            dragBoxInitialY = boxToMove.y;
-            ev.stopPropagation();
-            ev.preventDefault();
-            net.setOptions({ interaction: { dragNodes: false, dragView: false } });
-            return;
-          }
+      // 3a. Shift/Ctrl + Click on Box
+      if (hitBox && isMultiKey) {
+        ev.stopPropagation();
+        ev.preventDefault();
+        if (selectedBoxId && !multiSelectedBoxIds.includes(selectedBoxId)) {
+          multiSelectedBoxIds.push(selectedBoxId);
+        }
+        if (multiSelectedBoxIds.includes(hitBox.id)) {
+          multiSelectedBoxIds = multiSelectedBoxIds.filter(id => id !== hitBox.id);
+        } else {
+          multiSelectedBoxIds.push(hitBox.id);
+        }
+        selectedBoxId = multiSelectedBoxIds.length === 1 ? multiSelectedBoxIds[0] : null;
+        net.redraw();
+        updateSelectionUI();
+        return;
+      }
+
+      // 3b. Shift/Ctrl + Click on Link
+      if (clickedLink && isMultiKey) {
+        ev.stopPropagation();
+        ev.preventDefault();
+        if (selectedLinkId && !multiSelectedLinkIds.includes(selectedLinkId)) {
+          multiSelectedLinkIds.push(selectedLinkId);
+        }
+        if (multiSelectedLinkIds.includes(clickedLink)) {
+          multiSelectedLinkIds = multiSelectedLinkIds.filter(id => id !== clickedLink);
+        } else {
+          multiSelectedLinkIds.push(clickedLink);
+        }
+        selectedLinkId = multiSelectedLinkIds.length === 1 ? multiSelectedLinkIds[0] : null;
+        updateEdgeVisuals();
+        updateSelectionUI();
+        return;
+      }
+
+      // 3c. Normal Click on Box
+      if (hitBox) {
+        if (!multiSelectedBoxIds.includes(hitBox.id)) {
+          clearMultiSelection();
+        }
+        if (selectedBoxId !== hitBox.id) {
+          selectedBoxId = hitBox.id;
+          selectedLinkId = null;
+          selectedCornerNodeId = null;
+          select(null, "net");
+          updateEdgeVisuals();
+          net.unselectAll();
+          net.redraw();
+        }
+        updateSelectionUI();
+
+        const boxToMove = (hitBox.type === "text") ? hitBox : headerBorderBox;
+        if (boxToMove) {
+          pushUndoSnapshot();
+          isDraggingBox = true;
+          draggingBoxId = boxToMove.id;
+          dragBoxStartPointer = cPos;
+          dragBoxInitialX = boxToMove.x;
+          dragBoxInitialY = boxToMove.y;
+          ev.stopPropagation();
+          ev.preventDefault();
+          net.setOptions({ interaction: { dragNodes: false, dragView: false } });
+          return;
+        }
+        return;
+      }
+
+      // 3d. Click on Empty Canvas: Start Marquee Selection if Shift held or in Marquee Mode, or clear multi-selection
+      if (!clickedNode && !clickedLink && !hitBox) {
+        if (ev.shiftKey || isMarqueeMode) {
+          isMarqueeSelecting = true;
+          marqueeStartCanvasPos = cPos;
+          marqueeCurrentCanvasPos = cPos;
+          ev.stopPropagation();
+          ev.preventDefault();
+          net.setOptions({ interaction: { dragNodes: false, dragView: false } });
+          net.redraw();
+          return;
+        } else if (!isMultiKey) {
+          clearMultiSelection();
         }
       }
     }
@@ -5917,10 +6483,18 @@ function initNet() {
       const domPos = { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
       const cPos = net.DOMtoCanvas(domPos);
 
+      if (isMarqueeSelecting && net) {
+        ev.stopPropagation();
+        ev.preventDefault();
+        marqueeCurrentCanvasPos = net.DOMtoCanvas(domPos);
+        net.redraw();
+        return;
+      }
+
       if (selectedBoxId && data.boxes) {
         const selBox = data.boxes.find(x => x.id === selectedBoxId);
         if (selBox) {
-          if (isClickOnBoxEditButton(cPos, selBox) || isClickOnBoxDuplicateButton(cPos, selBox)) {
+          if (isClickOnBoxEditButton(cPos, selBox) || isClickOnBoxDuplicateButton(cPos, selBox) || isClickOnBoxUngroupButton(cPos, selBox)) {
             container.style.cursor = "pointer";
             return;
           }
@@ -5971,6 +6545,71 @@ function initNet() {
   }, true);
 
   window.addEventListener("pointerup", ev => {
+    // 0a. Completing Marquee selection
+    if (isMarqueeSelecting) {
+      ev.stopPropagation();
+      ev.preventDefault();
+      isMarqueeSelecting = false;
+      if (net) {
+        net.setOptions({ interaction: { dragNodes: !isLinkMode && !isBoxMode && !isTextMode, dragView: !isLinkMode && !isBoxMode && !isTextMode } });
+      }
+
+      if (marqueeStartCanvasPos && marqueeCurrentCanvasPos) {
+        const x1 = Math.min(marqueeStartCanvasPos.x, marqueeCurrentCanvasPos.x);
+        const y1 = Math.min(marqueeStartCanvasPos.y, marqueeCurrentCanvasPos.y);
+        const x2 = Math.max(marqueeStartCanvasPos.x, marqueeCurrentCanvasPos.x);
+        const y2 = Math.max(marqueeStartCanvasPos.y, marqueeCurrentCanvasPos.y);
+
+        if ((x2 - x1) >= 8 && (y2 - y1) >= 8) {
+          const matchedEntities = (data.entities || []).filter(e => {
+            let ex = e.x, ey = e.y;
+            if (net && net.getPosition) {
+              try {
+                const p = net.getPosition(e.id);
+                if (p && p.x != null) { ex = p.x; ey = p.y; }
+              } catch (err) {}
+            }
+            return ex >= x1 && ex <= x2 && ey >= y1 && ey <= y2;
+          });
+
+          const matchedBoxes = (data.boxes || []).filter(b => {
+            return !(b.x > x2 || b.x + b.w < x1 || b.y > y2 || b.y + b.h < y1);
+          });
+
+          const matchedLinks = (data.links || []).filter(l => {
+            const fromIn = matchedEntities.some(e => e.id === l.from) || matchedBoxes.some(b => b.id === l.from);
+            const toIn = matchedEntities.some(e => e.id === l.to) || matchedBoxes.some(b => b.id === l.to);
+            return fromIn && toIn;
+          });
+
+          if (ev.ctrlKey || ev.metaKey) {
+            matchedEntities.forEach(e => { if (!multiSelectedEntityIds.includes(e.id)) multiSelectedEntityIds.push(e.id); });
+            matchedBoxes.forEach(b => { if (!multiSelectedBoxIds.includes(b.id)) multiSelectedBoxIds.push(b.id); });
+            matchedLinks.forEach(l => { if (!multiSelectedLinkIds.includes(l.id)) multiSelectedLinkIds.push(l.id); });
+          } else {
+            multiSelectedEntityIds = matchedEntities.map(e => e.id);
+            multiSelectedBoxIds = matchedBoxes.map(b => b.id);
+            multiSelectedLinkIds = matchedLinks.map(l => l.id);
+          }
+
+          selected = multiSelectedEntityIds.length === 1 ? multiSelectedEntityIds[0] : null;
+          selectedBoxId = multiSelectedBoxIds.length === 1 ? multiSelectedBoxIds[0] : null;
+          selectedLinkId = multiSelectedLinkIds.length === 1 ? multiSelectedLinkIds[0] : null;
+
+          if (net) {
+            net.selectNodes(multiSelectedEntityIds);
+            net.redraw();
+          }
+          updateEdgeVisuals();
+          updateSelectionUI();
+        }
+      }
+
+      marqueeStartCanvasPos = null;
+      marqueeCurrentCanvasPos = null;
+      return;
+    }
+
     // 0. Releasing resized box
     if (isResizingBox) {
       ev.stopPropagation();
@@ -7774,15 +8413,15 @@ window.addEventListener("keydown", e => {
     if (isDeleteCornerMode) exitDeleteCornerMode();
     closeEditBoxModal();
     closeEditTextModal();
-    if (selectedBoxId || selectedLinkId || selectedCornerNodeId) {
-      selectedBoxId = null;
-      selectedLinkId = null;
-      selectedCornerNodeId = null;
-      updateEdgeVisuals();
-      if (net) {
-        net.unselectAll();
-        net.redraw();
-      }
+    clearMultiSelection();
+    selected = null;
+    selectedBoxId = null;
+    selectedLinkId = null;
+    selectedCornerNodeId = null;
+    updateEdgeVisuals();
+    if (net) {
+      net.unselectAll();
+      net.redraw();
     }
     return;
   }
@@ -7843,6 +8482,31 @@ window.addEventListener("keydown", e => {
       duplicateSelected();
       return;
     }
+
+    // Ctrl + G: Group selected items (or Ctrl + Shift + G: Ungroup)
+    if (key === "g") {
+      e.preventDefault();
+      if (e.shiftKey) {
+        ungroupSelected();
+      } else {
+        groupSelected();
+      }
+      return;
+    }
+
+    // Ctrl + U: Ungroup
+    if (key === "u") {
+      e.preventDefault();
+      ungroupSelected();
+      return;
+    }
+
+    // Ctrl + A: Select All workspace items
+    if (key === "a") {
+      e.preventDefault();
+      selectAllWorkspace();
+      return;
+    }
   }
 
   // Enter or F2 opens edit modal for selected group box or text box
@@ -7862,6 +8526,35 @@ window.addEventListener("keydown", e => {
   if (e.key === "Delete" || e.key === "Backspace") {
     // Only if not currently typing in an input or textarea
     if (isUserTyping()) return;
+
+    // 0. Delete multi-selected items if multiple selected
+    const { entities: delEnts, boxes: delBoxes, links: delLinks, totalCount: delTotal } = getSelectedItems();
+    if (delTotal > 1) {
+      e.preventDefault();
+      pushUndoSnapshot();
+      const entIds = delEnts.map(e => e.id);
+      const boxIds = delBoxes.map(b => b.id);
+      const linkIds = delLinks.map(l => l.id);
+      if (entIds.length > 0 && data.entities) {
+        data.entities = data.entities.filter(x => !entIds.includes(x.id));
+        data.links = (data.links || []).filter(l => !entIds.includes(l.from) && !entIds.includes(l.to));
+      }
+      if (boxIds.length > 0 && data.boxes) {
+        data.boxes = data.boxes.filter(x => !boxIds.includes(x.id));
+        data.links = (data.links || []).filter(l => !boxIds.includes(l.from) && !boxIds.includes(l.to));
+      }
+      if (linkIds.length > 0 && data.links) {
+        data.links = data.links.filter(l => !linkIds.includes(l.id));
+      }
+      clearMultiSelection();
+      selected = null;
+      selectedBoxId = null;
+      selectedLinkId = null;
+      render(false);
+      queueSave();
+      setStatus(`Deleted ${delTotal} selected items`);
+      return;
+    }
 
     // 1. Delete selected Corner handle
     if (selectedCornerNodeId && typeof selectedCornerNodeId === "string" && selectedCornerNodeId.startsWith("corner_")) {
