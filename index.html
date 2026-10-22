@@ -1866,11 +1866,11 @@
     </button>
 
     <!-- Map Floating Toolbar (Export dropdown and Fullscreen exit) -->
-    <div id="mapToolbarContainer" class="absolute top-2.5 right-14 sm:right-16 z-30 pointer-events-auto flex items-center gap-1.5 sm:gap-2">
+    <div id="mapToolbarContainer" class="absolute top-2.5 right-14 sm:right-16 z-[1000] pointer-events-auto flex items-center gap-1.5 sm:gap-2">
       <!-- 1. Map Export / Save Dropdown -->
       <div class="relative" id="exportMapDropdownContainer">
         <button id="btnExportMapDropdown" type="button" title="Save / Export Geospatial Map (PDF, PNG, JPEG)"
-          class="btn-secondary btn-chart-ctrl py-1.5 px-2.5 sm:px-3 text-xs flex items-center gap-1.5 sm:gap-2 font-bold transition shadow-sm cursor-pointer">
+          class="btn-secondary btn-chart-ctrl py-1.5 px-2.5 sm:px-3 text-xs flex items-center gap-1.5 sm:gap-2 font-bold transition shadow-sm cursor-pointer bg-white">
           <i class="fi fi-rr-download text-xs text-blue-600"></i>
           <span>Export</span>
           <svg viewBox="0 0 20 20" class="w-3 h-3 fill-current opacity-70 shrink-0" aria-hidden="true">
@@ -1879,7 +1879,7 @@
         </button>
 
         <!-- Map Export Dropdown Menu -->
-        <div id="exportMapMenu" class="hidden absolute right-0 top-full mt-1.5 w-48 bg-white border-2 border-black rounded-xl shadow-2xl p-1.5 z-50 space-y-1">
+        <div id="exportMapMenu" class="hidden absolute right-0 top-full mt-1.5 w-48 bg-white border-2 border-black rounded-xl shadow-2xl p-1.5 z-[1001] space-y-1">
           <div class="px-2.5 py-1 text-[10px] font-bold text-black/50 uppercase tracking-wider">Save Geospatial Map</div>
           <button id="btnExportMapPDF" type="button" title="Save Map view as PDF document"
             class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer text-left">
