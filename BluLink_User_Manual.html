@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BluLink — User Manual & Operational Guide</title>
+<style>
+  @page {
+    size: letter;
+    margin: 18mm 16mm 18mm 16mm;
+    @bottom-center {
+      content: "BluLink Intelligence Analysis Workspace — Confidential & Authorized Use Only";
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+      font-size: 8pt;
+      color: #94a3b8;
+    }
+    @bottom-right {
+      content: "Page " counter(page);
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+      font-size: 8pt;
+      font-weight: 600;
+      color: #475569;
+    }
+  }
+
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #1e293b;
+    line-height: 1.55;
+    font-size: 9.5pt;
+    margin: 0;
+    padding: 0;
+    background: #ffffff;
+  }
+
+  .page-break {
+    page-break-before: always;
+  }
+
+  .avoid-break {
+    page-break-inside: avoid;
+  }
+
+  /* Cover Page Styling */
+  .cover-page {
+    min-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 24mm 12mm 12mm 12mm;
+    page-break-after: always;
+    border: 3px solid #0f172a;
+    border-radius: 12px;
+    background: linear-gradient(180deg, #f8fafc 0%, #ffffff 60%, #eff6ff 100%);
+    position: relative;
+    box-sizing: border-box;
+  }
+
+  .cover-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .cover-logo {
+    height: 52px;
+  }
+
+  .cover-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    background: #2563eb;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 8pt;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    border-radius: 9999px;
+  }
+
+  .cover-body {
+    margin-top: 40px;
+    margin-bottom: 40px;
+  }
+
+  .cover-title {
+    font-size: 28pt;
+    font-weight: 800;
+    line-height: 1.15;
+    color: #0f172a;
+    letter-spacing: -0.5px;
+    margin: 0 0 12px 0;
+  }
+
+  .cover-title span {
+    color: #2563eb;
+  }
+
+  .cover-subtitle {
+    font-size: 13pt;
+    font-weight: 500;
+    color: #475569;
+    line-height: 1.4;
+    margin: 0 0 24px 0;
+    max-width: 90%;
+  }
+
+  .cover-desc {
+    font-size: 9.5pt;
+    color: #64748b;
+    line-height: 1.6;
+    max-width: 85%;
+    border-left: 3px solid #2563eb;
+    padding-left: 14px;
+    margin-top: 24px;
+  }
+
+  .cover-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    border-top: 1px solid #cbd5e1;
+    padding-top: 20px;
+    margin-top: 30px;
+  }
+
+  .meta-item {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .meta-label {
+    font-size: 7.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-weight: 700;
+    color: #64748b;
+    margin-bottom: 2px;
+  }
+
+  .meta-value {
+    font-size: 9.5pt;
+    font-weight: 600;
+    color: #0f172a;
+  }
+
+  /* Headings */
+  h1 {
+    font-size: 17pt;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 22px 0 10px 0;
+    padding-bottom: 6px;
+    border-bottom: 2px solid #2563eb;
+    letter-spacing: -0.3px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  h1 .chapter-num {
+    background: #2563eb;
+    color: #ffffff;
+    font-size: 10pt;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 4px;
+  }
+
+  h2 {
+    font-size: 12.5pt;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 16px 0 8px 0;
+    border-left: 3px solid #2563eb;
+    padding-left: 8px;
+  }
+
+  h3 {
+    font-size: 10pt;
+    font-weight: 700;
+    color: #334155;
+    margin: 12px 0 6px 0;
+  }
+
+  p {
+    margin: 0 0 9px 0;
+  }
+
+  ul, ol {
+    margin: 0 0 10px 0;
+    padding-left: 20px;
+  }
+
+  li {
+    margin-bottom: 4px;
+  }
+
+  /* Keyboard badges */
+  kbd {
+    display: inline-block;
+    padding: 1.5px 5px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 8pt;
+    font-weight: 600;
+    color: #0f172a;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+  }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0 14px 0;
+    font-size: 8.5pt;
+  }
+
+  th {
+    background: #0f172a;
+    color: #ffffff;
+    font-weight: 700;
+    text-align: left;
+    padding: 6px 10px;
+    border: 1px solid #0f172a;
+  }
+
+  td {
+    padding: 5px 10px;
+    border: 1px solid #e2e8f0;
+    vertical-align: top;
+  }
+
+  tr:nth-child(even) {
+    background: #f8fafc;
+  }
+
+  /* Callout Boxes */
+  .callout {
+    padding: 9px 13px;
+    margin: 10px 0;
+    border-radius: 6px;
+    font-size: 8.5pt;
+    border-left: 3.5px solid;
+    page-break-inside: avoid;
+  }
+
+  .callout-note {
+    background: #f0fdf4;
+    border-color: #16a34a;
+    color: #166534;
+  }
+
+  .callout-tip {
+    background: #eff6ff;
+    border-color: #2563eb;
+    color: #1e40af;
+  }
+
+  .callout-warn {
+    background: #fffbeb;
+    border-color: #d97706;
+    color: #92400e;
+  }
+
+  .callout-title {
+    font-weight: 700;
+    margin-bottom: 3px;
+    text-transform: uppercase;
+    font-size: 7.5pt;
+    letter-spacing: 0.5px;
+  }
+
+  /* Table of Contents */
+  .toc-list {
+    list-style: none;
+    padding: 0;
+    margin: 16px 0;
+  }
+
+  .toc-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 5px 0;
+    border-bottom: 1px dotted #cbd5e1;
+    font-size: 9.5pt;
+  }
+
+  .toc-title {
+    font-weight: 600;
+    color: #1e293b;
+  }
+
+  .toc-num {
+    font-weight: 700;
+    color: #2563eb;
+    margin-right: 8px;
+  }
+
+  .toc-page {
+    font-weight: 700;
+    color: #64748b;
+    font-family: monospace;
+  }
+
+  /* Screenshot Card */
+  .screenshot-card {
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 8px;
+    background: #f8fafc;
+    margin: 12px 0;
+    text-align: center;
+    page-break-inside: avoid;
+  }
+
+  .screenshot-img {
+    max-width: 100%;
+    max-height: 240px;
+    border-radius: 4px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  }
+
+  .screenshot-caption {
+    font-size: 8pt;
+    font-weight: 600;
+    color: #64748b;
+    margin-top: 6px;
+  }
+
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin: 10px 0;
+  }
+
+  .feature-box {
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    padding: 10px;
+    border-radius: 6px;
+    page-break-inside: avoid;
+  }
+
+  .feature-box h4 {
+    margin: 0 0 4px 0;
+    font-size: 9pt;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .feature-box p {
+    font-size: 8pt;
+    color: #475569;
+    margin: 0;
+    line-height: 1.45;
+  }
+
+  .step-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    background: #2563eb;
+    color: white;
+    border-radius: 50%;
+    font-size: 7.5pt;
+    font-weight: bold;
+    margin-right: 4px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ==================== COVER PAGE ==================== -->
+<div class="cover-page">
+  <div class="cover-header">
+    <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTAgNjQiIHdpZHRoPSI1MDAiIGhlaWdodD0iMTI4IiByb2xlPSJpbWciIGFyaWEtbGFiZWw9IkJsdUxpbmsiIHhtbG5zOmMycGE9Imh0dHA6Ly9jMnBhLm9yZy9tYW5pZmVzdCI+PG1ldGFkYXRhPjxjMnBhOm1hbmlmZXN0PkFBQVdnbXAxYldJQUFBQWVhblZ0WkdNeWNHRUFFUUFRZ0FBQXFnQTRtM0VEWXpKd1lRQUFBQlpjYW5WdFlnQUFBRWRxZFcxa1l6SnRZUUFSQUJDQUFBQ3FBRGliY1FOMWNtNDZZekp3WVRwbE9USmtNVEkwTkMxbE1UZzVMVFJsTlRBdE9UTTVZaTB4TkRBeU1tTXdOalppTmpjQUFBQURsMnAxYldJQUFBQXBhblZ0WkdNeVlYTUFFUUFRZ0FBQXFnQTRtM0VEWXpKd1lTNWhjM05sY25ScGIyNXpBQUFBQUx4cWRXMWlBQUFBUkdwMWJXUmpZbTl5QUJFQUVJQUFBS29BT0p0eEUyTXljR0V1YVc1bmNtVmthV1Z1ZEM1Mk13QUFBQUFZWXpKemFQWnZzK2lsT3BXUzVxdjRjMmVVK2lvQUFBQndZMkp2Y3FOcFpHTTZabTl5YldGMGJXbHRZV2RsTDNOMlp5dDRiV3hxYVc1emRHRnVZMlZKUkhnc2VHMXdPbWxwWkRveFl6a3dPR1kzTkMxaFpUazJMVFEzTVRRdFltVXdaUzFoTm1VNE9EazRNelJoWldWc2NtVnNZWFJwYjI1emFHbHdhSEJoY21WdWRFOW1BQUFCNG1wMWJXSUFBQUJCYW5WdFpHTmliM0lBRVFBUWdBQUFxZ0E0bTNFVFl6SndZUzVoWTNScGIyNXpMbll5QUFBQUFCaGpNbk5vOUhhNExWN044UUNBdEZQVk5TVDlZd0FBQVpsalltOXlvbWRoWTNScGIyNXpncUptWVdOMGFXOXVhMk15Y0dFdWIzQmxibVZrYW5CaGNtRnRaWFJsY25PaGEybHVaM0psWkdsbGJuUnpnYUpqZFhKc2VDMXpaV3htSTJwMWJXSm1QV015Y0dFdVlYTnpaWEowYVc5dWN5OWpNbkJoTG1sdVozSmxaR2xsYm5RdWRqTmthR0Z6YUZnZ3lFbmk5WkRDd3p1aEt2NjVCUkw1TjM3U1JYM0p4bW4vRTdLTHZ0Wml2b1NrWm1GamRHbHZibmdkWTI5dExtRnVkR2h5YjNCcFl5NWpiR0YxWkdVdWNISnZkbWxrWldScWNHRnlZVzFsZEdWeWM2RjRIMk52YlM1aGJuUm9jbTl3YVdNdWIzSnBaMmx1TFdOdmJtWnBaR1Z1WTJWbmRXNXJibTkzYm10a1pYTmpjbWx3ZEdsdmJuaG1RMnhoZFdSbElIQnliM1pwWkdWa0lIUm9hWE1nWm1sc1pTQmhkQ0IwYUdVZ2NtVnhkV1Z6ZENCdlppQmhJSFZ6WlhJZ1lXNWtJRzFoZVNCb1lYWmxJR055WldGMFpXUWdiM0lnYlc5a2FXWnBaV1FnZEdobElHWnBiR1VnWTI5dWRHVnVkSE11YlhOdlpuUjNZWEpsUVdkbGJuU2haRzVoYldWbVEyeGhkV1JsY21Gc2JFRmpkR2x2Ym5OSmJtTnNkV1JsWlBVQUFBRElhblZ0WWdBQUFFQnFkVzFrWTJKdmNnQVJBQkNBQUFDcUFEaWJjUk5qTW5CaExtaGhjMmd1WkdGMFlRQUFBQUFZWXpKemFDOWZ1VlNoNC80RENBNGFzZnl0L3Y0QUFBQ0FZMkp2Y3FWallXeG5abk5vWVRJMU5tTndZV1JOQUFBQUFBQUFBQUFBQUFBQUFHUm9ZWE5vV0NDUmF0ZTYzczFVTTVPYkxyejFMZEZyQm9Hc0NNMktVSG41eVZYTFJBQVc4MlJ1WVcxbGJtcDFiV0ptSUcxaGJtbG1aWE4wYW1WNFkyeDFjMmx2Ym5PQm9tVnpkR0Z5ZEJpMVpteGxibWQwYUJrZUJBQUFBajVxZFcxaUFBQUFKMnAxYldSak1tTnNBQkVBRUlBQUFLb0FPSnR4QTJNeWNHRXVZMnhoYVcwdWRqSUFBQUFDRDJOaWIzS2xZMkZzWjJaemFHRXlOVFpwYzJsbmJtRjBkWEpsZUUxelpXeG1JMnAxYldKbVBTOWpNbkJoTDNWeWJqcGpNbkJoT21VNU1tUXhNalEwTFdVeE9Ea3ROR1UxTUMwNU16bGlMVEUwTURJeVl6QTJObUkyTnk5ak1uQmhMbk5wWjI1aGRIVnlaV3BwYm5OMFlXNWpaVWxFZUN4NGJYQTZhV2xrT2pObU1tSTFaR1JsTFRkaE5XRXROR0UzWWkxaU1qZ3hMVEZsWmpWaU5UTTVPR05qWW5KamNtVmhkR1ZrWDJGemMyVnlkR2x2Ym5PRG9tTjFjbXg0TFhObGJHWWphblZ0WW1ZOVl6SndZUzVoYzNObGNuUnBiMjV6TDJNeWNHRXVhVzVuY21Wa2FXVnVkQzUyTTJSb1lYTm9XQ0RJU2VMMWtNTERPNkVxL3JrRkV2azNmdEpGZmNuR2FmOFRzb3UrMW1LK2hLSmpkWEpzZUNwelpXeG1JMnAxYldKbVBXTXljR0V1WVhOelpYSjBhVzl1Y3k5ak1uQmhMbUZqZEdsdmJuTXVkakprYUdGemFGZ2daeTJGbC9nTFUzZExBbkdQZHRNU0IwK0kzekY4MllnWEZlNmorZFF3NGt5aVkzVnliSGdwYzJWc1ppTnFkVzFpWmoxak1uQmhMbUZ6YzJWeWRHbHZibk12WXpKd1lTNW9ZWE5vTG1SaGRHRmthR0Z6YUZnZzRsVXduc1poeXMvUzFsQUg2VTFETUZBQkwrSENOODJxM2NKdThjUG13Yk4wWTJ4aGFXMWZaMlZ1WlhKaGRHOXlYMmx1Wm0ralpHNWhiV1Z2UVc1MGFISnZjR2xqSUVacGJHVnpaM1psY25OcGIyNWxNUzR3TGpCcmMzQmxZMVpsY25OcGIyNWxNaTQwTGpBQUFCQTRhblZ0WWdBQUFDaHFkVzFrWXpKamN3QVJBQkNBQUFDcUFEaWJjUU5qTW5CaExuTnBaMjVoZEhWeVpRQUFBQkFJWTJKdmN0S0VXUUlTb2dFbUdDRlpBZ293Z2dJR01JSUJqYUFEQWdFQ0FoUkE1YUFLN3NJNTBMNjRnL29HUWdVOVoxVVRBREFLQmdncWhrak9QUVFEQXpCSk1SY3dGUVlEVlFRS0V3NUJiblJvY205d2FXTXNJRkJDUXpFdU1Dd0dBMVVFQXhNbFFXNTBhSEp2Y0dsaklFTnZiblJsYm5RZ1EzSmxaR1Z1ZEdsaGJITWdVbTl2ZENCRFFUQWVGdzB5TmpBNE1EY3hPRFF6TlRaYUZ3MHlPREE0TURZeE9UUXpOVFphTUVReEZ6QVZCZ05WQkFvVERrRnVkR2h5YjNCcFl5d2dVRUpETVNrd0p3WURWUVFERXlCQmJuUm9jbTl3YVdNZ1EyeGhkV1JsSUVOdmJuUmxiblFnVTJsbmJtbHVaekJaTUJNR0J5cUdTTTQ5QWdFR0NDcUdTTTQ5QXdFSEEwSUFCSmg2Q212TFVCZ0ZGTlUwdlVLbE9WdEU2ZGpkMTdMNVN1d1gwTGVtRmlzQk0zZGtkLzNjeWp4RkEzUW81UzQ2ZlgwL2loWTBWWjdtZmI5S0Y3MDN0NU9qV0RCV01BNEdBMVVkRHdFQi93UUVBd0lIZ0RBVkJnTlZIU1VFRGpBTUJnb3JCZ0VFQVlQb1hnSUJNQXdHQTFVZEV3RUIvd1FDTUFBd0h3WURWUjBqQkJnd0ZvQVV6bEhpQklGT1pGc2orT1BFejVvK25NSFhYTUl3Q2dZSUtvWkl6ajBFQXdNRFp3QXdaQUl3TVhNZEZKNEJldExMVlk3T1J1RTlub3FiYkFaT1puL2FBclh5VHdGQVpmS3JQenhGMnZQb0pOZjErVUNkZzFYR0FqQndYMXpkOVdHcVlrcW1MNVNGcXcxUXlTanIxekpmcEpNOSsxcmREd1NQTE1PUE9qS3VpWGpvVS9wVVVlRzlSd21oWTNCaFpGa05uZ0FBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQVBaWVFPRlVxekltazFYWjdEZ055YXBuZlZ5dnRUVzZ5WE05MDY5dW1oNys3Y2FjZ1RjZEdJbTlBallSU3gwT2FNYnM1OEt2bVF6ZjBRV1FSVDhuNFdhNlJUMD08L2MycGE6bWFuaWZlc3Q+PC9tZXRhZGF0YT4KICA8ZGVmcz48Y2xpcFBhdGggaWQ9InRvcCI+PHJlY3QgeD0iMjAiIHk9IjAiIHdpZHRoPSIyNCIgaGVpZ2h0PSIzMiIvPjwvY2xpcFBhdGg+PC9kZWZzPgogIDxnIGZpbGw9Im5vbmUiIHN0cm9rZS13aWR0aD0iNyI+CiAgICA8Y2lyY2xlIGN4PSIyNCIgY3k9IjMyIiByPSIxNCIgc3Ryb2tlPSIjMGE0YmQ2Ii8+CiAgICA8Y2lyY2xlIGN4PSI0MCIgY3k9IjMyIiByPSIxNCIgc3Ryb2tlPSIjNGFhM2ZmIi8+CiAgICA8Y2lyY2xlIGN4PSIyNCIgY3k9IjMyIiByPSIxNCIgc3Ryb2tlPSIjMGE0YmQ2IiBjbGlwLXBhdGg9InVybCgjdG9wKSIvPgogIDwvZz4KICA8dGV4dCB4PSI3MiIgeT0iNDYiIGZvbnQtZmFtaWx5PSInU2Vnb2UgVUknLHN5c3RlbS11aSwtYXBwbGUtc3lzdGVtLEhlbHZldGljYSxBcmlhbCxzYW5zLXNlcmlmIiBmb250LXNpemU9IjQwIiBmb250LXdlaWdodD0iNzAwIiBsZXR0ZXItc3BhY2luZz0iLTAuOCIgZmlsbD0iIzBhNGJkNiI+Qmx1TGluazwvdGV4dD4KPC9zdmc+Cg==" alt="BluLink Logo" class="cover-logo">
+    <div class="cover-badge">Official User Manual</div>
+  </div>
+
+  <div class="cover-body">
+    <h1 class="cover-title">Geospatial &amp; Link Analysis<br><span>Intelligence Workspace</span></h1>
+    <div class="cover-subtitle">Complete End-to-End Operational Manual &amp; Analytical Field Guide</div>
+    <div class="cover-desc">
+      A comprehensive technical and practical guide for intelligence analysts, investigators, and authorized operators. Covers project management, entity profiling, relationship network mapping, military grid coordinates (MGRS), container grouping, multi-selection, and analytical reporting.
+    </div>
+  </div>
+
+  <div class="cover-meta-grid">
+    <div class="meta-item">
+      <span class="meta-label">Application Version</span>
+      <span class="meta-value">BluLink Suite v1.2 (Production)</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Lead Developer &amp; Architect</span>
+      <span class="meta-value">Rawnald Blu</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Deployment Infrastructure</span>
+      <span class="meta-value">Cloudflare Pages &amp; D1 Serverless Edge DB</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Document Date &amp; Classification</span>
+      <span class="meta-value">October 2026 • Official Documentation</span>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== TABLE OF CONTENTS ==================== -->
+<div>
+  <h1><span class="chapter-num">TOC</span> Table of Contents</h1>
+  <p style="color:#64748b; font-size:9pt;">Quick navigation across all chapters, modules, and operational cheat sheets.</p>
+
+  <ul class="toc-list">
+    <li class="toc-item"><span class="toc-title"><span class="toc-num">01.</span> Executive Overview &amp; Architecture</span><span class="toc-page">Page 2</span></li>
+    <li class="toc-item"><span class="toc-title"><span class="toc-num">02.</span> Getting Started: Authentication &amp; Projects</span><span class="toc-page">Page 3</span></li>
+    <li class="toc-item"><span class="toc-title"><span class="toc-num">03.</span> The Dual-Pane Workspace Interface</span><span class="toc-page">Page 4</span></li>
+    <li class="toc-item"><span class="toc-title"><span class="toc-num">04.</span> Entity Management &amp; Profiling</span><span class="toc-page">Page 5</span></li>
+    <li class="toc-item"><span class="toc-title"><span class="toc-num">05.</span> Relationship &amp; Link Analysis</span><span class="toc-page">Page 6</span></li>
+    <li class="toc-item"><span class="toc-title"><span class="toc-num">06.</span> Geospatial Intelligence &amp; Mapping Engine</span><span class="toc-page">Page 7</span></li>
+    <li class="toc-item"><span class="toc-title"><span class="toc-num">07.</span> Grouping, Containers &amp; Annotation Boxes</span><span class="toc-page">Page 8</span></li>
+    <li class="toc-item"><span class="toc-title"><span class="toc-num">08.</span> Multi-Selection, Marquee &amp; Batch Operations</span><span class="toc-page">Page 9</span></li>
+    <li class="toc-item"><span class="toc-title"><span class="toc-num">09.</span> History, Undo/Redo, Import &amp; Export</span><span class="toc-page">Page 10</span></li>
+    <li class="toc-item"><span class="toc-title"><span class="toc-num">10.</span> Keyboard Shortcuts &amp; Operations Matrix</span><span class="toc-page">Page 11</span></li>
+    <li class="toc-item"><span class="toc-title"><span class="toc-num">11.</span> Operational Troubleshooting &amp; FAQs</span><span class="toc-page">Page 12</span></li>
+  </ul>
+
+  <div class="callout callout-tip">
+    <div class="callout-title">Document Usage Tip</div>
+    This manual is formatted for both electronic reading and direct high-resolution printing. All keyboard shortcuts are enclosed in highlighted keys such as <kbd>Ctrl</kbd> + <kbd>G</kbd> for rapid reference in high-tempo analytical environments.
+  </div>
+</div>
+
+<div class="page-break"></div>
+
+<!-- ==================== CHAPTER 1 ==================== -->
+<h1><span class="chapter-num">01</span> Executive Overview &amp; Architecture</h1>
+
+<p><strong>BluLink</strong> is a next-generation analytical platform designed specifically for intelligence analysts, investigators, defense operators, and data scientists. It provides an integrated environment where complex human, vehicular, infrastructural, and organizational relationships are synchronized in real-time with precise geospatial intelligence.</p>
+
+<h2>1.1 The Dual-Analytical Problem</h2>
+<p>Traditional intelligence workflows suffer from analytical fragmentation: network link diagrams are maintained in one tool, while geographic information is stored in another GIS platform. When an entity moves or a relationship changes, analysts are forced to update both databases manually, introducing transcription latency and error.</p>
+
+<p>BluLink resolves this by establishing an <strong>instant bidirectional reactive bridge</strong> between:</p>
+<ul>
+  <li><strong>Link Analysis Chart (Vis.Network 2D Engine):</strong> Displays entity nodes, organizational hierarchies, multi-hop relationship links, and custom grouping boundaries.</li>
+  <li><strong>Geospatial Intelligence Map (Leaflet GIS Engine):</strong> Visualizes exact GPS locations, 10-figure MGRS military grid coordinates, real-time polyline relationship rays, and co-location clustering over Google Satellite and Terrain basemaps.</li>
+</ul>
+
+<h2>1.2 Core Architectural Stack</h2>
+<table>
+  <thead>
+    <tr>
+      <th style="width:25%;">Component</th>
+      <th style="width:35%;">Technology</th>
+      <th>Operational Role</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Frontend Client</strong></td>
+      <td>Single-Page Architecture, Tailwind CSS</td>
+      <td>Hardware-accelerated HTML5 Canvas with sub-millisecond reaction times.</td>
+    </tr>
+    <tr>
+      <td><strong>Network Engine</strong></td>
+      <td>Vis.js Network Engine 9.1.9</td>
+      <td>Multi-node physics-free rendering, polyline links, customized corner handles.</td>
+    </tr>
+    <tr>
+      <td><strong>Geospatial Engine</strong></td>
+      <td>Leaflet GIS + Google Hybrid/Satellite</td>
+      <td>High-resolution satellite mapping, spiderfied pins, and geo-relationship polylines.</td>
+    </tr>
+    <tr>
+      <td><strong>Edge Backend</strong></td>
+      <td>Cloudflare Pages Functions</td>
+      <td>Serverless API endpoints with zero cold-starts distributed across 300+ global data centers.</td>
+    </tr>
+    <tr>
+      <td><strong>Persistence Layer</strong></td>
+      <td>Cloudflare D1 (Edge SQLite)</td>
+      <td>Transactional storage of projects, entities, relationships, and user credentials.</td>
+    </tr>
+    <tr>
+      <td><strong>Security Engine</strong></td>
+      <td>Web Crypto API Salted SHA-256</td>
+      <td>Zero-knowledge password hashing and cryptographically secure session handling.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="page-break"></div>
+
+<!-- ==================== CHAPTER 2 ==================== -->
+<h1><span class="chapter-num">02</span> Getting Started: Authentication &amp; Projects</h1>
+
+<p>Access to BluLink is protected by multi-factor identity authentication and granular project-level workspaces, ensuring data isolation between investigations.</p>
+
+<h2>2.1 Authentication &amp; Account Setup</h2>
+<p>Authorized operators can authenticate using either enterprise email credentials or single-sign-on (Google OAuth):</p>
+<ol>
+  <li>Navigate to the production workspace URL: <code>https://blulink.pages.dev/</code></li>
+  <li><strong>Sign Up:</strong> Enter an authorized email address and master password. The system sends an automated 6-digit confirmation code via secure SMTP (Resend).</li>
+  <li><strong>Email Verification:</strong> Enter the 6-digit code in the verification modal to unlock workspace privileges.</li>
+  <li><strong>Google OAuth:</strong> Click <em>"Continue with Google"</em> for one-click single sign-on.</li>
+</ol>
+
+<h2>2.2 Project Management Dashboard</h2>
+<p>All investigations are stored as independent projects with dedicated entity tables, link graphs, container zones, and basemap configurations.</p>
+
+<div class="feature-grid">
+  <div class="feature-box">
+    <h4><span class="step-badge">1</span> Create New Project</h4>
+    <p>Click <strong>"New Project"</strong> on the top navigation bar. Enter a descriptive investigation title (e.g., <em>Operation Trident - Cartel Tracking</em>) and confirm creation.</p>
+  </div>
+  <div class="feature-box">
+    <h4><span class="step-badge">2</span> Switch Projects</h4>
+    <p>Click the active project dropdown to instantaneously switch between open cases. All graph positions and map bounds are auto-restored.</p>
+  </div>
+  <div class="feature-box">
+    <h4><span class="step-badge">3</span> Clone Project</h4>
+    <p>Duplicate an entire investigation workspace for branch analysis, hypothesis testing, or red-team exercise modeling without altering the master file.</p>
+  </div>
+  <div class="feature-box">
+    <h4><span class="step-badge">4</span> Auto-Save Engine</h4>
+    <p>Every change made in the workspace is throttled and committed automatically to Cloudflare D1 with local offline cache fallback.</p>
+  </div>
+</div>
+
+<div class="page-break"></div>
+
+<!-- ==================== CHAPTER 3 ==================== -->
+<h1><span class="chapter-num">03</span> The Dual-Pane Workspace Interface</h1>
+
+<p>The BluLink interface is engineered for high situational awareness. It eliminates window switching by presenting both logical relationship structures and physical geographic coordinates simultaneously.</p>
+
+<h2>3.1 Workspace Layout Anatomy</h2>
+<ul>
+  <li><strong>Left Pane — Link Analysis Canvas:</strong> Interactive node-and-edge network chart. Allows drag-and-drop entity arrangement, multi-segment link routing, container zoning, and live marquee selection.</li>
+  <li><strong>Center Splitter Bar:</strong> Draggable divider allowing analysts to resize the Link Chart and Map panes to any desired ratio (e.g., 70% Map / 30% Graph for tactical tracking).</li>
+  <li><strong>Right Pane — Geospatial Map:</strong> High-resolution Leaflet map displaying real-time entity markers, spiderfied clusters, link vectors, and coordinate indicators.</li>
+  <li><strong>Left Sidebar:</strong> Collapsible tool drawer with 5 dedicated tabs:
+    <ul>
+      <li><strong>Palette:</strong> Categorized icons ready to drag or click into the chart.</li>
+      <li><strong>Inspect:</strong> Detailed profile, GPS/MGRS coordinates, and metadata of the selected entity.</li>
+      <li><strong>List:</strong> Searchable tabular directory of all entities and links in the current project.</li>
+      <li><strong>Settings:</strong> Map defaults, basemap selection, and visualization preferences.</li>
+    </ul>
+  </li>
+</ul>
+
+<h2>3.2 Screen Control Buttons</h2>
+<table>
+  <thead>
+    <tr>
+      <th style="width:25%;">Tool</th>
+      <th style="width:20%;">Shortcut</th>
+      <th>Operational Effect</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Fit View</strong></td>
+      <td>Button / Menu</td>
+      <td>Automatically centers and scales the link chart to display all entities with optimal margins.</td>
+    </tr>
+    <tr>
+      <td><strong>Full Screen (Chart)</strong></td>
+      <td>Button / <kbd>Esc</kbd></td>
+      <td>Expands the link chart to occupy 100% of the monitor display for conference briefings.</td>
+    </tr>
+    <tr>
+      <td><strong>Full Screen (Map)</strong></td>
+      <td>Map Control</td>
+      <td>Expands the satellite geospatial map to full screen for spatial route planning.</td>
+    </tr>
+    <tr>
+      <td><strong>Toggle Sidebar</strong></td>
+      <td><kbd>Ctrl</kbd> + <kbd>B</kbd></td>
+      <td>Hides or reveals the analytical sidebar to maximize available canvas area.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="page-break"></div>
+
+<!-- ==================== CHAPTER 4 ==================== -->
+<h1><span class="chapter-num">04</span> Entity Management &amp; Profiling</h1>
+
+<p>Entities represent persons, vehicles, facilities, weapons, organizations, communications, or contraband under active investigation.</p>
+
+
+<div class="screenshot-card">
+  <img src="data:image/png;base64,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" class="screenshot-img" alt="Entities Palette">
+  <div class="screenshot-caption">Figure 4.1: BluLink Comprehensive Entity Palette with intelligence icon library.</div>
+</div>
+
+<h2>4.1 Adding Entities to the Workspace</h2>
+<ul>
+  <li><strong>Method A (Drag &amp; Drop):</strong> Open the <strong>Palette</strong> tab in the sidebar. Select an icon category, then click and drag the icon directly onto any desired location on the Link Chart canvas.</li>
+  <li><strong>Method B (One-Click Placement):</strong> Click on any entity in the Palette or <em>"All Entities"</em> modal; it will be automatically instantiated at the center of the current chart view.</li>
+  <li><strong>Method C (Custom Entity):</strong> Click <em>"Add Custom Entity"</em> to upload custom PNG/SVG/GIF icons, assign custom category tags, and input initial intelligence notes.</li>
+</ul>
+
+<h2>4.2 Selected Entity Identifier</h2>
+<div class="callout callout-note">
+  <div class="callout-title">Visual Selection Indicator (v1.2 Feature)</div>
+  When an entity is selected, it displays clean <strong>solid gray corner framing brackets</strong> (<code>┌ ┐ └ ┘</code>) with corner handle marks positioned precisely at the four corners of the entity icon. It contains <strong>zero background fill</strong> and <strong>no full dashed border</strong>, preserving 100% icon clarity and visual focus.
+</div>
+
+<h2>4.3 Geographic &amp; MGRS Coordinates</h2>
+<p>Every entity can be assigned physical geographic coordinates. BluLink features an embedded real-time coordinate converter supporting:</p>
+<ul>
+  <li><strong>Decimal Degrees (GPS):</strong> Latitude (e.g., <code>14.599512</code>) and Longitude (e.g., <code>120.984222</code>).</li>
+  <li><strong>Military Grid Reference System (MGRS):</strong> Standard NATO 10-figure grid precision (e.g., <code>51RUH1829414210</code>). Typing GPS auto-computes MGRS; typing MGRS auto-computes GPS.</li>
+  <li><strong>Interactive Map Picker (<kbd>Pick on Map</kbd>):</strong> Click the crosshair tool in the Inspector panel, then click anywhere on the satellite map to instantly snap the entity's location.</li>
+</ul>
+
+<div class="page-break"></div>
+
+<!-- ==================== CHAPTER 5 ==================== -->
+<h1><span class="chapter-num">05</span> Relationship &amp; Link Analysis</h1>
+
+<p>Links represent interpersonal communications, financial transfers, operational meetings, logistics supply chains, or familial associations between entities.</p>
+
+
+<div class="screenshot-card">
+  <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFwAAABfCAYAAABle6D2AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAEnQAABJ0Ad5mH3gAAAZkSURBVHhe7ZxBSBtpFMf/0U0jPagU28SsWxEPvXTdiodQWUVYdLfrIRTpoYUNFo8eoiAIuZS9BAKFOIcchWUK7WEJJYe0W0tBanGZg7hrt4ceNOhmY4JSWi81jegeMomTrzNxksx8Y+P7wYB538zk5Tdv3jfDB9o+fvx4BIIbDWyAMBcSzpGNjQ0Szhubsof/sfpv6egp5afeb9jQFwFVuAWQcM6QcM5YLnw9vQ/p7R6kt3tYT++zw3WHZcKzB4d4uJjBy9fvkc0dIps7xMvX7/FwMYPswSG7e91gmfDoqx1cbLHj7rALg1dbMXi1FXeHXbjYYkf01Q67e91gifD19D6yuSMM915ghzDcewHZ3FHdthdLhO9++ITu9iY2XKS7vQm7Hz6x4Zr5+dc/SzYrsOTFR3q7h2zuEINXW9khAMDLf97DYW+A50ozOwTU8OJTq+Qn966zoYqw7MWnreUc1re1W8b69j7aWs6x4brAkgrPHhziwYsMOi85Puvjz1ffYedDDneGnCVxJUZVeK0VWykbGxv8hWcPDhF9tYPdvRzOOxrR2GAr9vP17X047DaMfX8Rjq+0b75qhUMhnbdsWNFSlLLbmu345QcnBr9thcPeAIe9AYPftuLOkLOs7C8dbr+MlV2o4m5XEzxXmuG50oxul/aTS73ARbiW7LOI6b+aZJdi6i8n2Z9j2q8n2eqYYoBka2O4BZJdHkNNkOyTMcwGydaHIUZItn4qtsKuQZLsytBtRmsN8sGLDMmuAN12tNYgOy85cN7RSLJ1osvQSWuQjQ02JHeNXxKrR3QJt2oNsh7RJZwwDl3C62kN8sm965as9hTQJbzb1QSH3Ybnq+/YITxffQeH3XYmFg+MQPeaZuF5O5s7qngN0mhqWdO0kqoWkdfT+8UJsq3lnCWV/SULr7gsz9oapNFULJyoDRLOGRLOmZJJkzCXqiZNojZIOGeqFC4h7J1CNMnGwpCUIVXUjjUAKQyv11vcpgz/AmOoUrgaHkzHpuFhwzyQwvAGgUAshpi8zY11sHudCgwUrqxc+e/ocdWpV5yEsNeL8Mm3RRmSiD7ahC+idbHz35HPQ3ln5XMMh6fgnYoieWLOivMUE2bPcTIGCmdJQNzqz1dcYAgJ8Xem3SQRnXqEy5EYptVN6SMpYQkD8GgUtBQOYtMXkfPohHhfKSaBzcsziM2NIX+4ds5SOAgEYojFIvBtPlJcOPYc5TFReBd8t2STnn4MYRNJRQks3Z/E1u05mHvnS1he7MJA4Wp4+jGUWIJUzEMxJn9Wz1nC8iKwGPTC652EmEhg67/jY0rPUR4ThZcjAaALm8orUC0dHegskWgWXfBFjueIau9Ki4R3YWBmDre3JjV6eyV4cMsHplVIiEaTADzoH0pgqXA1pGUsdmm3H22+xuUuxXlqoAbhCYiT7CRSGZ7pCAaWJqs+vkDH2BwiA0uYLE6Oy+iQe5VnOoBOcTIfD27CN6Ov15bSgbEZH1A4j67HX3Xo1Z4j9GpvASScMyScMyScMyScMyScM6Y8Ft68eZMN4fHjx2zozGHaYyErl/18ljFFOBSSSXYpprQUQh3TWgqhDQnnDAnnDAnnDAnnDAnnDAnnDAnnDAnnDAnnDAnnDAnnTI3C1yD6RayxYUNZg+gPYSHDxqExpjcntWPNp0bhp5Ee+AQfetjwKcFA4XLFLIjw+/3w+/0IKconsxCS48rqW4Mo7+sXC9H8eUQxBH8ohJB/HitIIR4sPZ82ysotn9Mx+TwKKajnagwGCgeAFOLpaxAEAcJEH1LxZ3LCa3gWb8eEIEBQVN+aOA9MCBCEAEa3nypu7xS2XeMQZmcxK0ygD26MBgTMjmj/T3FttHIqkMFC6ClcAQG+HmjmahQGC3dj9Ec5xZ5r6MM20hkAcMLlXsF8sYoBYA1/rQAr8374/UHEUyl5XwBwo/e7auSqoZVTntXfgkjfmMXxtVTL1TgMFq6FEyOzAgKup8xtmq9cQchv+QrjSQqAG9vKK6CZqzFwEp7HOTKOUbey6lNY/Vutp/LCjd7xWdxIBz/r7aW5Ggcn4YXJMYh4+w359nViZHwUiAdPmKB6cK2v3KSZHyudeCujxxdA72pQPl4tV+OgRWSO0CKyBZBwzpBwzlAP5wxVOGdIOGdsb968oZbCEVsqlSLhHKGWwhkSzpn/AUpoazv8RpMSAAAAAElFTkSuQmCC" class="screenshot-img" alt="Adding Links">
+  <div class="screenshot-caption">Figure 5.1: Live connection mode linking target entities with directional flow.</div>
+</div>
+
+<h2>5.1 Creating Relationship Links</h2>
+<ul>
+  <li><strong>Quick Draw Mode:</strong> Open the <strong>Draw Tools</strong> dropdown and select <strong>Draw Link</strong> (or hold <kbd>Shift</kbd> and drag directly from any entity). Click and release on the destination entity or container box.</li>
+  <li><strong>Two-Click Mode:</strong> In Draw Link mode, click once on the source node, then click once on the target node.</li>
+</ul>
+
+<h2>5.2 Link Attributes &amp; Directionality</h2>
+
+<div class="screenshot-card">
+  <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALwAAAB/CAYAAABVNaixAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAEnQAABJ0Ad5mH3gAAARySURBVHhe7ds/buJoGMfxH3sCn8FBQvJ0KXIDoKCiSE+5abKUS7HVFqw0DZPGW9KncEXBcAMX6RYJafAZ3huwBZhxPCLmnw3h+X6kRwq2o1B8DS8xrjnnVgKM+C2/AbhlBA9TCB6mEDxMyQWfKGx58lqhkvc7gJvwPvhkqkg99RRpSvG4Qe+CT6aR1H1WJ4gVpcUnoVqtUGHfk+f1Ncs/To/xPHleblv6TpGEaqXblShsrX9OwtbmdzLvKkmoltdSyAmHEmSCTzSNpG7bV7PTUxxNfy5r4oEWHSfnRmr+8nim/v1AwauTc05vw7ke+zPJryuIF1puTqSgJ01mkrTUQg3dJaF+HwR6devfew3WxwJl+hl8MlWkrtq+pGZHvTizrHkY6rm5PfL94+SH5pnHfrurh/FEMzXV6c31I5GWi0Cd54bmk9n6+KAu368r0FiPm1f+5mhzMvlP+u6+68nP/D3gTLbBJ9NIcTzQvefJ8x41VmZZc6S7hrRYzjSZN3Tnt9WdTzRbLhR0mpKaGjkn5zqaZJdCQIm2wU+jWL3NssQ5J/eaW9bs4tcVxAO9bGpNppHiXkfNzau9vn7VvNuWL1/trjSZSI279Vq9Hyab8N80fFi/G7CGR5m2wUfKLVvSZU3hwrqp0dtQ88f1h8/7QaDXUbq+qUvx+nNB+nA8b6yXTX5dGtxvPrTeK+r+yzIGpavx5TFYwpVWmELwMIXgYQrBwxSChykED1O2/5Z8Ccf5fcDVe37q5Td96F3wf/35R34/cLX+/ufb6cHXBv/ljwGuzmr45ajgWcPDFIKHKQQPUwgephA8TCF4mELwMIXgYcrBF55Wwy/5TcDZ7dPhMReeDg4euAbHBs+SBqYQPEwheJhC8DCF4GEKwcMUgocpBA9TCB6m/HKlFfgsuNIKFCB4mELwMIXgYQrBwxSCx8XUarX8ptIRPC6qVqttpwoEj6tRRfgHB589IxnmlNmlaP8pDg5+tVoxzFlml6L9pzg4eKAsZYaeInhc1D6v+OdE8LiYqiLPIniYQvAwheBhCsHDFIKHKQQPUwgephA8TCF4mELwMIXgYQrBw5SzBF/Wl/WBczs6+H3uXAGuzcHBEzk+s72DLwo9f78iw5wyZdk7+KK7UvL3KzLMKVOWvYNPlf2EgDIdHHyqirMROLejg88ienwWZwke+CwIHqYQPEwheJhC8DCF4GEKwcMUgocpBA9TCB6mEDxMIXiYcrbgy/zSPm7TJZo5Kfgq7lDBbau6oaOCr/IJwo4qujoo+KInlD1bGaZodinaf4qDgi+6wyl/XyLDfDS7FO0/xUHBp8p8QrCriq6OCj61z9kKfKTqhk4KPquqJ4zbcYlmzhY88BkQPEwheJhC8DCF4GEKwcMUgocpBA9TCB6mEDxMIXiYQvAwheBhCsHDFIKHKQQPUwgephA8TCF4mELwMIXgYQrBwxSChykED1NqzrmVJL2E4/w+4Oo9P/Xymz60DR6wgCUNTCF4mELwMIXgYQrBw5T/ARMAqHUkliNyAAAAAElFTkSuQmCC" class="screenshot-img" alt="Link Types">
+  <div class="screenshot-caption">Figure 5.2: Link properties dialog for strength, style, width, and arrows.</div>
+</div>
+
+<p>Double-click any link line on the chart (or polyline on the map) to open the <strong>Edit Link Modal</strong>:</p>
+<ul>
+  <li><strong>Relationship Label:</strong> Contextual text (e.g., <em>"Satellite Phone Call (34 mins)"</em>, <em>"Funds Transfer $50,000"</em>).</li>
+  <li><strong>Link Strength:</strong> Confirmed (solid), Suspected (dashed), or Weak (dotted).</li>
+  <li><strong>Directional Arrows:</strong> None (undirected association), Forward (➔), Backward (⬅), or Bidirectional (⬌).</li>
+  <li><strong>Color &amp; Stroke Width:</strong> Fully customizable color palette and stroke thickness (1px to 8px).</li>
+</ul>
+
+<h2>5.3 Multi-Segment / Polyline Routing (Diamond Corners)</h2>
+<p>To prevent messy line crossings in complex graphs, BluLink supports draggable polyline corners:</p>
+<ul>
+  <li><strong>Add Corner:</strong> Open <em>Draw Tools</em> ➔ <em>Add Corner</em>. Click on any link segment to insert a draggable <strong>diamond handle</strong> (<code>◆</code>). Drag the diamond to route the connection cleanly around other clusters.</li>
+  <li><strong>Delete Corner:</strong> Select <em>Draw Tools</em> ➔ <em>Delete Corner</em> and click any diamond handle (or select the diamond and press <kbd>Delete</kbd>).</li>
+</ul>
+
+<div class="page-break"></div>
+
+<!-- ==================== CHAPTER 6 ==================== -->
+<h1><span class="chapter-num">06</span> Geospatial Intelligence &amp; Mapping Engine</h1>
+
+<p>The right pane delivers high-performance tactical mapping powered by Leaflet GIS and Google Maps tiles.</p>
+
+<h2>6.1 Basemap Layers</h2>
+<p>Analysts can switch basemaps instantaneously via the map layer control:</p>
+<ul>
+  <li><strong>Google Hybrid (Default):</strong> High-resolution satellite imagery overlaid with road vectors and place names.</li>
+  <li><strong>Google Satellite:</strong> Pure satellite reconnaissance imagery for terrain and obstacle assessment.</li>
+  <li><strong>Google Terrain / Street:</strong> Topographic elevation contours and road networks.</li>
+  <li><strong>OpenStreetMap:</strong> High-contrast municipal street mapping.</li>
+</ul>
+
+<h2>6.2 Co-Location Clustering &amp; Spiderfy</h2>
+<p>When multiple entities share the exact same location (e.g., multiple suspects arrested in the same safehouse), BluLink prevents marker overlap by automatically engaging a <strong>radial spiderfy cluster</strong> upon click. Each entity fans out in a circle with a direct tether to the true ground coordinate.</p>
+
+<h2>6.3 Synchronized Geospatial Links</h2>
+<p>Whenever a relationship link exists between two entities with geographic coordinates, BluLink automatically renders a vector polyline between their map pins. The line features:</p>
+<ul>
+  <li>Exact synchronized color, thickness, and dash style matching the network chart.</li>
+  <li><strong>Angle-Aligned Floating Text:</strong> The relationship label is dynamically rotated and positioned parallel to the vector line angle for seamless geospatial reading.</li>
+</ul>
+
+<div class="page-break"></div>
+
+<!-- ==================== CHAPTER 7 ==================== -->
+<h1><span class="chapter-num">07</span> Grouping, Containers &amp; Annotation Boxes</h1>
+
+<p>To represent jurisdictional perimeters, suspect cells, military task forces, or operational zones, BluLink provides intelligent container boxes.</p>
+
+<h2>7.1 Group Boxes &amp; Text Annotations</h2>
+<ul>
+  <li><strong>Group Boxes:</strong> Boundary containers with customizable dashed/solid borders, background color fill opacity (0% to 100%), and corner title badges (e.g., <em>"Suspect Cell Alpha"</em>, <em>"Northern Operations Area"</em>).</li>
+  <li><strong>Text Boxes:</strong> Word-wrapped multiline text placards for analytical commentary, date/time stamps, or executive summary text directly on the canvas.</li>
+</ul>
+
+<h2>7.2 Hierarchical Nesting (Boxes Inside Boxes)</h2>
+<div class="callout callout-tip">
+  <div class="callout-title">Smart Depth Hierarchy (v1.2 Feature)</div>
+  BluLink features a sophisticated <strong>area-based hierarchical hit-testing and rendering engine</strong>. When smaller boxes or entities are placed inside a larger container box:
+  <ul>
+    <li>The larger container box renders in the deepest background layer.</li>
+    <li>Clicking or double-clicking an inner box targets the <strong>innermost box directly</strong>. The inner box can be edited, resized, and duplicated without interference from the larger parent box.</li>
+    <li>Clicking on the parent box's border, header badge, or empty padding selects the parent box.</li>
+  </ul>
+</div>
+
+<h2>7.3 Interactive Selection Pills</h2>
+<p>When any container box is selected, three dedicated one-click action pill buttons appear immediately above its top-right corner:</p>
+<ul>
+  <li><strong><code>✎ Edit Box</code>:</strong> Opens the modal to modify title, border width, dash style, fill color, and dimensions.</li>
+  <li><strong><code>⎘ Duplicate</code>:</strong> Clones the box with identical properties and styles.</li>
+  <li><strong><code>🔓 Ungroup</code>:</strong> Instantly dissolves the container box while preserving all entities and links inside intact.</li>
+</ul>
+
+<div class="page-break"></div>
+
+<!-- ==================== CHAPTER 8 ==================== -->
+<h1><span class="chapter-num">08</span> Multi-Selection, Marquee &amp; Batch Operations</h1>
+
+<p>Analyzing large datasets requires batch operations to group, move, or delete collections of entities and links simultaneously.</p>
+
+<h2>8.1 Multi-Selection Techniques</h2>
+<div class="feature-grid">
+  <div class="feature-box">
+    <h4><span class="step-badge">A</span> Shift / Ctrl + Click</h4>
+    <p>Hold <kbd>Shift</kbd> or <kbd>Ctrl</kbd> while clicking on any entity, box, or link to toggle its selection state without deselecting other items.</p>
+  </div>
+  <div class="feature-box">
+    <h4><span class="step-badge">B</span> Rubberband Marquee Drag</h4>
+    <p>Hold <kbd>Shift</kbd> and drag on empty canvas to draw a blue dashed selection box. Releasing automatically selects all entities, boxes, and links enclosed.</p>
+  </div>
+  <div class="feature-box">
+    <h4><span class="step-badge">C</span> Select All (<kbd>Ctrl+A</kbd>)</h4>
+    <p>Press <kbd>Ctrl</kbd> + <kbd>A</kbd> to select every entity, container box, and link in the current investigation workspace.</p>
+  </div>
+  <div class="feature-box">
+    <h4><span class="step-badge">D</span> Clear Selection (<kbd>Esc</kbd>)</h4>
+    <p>Press <kbd>Esc</kbd> or click the ✕ button to instantly clear all active selections and dismiss floating bars.</p>
+  </div>
+</div>
+
+<h2>8.2 Grouping (<kbd>Ctrl+G</kbd>)</h2>
+<p>When two or more items (entities, boxes, or links) are selected:</p>
+<ul>
+  <li>A floating pill action bar appears at the top displaying: <code>2 entities, 1 box selected [ Group (Ctrl+G) ]</code>.</li>
+  <li>Press <strong><kbd>Ctrl</kbd> + <kbd>G</kbd></strong> (or click <em>Group</em> in the floating bar or <em>Draw Tools</em> menu).</li>
+  <li>BluLink calculates the exact bounding box enclosing all selected items, adds standard 28px padding, and wraps them in a new Group Box automatically.</li>
+</ul>
+
+<h2>8.3 Ungrouping (<kbd>Ctrl+Shift+G</kbd> / <kbd>Ctrl+U</kbd>)</h2>
+<p>To dissolve a group box without deleting the records inside:</p>
+<ul>
+  <li>Select the Group Box (or select any entity inside it) and press <strong><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>G</kbd></strong> or <strong><kbd>Ctrl</kbd> + <kbd>U</kbd></strong>.</li>
+  <li>Alternatively, click the <strong><code>🔓 Ungroup</code></strong> pill button above the box or in the Edit Box modal footer.</li>
+  <li>The container box is safely removed; all entities, icons, links, and coordinates remain completely intact.</li>
+</ul>
+
+<div class="page-break"></div>
+
+<!-- ==================== CHAPTER 9 ==================== -->
+<h1><span class="chapter-num">09</span> History, Undo/Redo, Import &amp; Export</h1>
+
+<h2>9.1 Undo &amp; Redo Architecture</h2>
+<p>BluLink records every workspace mutation into an in-memory chronological state stack:</p>
+<ul>
+  <li><strong>Undo (<kbd>Ctrl+Z</kbd>):</strong> Steps back one operation (supports entity deletion, link creation, box resizing, grouping, and coordinate changes).</li>
+  <li><strong>Redo (<kbd>Ctrl+Y</kbd> or <kbd>Ctrl+Shift+Z</kbd>):</strong> Re-applies the previously undone state.</li>
+</ul>
+
+<h2>9.2 Exporting Analytical Products</h2>
+<p>Completed link and geospatial charts can be exported for tactical intelligence briefings and court evidentiary presentations:</p>
+<table>
+  <thead>
+    <tr>
+      <th style="width:25%;">Format</th>
+      <th style="width:30%;">Output Target</th>
+      <th>Recommended Operational Use</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>JSON Backup</strong></td>
+      <td>Raw encrypted data file</td>
+      <td>Full forensic backup. Can be imported into another BluLink instance to restore 100% of the project.</td>
+    </tr>
+    <tr>
+      <td><strong>High-Res PNG</strong></td>
+      <td>Raster Graphic Image</td>
+      <td>Briefing slides, PowerPoint presentations, printed intelligence summaries, and operational case files.</td>
+    </tr>
+    <tr>
+      <td><strong>CSV Spreadsheet</strong></td>
+      <td>Comma-Separated Values</td>
+      <td>Tabular export of entity profiles, phone numbers, MGRS coordinates, and relationship matrices for Excel.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>9.3 Restoring Workspace from Backup</h2>
+<p>To restore or share a project, click <strong>"Import Backup"</strong> in the project menu. Select the <code>.json</code> file; BluLink verifies schema integrity, updates nodes and links, recalculates MGRS grids, and mounts the workspace immediately.</p>
+
+<div class="page-break"></div>
+
+<!-- ==================== CHAPTER 10 ==================== -->
+<h1><span class="chapter-num">10</span> Keyboard Shortcuts &amp; Operations Matrix</h1>
+
+<p>Power users can navigate, model, and analyze intelligence records rapidly using the following standardized keyboard accelerators:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width:22%;">Shortcut</th>
+      <th style="width:30%;">Function</th>
+      <th>Context &amp; Behavioral Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><kbd>Ctrl</kbd> + <kbd>G</kbd></td>
+      <td><strong>Group Selected</strong></td>
+      <td>Wraps 2 or more selected entities, boxes, or links into an enclosing container box.</td>
+    </tr>
+    <tr>
+      <td><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>G</kbd></td>
+      <td><strong>Ungroup Box</strong></td>
+      <td>Dissolves the container box while preserving all internal entities and links.</td>
+    </tr>
+    <tr>
+      <td><kbd>Ctrl</kbd> + <kbd>U</kbd></td>
+      <td><strong>Ungroup Box (Alt)</strong></td>
+      <td>Alternative one-hand shortcut to dissolve the selected group box.</td>
+    </tr>
+    <tr>
+      <td><kbd>Ctrl</kbd> + <kbd>A</kbd></td>
+      <td><strong>Select All</strong></td>
+      <td>Selects every entity, box, and link in the current workspace.</td>
+    </tr>
+    <tr>
+      <td><kbd>Shift</kbd> + Click</td>
+      <td><strong>Multi-Select Item</strong></td>
+      <td>Toggles an individual entity, box, or link in the active selection set.</td>
+    </tr>
+    <tr>
+      <td><kbd>Shift</kbd> + Drag</td>
+      <td><strong>Marquee Drag-Select</strong></td>
+      <td>Draws a rubberband selection rectangle on empty canvas to batch-select items.</td>
+    </tr>
+    <tr>
+      <td><kbd>Ctrl</kbd> + <kbd>Z</kbd></td>
+      <td><strong>Undo Action</strong></td>
+      <td>Reverts the last graph, box, coordinate, or link modification.</td>
+    </tr>
+    <tr>
+      <td><kbd>Ctrl</kbd> + <kbd>Y</kbd></td>
+      <td><strong>Redo Action</strong></td>
+      <td>Re-applies the most recently undone workspace state.</td>
+    </tr>
+    <tr>
+      <td><kbd>Ctrl</kbd> + <kbd>C</kbd></td>
+      <td><strong>Copy Selected</strong></td>
+      <td>Copies selected entities, internal links, or boxes into the BluLink clipboard.</td>
+    </tr>
+    <tr>
+      <td><kbd>Ctrl</kbd> + <kbd>X</kbd></td>
+      <td><strong>Cut Selected</strong></td>
+      <td>Copies selection to clipboard and removes them from the canvas.</td>
+    </tr>
+    <tr>
+      <td><kbd>Ctrl</kbd> + <kbd>V</kbd></td>
+      <td><strong>Paste Clipboard</strong></td>
+      <td>Pastes items from clipboard with automatic 40px visual offset.</td>
+    </tr>
+    <tr>
+      <td><kbd>Ctrl</kbd> + <kbd>D</kbd></td>
+      <td><strong>Duplicate Selected</strong></td>
+      <td>One-step duplicate for selected entity, text box, or container box.</td>
+    </tr>
+    <tr>
+      <td><kbd>Enter</kbd> or <kbd>F2</kbd></td>
+      <td><strong>Edit Selected Item</strong></td>
+      <td>Opens the edit modal for the currently selected container box or text box.</td>
+    </tr>
+    <tr>
+      <td><kbd>Delete</kbd> / <kbd>Backspace</kbd></td>
+      <td><strong>Delete Selected</strong></td>
+      <td>Deletes selected entities, links, boxes, or diamond corner handles.</td>
+    </tr>
+    <tr>
+      <td><kbd>Ctrl</kbd> + <kbd>B</kbd></td>
+      <td><strong>Toggle Sidebar</strong></td>
+      <td>Expands or collapses the left analytical drawer.</td>
+    </tr>
+    <tr>
+      <td><kbd>Esc</kbd></td>
+      <td><strong>Escape / Cancel</strong></td>
+      <td>Cancels active drawing modes, closes modals, exits full screen, and clears selection.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="page-break"></div>
+
+<!-- ==================== CHAPTER 11 ==================== -->
+<h1><span class="chapter-num">11</span> Operational Troubleshooting &amp; FAQs</h1>
+
+<div class="avoid-break">
+  <h3>Q1: Why does an entity not appear on the geospatial map?</h3>
+  <p><strong>Resolution:</strong> The entity must have valid geographic coordinates. Select the entity, open the <strong>Inspect</strong> tab in the sidebar, and confirm that both Latitude and Longitude are populated. You can also click <kbd>Pick on Map</kbd> and click the map directly to assign coordinates.</p>
+</div>
+
+<div class="avoid-break">
+  <h3>Q2: Can I edit an inner box when it is covered by a larger container box?</h3>
+  <p><strong>Resolution:</strong> Yes! BluLink v1.2 incorporates an intelligent hierarchical hit-testing engine. Simply double-click directly inside the inner box or on its border to open its edit modal. To edit the outer parent box, double-click on the parent box's title badge or outside the boundary of the inner box.</p>
+</div>
+
+<div class="avoid-break">
+  <h3>Q3: What coordinate precision does the MGRS converter support?</h3>
+  <p><strong>Resolution:</strong> BluLink includes a specialized military grid library (<code>mgrs.min.js</code>) that computes standard 10-figure MGRS grids, providing 1-meter ground resolution accuracy for tactical military and defense operations.</p>
+</div>
+
+<div class="avoid-break">
+  <h3>Q4: Does ungrouping a box delete the entities or relationship links inside?</h3>
+  <p><strong>Resolution:</strong> No. Ungrouping safely dissolves only the visual container boundary box. All entities, icons, links, attributes, and geospatial coordinates remain completely untouched.</p>
+</div>
+
+<div class="avoid-break">
+  <h3>Q5: How do I export a high-resolution chart without UI buttons for presentations?</h3>
+  <p><strong>Resolution:</strong> Click the <strong>Export</strong> dropdown in the top action bar and select <strong>Export Image (PNG)</strong>. The system renders a clean, transparent or solid-background high-dpi canvas screenshot excluding all menus, banners, and toolbars.</p>
+</div>
+
+<div style="margin-top: 40px; border-top: 2px solid #0f172a; padding-top: 14px; text-align: center; color: #64748b; font-size: 8pt;">
+  <strong>BluLink Intelligence Analysis Workspace</strong> • Developed by Rawnald Blu • Official Operational Documentation<br>
+  For technical inquiries or deployment updates, visit <code>https://blulink.pages.dev/</code>
+</div>
+
+</body>
+</html>
