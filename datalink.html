@@ -1724,6 +1724,14 @@
             </button>
           </div>
         </div>
+
+        <!-- 3. Exit Fullscreen Button (Shown in Fullscreen mode, aligned in toolbar with other buttons) -->
+        <button id="btnExitFullscreenNet" type="button" title="Exit Full Screen (Esc)"
+          class="hidden btn-primary btn-chart-ctrl py-1.5 px-2.5 sm:px-3 text-xs items-center gap-1.5 sm:gap-2 font-bold shadow-sm transition cursor-pointer">
+          <i class="fi fi-rr-cross text-xs"></i>
+          <span>Exit Full Screen</span>
+          <kbd class="ml-1 text-[10px] bg-white/20 px-1 py-0.5 rounded font-mono">Esc</kbd>
+        </button>
       </div>
     </div>
 
@@ -1789,12 +1797,7 @@
       <button id="btnDeselectMulti" type="button" class="text-black/60 hover:text-black font-bold text-xs px-1.5 py-0.5 rounded-full hover:bg-black/5" title="Clear selection (Esc)">✕</button>
     </div>
 
-    <!-- Exit Fullscreen Button (Shown in Fullscreen mode) -->
-    <button id="btnExitFullscreenNet" type="button" title="Exit Full Screen (Esc)" class="hidden absolute top-2.5 right-2.5 z-30 btn-primary py-1.5 px-3 text-xs shadow-2xl flex items-center gap-1.5">
-      <i class="fi fi-rr-cross text-xs"></i>
-      <span>Exit Full Screen</span>
-      <kbd class="ml-1 text-[10px] bg-white/20 px-1 py-0.5 rounded font-mono">Esc</kbd>
-    </button>
+
 
     <!-- Vis.Network Container (Pure White) -->
     <div id="net" class="flex-1 w-full h-full bg-white"></div>
@@ -8874,7 +8877,10 @@ function enterFullscreenNet() {
     netSec.classList.add("w-full", "h-full", "flex-1");
   }
 
-  if ($("btnExitFullscreenNet")) $("btnExitFullscreenNet").classList.remove("hidden");
+  if ($("btnExitFullscreenNet")) {
+    $("btnExitFullscreenNet").classList.remove("hidden");
+    $("btnExitFullscreenNet").classList.add("flex");
+  }
   if ($("btnFullscreenNetText")) $("btnFullscreenNetText").textContent = "Exit Full Screen";
   if ($("iconEnterFullscreenNet")) $("iconEnterFullscreenNet").classList.add("hidden");
   if ($("iconExitFullscreenNet")) $("iconExitFullscreenNet").classList.remove("hidden");
@@ -8913,7 +8919,10 @@ function exitFullscreenNet() {
 
   updateSidebarUI();
 
-  if ($("btnExitFullscreenNet")) $("btnExitFullscreenNet").classList.add("hidden");
+  if ($("btnExitFullscreenNet")) {
+    $("btnExitFullscreenNet").classList.add("hidden");
+    $("btnExitFullscreenNet").classList.remove("flex");
+  }
   if ($("btnFullscreenNetText")) $("btnFullscreenNetText").textContent = "Full Screen";
   if ($("iconEnterFullscreenNet")) $("iconEnterFullscreenNet").classList.remove("hidden");
   if ($("iconExitFullscreenNet")) $("iconExitFullscreenNet").classList.add("hidden");
