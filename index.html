@@ -9341,77 +9341,177 @@ function fitMapPins() {
   }
 }
 
+function getNetworkBoundingBox() {
+  const nodePositions = (net && typeof net.getPositions === "function") ? net.getPositions() : {};
+  const nodeIds = Object.keys(nodePositions);
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+
+  nodeIds.forEach(id => {
+    const pos = nodePositions[id];
+    if (pos && typeof pos.x === "number" && typeof pos.y === "number") {
+      if (pos.x < minX) minX = pos.x;
+      if (pos.x > maxX) maxX = pos.x;
+      if (pos.y < minY) minY = pos.y;
+      if (pos.y > maxY) maxY = pos.y;
+    }
+  });
+
+  if (typeof data !== "undefined" && data && Array.isArray(data.boxes)) {
+    data.boxes.forEach(b => {
+      if (b && typeof b.x === "number" && typeof b.y === "number") {
+        if (b.x < minX) minX = b.x;
+        if (b.x + (b.w || b.width || 0) > maxX) maxX = b.x + (b.w || b.width || 0);
+        if (b.y < minY) minY = b.y;
+        if (b.y + (b.h || b.height || 0) > maxY) maxY = b.y + (b.h || b.height || 0);
+      }
+    });
+  }
+
+  if (!isFinite(minX) || !isFinite(maxX)) {
+    minX = -500; maxX = 500; minY = -400; maxY = 400;
+  }
+
+  return { minX, maxX, minY, maxY, width: Math.max(300, maxX - minX), height: Math.max(200, maxY - minY) };
+}
+
 function exportWorkstation(format = "png") {
   closeExportNetMenu();
+  const netContainer = $("net");
   const netCanvas = document.querySelector("#net canvas");
-  if (!netCanvas) {
+  if (!net || !netCanvas || !netContainer) {
     alert("No active network chart canvas found to export.");
     return;
   }
 
-  setStatus(`Exporting Workstation as ${format.toUpperCase()}...`);
+  setStatus(`Generating Ultra-HD ${format.toUpperCase()} export...`);
 
-  try {
-    const offCanvas = document.createElement("canvas");
-    offCanvas.width = netCanvas.width;
-    offCanvas.height = netCanvas.height;
-    const ctx = offCanvas.getContext("2d");
+  // Calculate High-Definition target resolution (UHD / 4K / 300 DPI equivalent)
+  const bbox = getNetworkBoundingBox();
+  const paddedW = bbox.width + 300;
+  const paddedH = bbox.height + 300;
+  const aspect = paddedW / paddedH;
 
-    // Pure white background
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, offCanvas.width, offCanvas.height);
-    ctx.drawImage(netCanvas, 0, 0);
-
-    if (format === "png") {
-      const dataUrl = offCanvas.toDataURL("image/png");
-      triggerFileDownload(dataUrl, getExportFilename("Workstation", "png"));
-      setStatus("Workstation exported as PNG");
-    } else if (format === "jpeg") {
-      const dataUrl = offCanvas.toDataURL("image/jpeg", 0.95);
-      triggerFileDownload(dataUrl, getExportFilename("Workstation", "jpg"));
-      setStatus("Workstation exported as JPEG");
-    } else if (format === "pdf") {
-      const imgData = offCanvas.toDataURL("image/jpeg", 0.95);
-      if (window.jspdf && window.jspdf.jsPDF) {
-        const { jsPDF } = window.jspdf;
-        const isLandscape = offCanvas.width >= offCanvas.height;
-        const pdfWidth = isLandscape ? 842 : 595;
-        const pdfHeight = isLandscape ? 595 : 842;
-        const pdf = new jsPDF({
-          orientation: isLandscape ? "landscape" : "portrait",
-          unit: "pt",
-          format: "a4"
-        });
-        const margin = 20;
-        const availWidth = pdfWidth - margin * 2;
-        const availHeight = pdfHeight - margin * 2;
-        const imgRatio = offCanvas.width / offCanvas.height;
-        let drawWidth = availWidth;
-        let drawHeight = drawWidth / imgRatio;
-        if (drawHeight > availHeight) {
-          drawHeight = availHeight;
-          drawWidth = drawHeight * imgRatio;
-        }
-        const posX = margin + (availWidth - drawWidth) / 2;
-        const posY = margin + (availHeight - drawHeight) / 2;
-
-        pdf.addImage(imgData, "JPEG", posX, posY, drawWidth, drawHeight);
-        pdf.save(getExportFilename("Workstation", "pdf"));
-        setStatus("Workstation exported as PDF");
-      } else {
-        const printWin = window.open("", "_blank");
-        if (printWin) {
-          printWin.document.write(`<html><head><title>${getExportFilename("Workstation", "pdf")}</title><style>@page{size:landscape;margin:0}body{margin:0;display:flex;justify-content:center;align-items:center;height:100vh}img{max-width:100%;max-height:100%}</style></head><body><img src="${imgData}" onload="window.print();window.close();"/></body></html>`);
-          printWin.document.close();
-        }
-        setStatus("Workstation prepared for PDF printing");
-      }
-    }
-  } catch (err) {
-    console.error("Export workstation failed:", err);
-    alert("Export failed: " + err.message);
-    setStatus("Export failed", true);
+  // Ultra-HD base dimension: 3840px (4K UHD) up to 7680px (8K) for massive graphs
+  let targetW = 3840;
+  let targetH = Math.round(targetW / aspect);
+  if (aspect < 1) { // Tall chart
+    targetH = 3840;
+    targetW = Math.round(targetH * aspect);
   }
+  targetW = Math.min(7680, Math.max(2560, targetW));
+  targetH = Math.min(7680, Math.max(1600, targetH));
+
+  // Save current user view state
+  const currentPos = net.getViewPosition();
+  const currentScale = net.getScale();
+  const origContainerStyle = netContainer.style.cssText;
+
+  // Temporarily switch network to High-Definition render resolution
+  net.setSize(targetW + "px", targetH + "px");
+  net.redraw();
+  net.fit({ animation: false });
+
+  // Allow canvas buffer to draw at full HD resolution
+  setTimeout(() => {
+    try {
+      const activeCanvas = document.querySelector("#net canvas");
+      if (!activeCanvas) throw new Error("Chart canvas is not available.");
+
+      const offCanvas = document.createElement("canvas");
+      offCanvas.width = activeCanvas.width;
+      offCanvas.height = activeCanvas.height;
+      const ctx = offCanvas.getContext("2d");
+
+      // Solid white background
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, offCanvas.width, offCanvas.height);
+      ctx.drawImage(activeCanvas, 0, 0);
+
+      // Composite any animated GIF overlays if present
+      if (typeof data !== "undefined" && data && Array.isArray(data.entities)) {
+        data.entities.forEach(ent => {
+          const iconUri = (typeof getEntityIcon === "function") ? getEntityIcon(ent) : null;
+          if (iconUri && typeof isGifUrl === "function" && isGifUrl(iconUri)) {
+            const domImg = document.getElementById("gif_overlay_" + ent.id);
+            if (domImg && domImg.complete && domImg.naturalWidth > 0) {
+              const nodePos = net.getPosition(ent.id);
+              if (nodePos) {
+                const domPt1 = net.canvasToDOM({ x: nodePos.x - 24, y: nodePos.y - 24 });
+                const domPt2 = net.canvasToDOM({ x: nodePos.x + 24, y: nodePos.y + 24 });
+                const scaleFactor = activeCanvas.width / targetW;
+                const drawW = Math.round((domPt2.x - domPt1.x) * scaleFactor);
+                const drawH = Math.round((domPt2.y - domPt1.y) * scaleFactor);
+                ctx.drawImage(domImg, domPt1.x * scaleFactor, domPt1.y * scaleFactor, drawW, drawH);
+              }
+            }
+          }
+        });
+      }
+
+      if (format === "png") {
+        const dataUrl = offCanvas.toDataURL("image/png");
+        triggerFileDownload(dataUrl, getExportFilename("Workstation_HD", "png"));
+        setStatus("Ultra-HD PNG exported");
+      } else if (format === "jpeg") {
+        const dataUrl = offCanvas.toDataURL("image/jpeg", 0.98);
+        triggerFileDownload(dataUrl, getExportFilename("Workstation_HD", "jpg"));
+        setStatus("Ultra-HD JPEG exported");
+      } else if (format === "pdf") {
+        const imgData = offCanvas.toDataURL("image/jpeg", 0.98);
+        if (window.jspdf && window.jspdf.jsPDF) {
+          const { jsPDF } = window.jspdf;
+          const isLandscape = offCanvas.width >= offCanvas.height;
+          // Use A3 (842 x 1191 pt) for ultra high-definition intelligence charts
+          const pdf = new jsPDF({
+            orientation: isLandscape ? "landscape" : "portrait",
+            unit: "pt",
+            format: "a3",
+            compress: true
+          });
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = pdf.internal.pageSize.getHeight();
+          const margin = 24;
+          const availW = pdfWidth - margin * 2;
+          const availH = pdfHeight - margin * 2;
+          const imgRatio = offCanvas.width / offCanvas.height;
+          let drawW = availW;
+          let drawH = drawW / imgRatio;
+          if (drawH > availH) {
+            drawH = availH;
+            drawW = drawH * imgRatio;
+          }
+          const posX = margin + (availW - drawW) / 2;
+          const posY = margin + (availH - drawH) / 2;
+
+          pdf.addImage(imgData, "JPEG", posX, posY, drawW, drawH, undefined, "FAST");
+          pdf.save(getExportFilename("Workstation_HD", "pdf"));
+          setStatus("Ultra-HD PDF exported");
+        } else {
+          const printWin = window.open("", "_blank");
+          if (printWin) {
+            printWin.document.write(`<html><head><title>${getExportFilename("Workstation_HD", "pdf")}</title><style>@page{size:landscape;margin:0}body{margin:0;display:flex;justify-content:center;align-items:center;height:100vh;background:#fff}img{max-width:100%;max-height:100%}</style></head><body><img src="${imgData}" onload="window.print();window.close();"/></body></html>`);
+            printWin.document.close();
+          }
+          setStatus("Workstation prepared for printing");
+        }
+      }
+    } catch (err) {
+      console.error("Export workstation failed:", err);
+      alert("Export failed: " + err.message);
+      setStatus("Export failed", true);
+    } finally {
+      // Restore user's interactive network size, scale, and center position
+      netContainer.style.cssText = origContainerStyle;
+      net.setSize("100%", "100%");
+      net.redraw();
+      net.moveTo({
+        position: currentPos,
+        scale: currentScale,
+        animation: false
+      });
+      if (typeof updateGifOverlayPositions === "function") updateGifOverlayPositions();
+    }
+  }, 60);
 }
 
 function exportMap(format = "png") {
@@ -9422,7 +9522,7 @@ function exportMap(format = "png") {
     return;
   }
 
-  setStatus(`Generating Map ${format.toUpperCase()} export...`);
+  setStatus(`Generating Ultra-HD Map ${format.toUpperCase()} export...`);
 
   if (typeof html2canvas === "undefined") {
     alert("Export library is still loading. Please check your network connection and try again.");
@@ -9430,11 +9530,14 @@ function exportMap(format = "png") {
     return;
   }
 
+  // 3x supersampling resolution for ultra-sharp map tiles, labels, and pins
   html2canvas(mapEl, {
     useCORS: true,
     allowTaint: false,
-    scale: 2,
+    scale: 3,
     backgroundColor: "#ffffff",
+    logging: false,
+    imageTimeout: 15000,
     ignoreElements: (el) => {
       return el.id === "mapPickBanner" ||
              el.id === "mapToolbarContainer" ||
@@ -9444,44 +9547,46 @@ function exportMap(format = "png") {
   }).then(canvas => {
     if (format === "png") {
       const dataUrl = canvas.toDataURL("image/png");
-      triggerFileDownload(dataUrl, getExportFilename("GeospatialMap", "png"));
-      setStatus("Map exported as PNG");
+      triggerFileDownload(dataUrl, getExportFilename("GeospatialMap_HD", "png"));
+      setStatus("Ultra-HD Map exported as PNG");
     } else if (format === "jpeg") {
-      const dataUrl = canvas.toDataURL("image/jpeg", 0.95);
-      triggerFileDownload(dataUrl, getExportFilename("GeospatialMap", "jpg"));
-      setStatus("Map exported as JPEG");
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.98);
+      triggerFileDownload(dataUrl, getExportFilename("GeospatialMap_HD", "jpg"));
+      setStatus("Ultra-HD Map exported as JPEG");
     } else if (format === "pdf") {
-      const imgData = canvas.toDataURL("image/jpeg", 0.95);
+      const imgData = canvas.toDataURL("image/jpeg", 0.98);
       if (window.jspdf && window.jspdf.jsPDF) {
         const { jsPDF } = window.jspdf;
         const isLandscape = canvas.width >= canvas.height;
-        const pdfWidth = isLandscape ? 842 : 595;
-        const pdfHeight = isLandscape ? 595 : 842;
+        // A3 format for high-density map clarity
         const pdf = new jsPDF({
           orientation: isLandscape ? "landscape" : "portrait",
           unit: "pt",
-          format: "a4"
+          format: "a3",
+          compress: true
         });
-        const margin = 20;
-        const availWidth = pdfWidth - margin * 2;
-        const availHeight = pdfHeight - margin * 2;
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const margin = 24;
+        const availW = pdfWidth - margin * 2;
+        const availH = pdfHeight - margin * 2;
         const imgRatio = canvas.width / canvas.height;
-        let drawWidth = availWidth;
-        let drawHeight = drawWidth / imgRatio;
-        if (drawHeight > availHeight) {
-          drawHeight = availHeight;
-          drawWidth = drawHeight * imgRatio;
+        let drawW = availW;
+        let drawH = drawW / imgRatio;
+        if (drawH > availH) {
+          drawH = availH;
+          drawW = drawH * imgRatio;
         }
-        const posX = margin + (availWidth - drawWidth) / 2;
-        const posY = margin + (availHeight - drawHeight) / 2;
+        const posX = margin + (availW - drawW) / 2;
+        const posY = margin + (availH - drawH) / 2;
 
-        pdf.addImage(imgData, "JPEG", posX, posY, drawWidth, drawHeight);
-        pdf.save(getExportFilename("GeospatialMap", "pdf"));
-        setStatus("Map exported as PDF");
+        pdf.addImage(imgData, "JPEG", posX, posY, drawW, drawH, undefined, "FAST");
+        pdf.save(getExportFilename("GeospatialMap_HD", "pdf"));
+        setStatus("Ultra-HD Map exported as PDF");
       } else {
         const printWin = window.open("", "_blank");
         if (printWin) {
-          printWin.document.write(`<html><head><title>${getExportFilename("GeospatialMap", "pdf")}</title><style>@page{size:landscape;margin:0}body{margin:0;display:flex;justify-content:center;align-items:center;height:100vh}img{max-width:100%;max-height:100%}</style></head><body><img src="${imgData}" onload="window.print();window.close();"/></body></html>`);
+          printWin.document.write(`<html><head><title>${getExportFilename("GeospatialMap_HD", "pdf")}</title><style>@page{size:landscape;margin:0}body{margin:0;display:flex;justify-content:center;align-items:center;height:100vh;background:#fff}img{max-width:100%;max-height:100%}</style></head><body><img src="${imgData}" onload="window.print();window.close();"/></body></html>`);
           printWin.document.close();
         }
         setStatus("Map prepared for PDF printing");
