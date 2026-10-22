@@ -1236,16 +1236,9 @@
     <div class="flex items-center gap-2 border-l border-black/15 pl-4">
       <!-- Standalone New Project Button (Shown when user has 0 projects) -->
       <button id="btnInitialNewProject" title="Create Your First Project"
-        class="hidden btn-primary py-1.5 px-3 text-xs">
+        class="hidden btn-primary py-1.5 px-3 text-xs flex items-center gap-1.5 shadow-sm">
         <i class="fi fi-rr-plus text-xs"></i>
         <span>New Project</span>
-      </button>
-
-      <!-- Standalone Import Project Button (Shown when user has 0 projects) -->
-      <button id="btnInitialImportProject" type="button" title="Import Project from File (.json)"
-        class="hidden btn-secondary py-1.5 px-3 text-xs flex items-center gap-1.5 border-black/30 hover:border-blue-600 hover:text-blue-600 hover:bg-blue-50 transition cursor-pointer">
-        <i class="fi fi-rr-upload text-xs text-blue-600"></i>
-        <span>Import Project</span>
       </button>
 
       <!-- Project Dropdown (Shown once projects exist, with '+ New Project' inside dropdown) -->
@@ -1256,61 +1249,62 @@
             <option value="">Loading Projects…</option>
           </select>
         </div>
+      </div>
 
-        <!-- Project Settings & Actions Dropdown -->
-        <div class="relative" id="projectSettingsDropdownContainer">
-          <button id="btnProjectSettings" type="button" title="Project Settings & Actions (Export, Import, Delete)"
-            class="btn-secondary py-1 px-2.5 text-xs text-black border-black/30 hover:border-blue-600 hover:text-blue-600 hover:bg-blue-50 transition cursor-pointer flex items-center gap-1 shadow-sm">
-            <i class="fi fi-rr-settings text-xs text-black/70 hover:text-blue-600"></i>
-            <svg viewBox="0 0 20 20" class="w-3 h-3 fill-current opacity-70 shrink-0" aria-hidden="true">
-              <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/>
-            </svg>
+      <!-- Project Settings & Actions Dropdown (Always displayed next to Project Selector or New Project) -->
+      <div class="relative" id="projectSettingsDropdownContainer">
+        <button id="btnProjectSettings" type="button" title="Project Settings & Actions (Import, Export, BluLink Manual, Delete)"
+          class="btn-secondary py-1 px-2.5 text-xs text-black border-black/30 hover:border-blue-600 hover:text-blue-600 hover:bg-blue-50 transition cursor-pointer flex items-center gap-1 shadow-sm">
+          <i class="fi fi-rr-settings text-xs text-black/70 hover:text-blue-600"></i>
+          <svg viewBox="0 0 20 20" class="w-3 h-3 fill-current opacity-70 shrink-0" aria-hidden="true">
+            <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/>
+          </svg>
+        </button>
+
+        <!-- Settings Dropdown Menu -->
+        <div id="projectSettingsMenu" class="hidden absolute left-0 sm:left-auto sm:right-0 top-full mt-1.5 w-56 bg-white border-2 border-black rounded-xl shadow-2xl p-1.5 z-50 space-y-1">
+          <button id="btnImportProject" type="button" title="Import Project from File (.json)"
+            class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer text-left">
+            <i class="fi fi-rr-upload text-xs text-blue-600 shrink-0"></i>
+            <span>Import Project</span>
           </button>
-
-          <!-- Settings Dropdown Menu -->
-          <div id="projectSettingsMenu" class="hidden absolute left-0 sm:left-auto sm:right-0 top-full mt-1.5 w-56 bg-white border-2 border-black rounded-xl shadow-2xl p-1.5 z-50 space-y-1">
-            <button id="btnExportProject" type="button" title="Download Active Project (.json)"
-              class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer text-left">
-              <i class="fi fi-rr-download text-xs text-blue-600 shrink-0"></i>
-              <span>Export Project</span>
-            </button>
-            <button id="btnImportProject" type="button" title="Import Project from File (.json)"
-              class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer text-left">
-              <i class="fi fi-rr-upload text-xs text-blue-600 shrink-0"></i>
-              <span>Import Project</span>
-            </button>
-            <div class="border-t border-black/10 my-1"></div>
-            <button id="btnOpenManual" type="button" title="BluLink User Manual & Tutorial (PDF)"
-              class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer text-left">
-              <div class="flex items-center gap-2.5">
-                <i class="fi fi-rr-document text-xs text-blue-600 shrink-0"></i>
-                <span>BluLink Manual</span>
-              </div>
-              <span class="text-[9px] font-bold text-blue-600 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded uppercase">PDF</span>
-            </button>
-            <button id="btnDeleteProject" type="button" title="Delete Active Project"
-              class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold text-red-600 hover:bg-red-50 hover:text-red-700 transition cursor-pointer text-left">
-              <i class="fi fi-rr-trash text-xs text-red-600 shrink-0"></i>
-              <span>Delete Project</span>
-            </button>
-            <div class="border-t border-black/10 my-1"></div>
-            <!-- Account Info -->
-            <div class="px-3 py-1.5 bg-neutral-50 rounded-lg border border-black/10 select-none">
-              <div class="text-[9px] font-bold text-black/50 uppercase tracking-wider">Account</div>
-              <div class="flex items-center gap-1.5 mt-0.5 min-w-0">
-                <i class="fi fi-rr-envelope text-xs text-blue-600 shrink-0"></i>
-                <span id="whoSettings" class="text-xs font-bold text-black truncate" title="">User</span>
-              </div>
+          <button id="btnExportProject" type="button" title="Download Active Project (.json)"
+            class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer text-left">
+            <i class="fi fi-rr-download text-xs text-blue-600 shrink-0"></i>
+            <span>Export Project</span>
+          </button>
+          <div class="border-t border-black/10 my-1"></div>
+          <button id="btnOpenManual" type="button" title="BluLink User Manual & Tutorial (PDF)"
+            class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer text-left">
+            <div class="flex items-center gap-2.5">
+              <i class="fi fi-rr-document text-xs text-blue-600 shrink-0"></i>
+              <span>BluLink Manual</span>
             </div>
-            <!-- Sign out Button in Settings -->
-            <button id="btnLogoutSettings" type="button" title="Sign out"
-              class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-red-50 hover:text-red-600 transition cursor-pointer text-left">
-              <i class="fi fi-rr-sign-out-alt text-xs text-black/70 hover:text-red-600 shrink-0"></i>
-              <span>Sign out</span>
-            </button>
+            <span class="text-[9px] font-bold text-blue-600 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded uppercase">PDF</span>
+          </button>
+          <button id="btnDeleteProject" type="button" title="Delete Active Project"
+            class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold text-red-600 hover:bg-red-50 hover:text-red-700 transition cursor-pointer text-left">
+            <i class="fi fi-rr-trash text-xs text-red-600 shrink-0"></i>
+            <span>Delete Project</span>
+          </button>
+          <div class="border-t border-black/10 my-1"></div>
+          <!-- Account Info -->
+          <div class="px-3 py-1.5 bg-neutral-50 rounded-lg border border-black/10 select-none">
+            <div class="text-[9px] font-bold text-black/50 uppercase tracking-wider">Account</div>
+            <div class="flex items-center gap-1.5 mt-0.5 min-w-0">
+              <i class="fi fi-rr-envelope text-xs text-blue-600 shrink-0"></i>
+              <span id="whoSettings" class="text-xs font-bold text-black truncate" title="">User</span>
+            </div>
           </div>
+          <!-- Sign out Button in Settings -->
+          <button id="btnLogoutSettings" type="button" title="Sign out"
+            class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-red-50 hover:text-red-600 transition cursor-pointer text-left">
+            <i class="fi fi-rr-sign-out-alt text-xs text-black/70 hover:text-red-600 shrink-0"></i>
+            <span>Sign out</span>
+          </button>
         </div>
       </div>
+    </div>
   </div>
 
   <!-- Header Right (Actions & Status) -->
@@ -2375,39 +2369,54 @@ async function loadProjectsList() {
   }
 }
 
+function updateProjectSettingsMenuState() {
+  const hasProject = !!currentProjectId && projects && projects.length > 0;
+  const btnExport = $("btnExportProject");
+  const btnDelete = $("btnDeleteProject");
+  if (btnExport) {
+    if (hasProject) {
+      btnExport.classList.remove("opacity-40", "cursor-not-allowed", "pointer-events-none");
+      btnExport.title = "Download Active Project (.json)";
+    } else {
+      btnExport.classList.add("opacity-40", "cursor-not-allowed", "pointer-events-none");
+      btnExport.title = "No active project to export";
+    }
+  }
+  if (btnDelete) {
+    if (hasProject) {
+      btnDelete.classList.remove("opacity-40", "cursor-not-allowed", "pointer-events-none");
+      btnDelete.title = "Delete Active Project";
+    } else {
+      btnDelete.classList.add("opacity-40", "cursor-not-allowed", "pointer-events-none");
+      btnDelete.title = "No active project to delete";
+    }
+  }
+}
+
 function renderProjectSelect() {
   const sel = $("projectSelect");
   const initialBtn = $("btnInitialNewProject");
   const dropdownContainer = $("projectDropdownContainer");
 
-  const initialImportBtn = $("btnInitialImportProject");
-
   if (!projects || projects.length === 0) {
-    // When there is NO project yet: show standalone New Project and Import Project buttons
+    // When there is NO project yet: show standalone New Project button; Settings button is always visible
     if (initialBtn) {
       initialBtn.classList.remove("hidden");
       initialBtn.classList.add("flex");
-    }
-    if (initialImportBtn) {
-      initialImportBtn.classList.remove("hidden");
-      initialImportBtn.classList.add("flex");
     }
     if (dropdownContainer) {
       dropdownContainer.classList.add("hidden");
       dropdownContainer.classList.remove("flex");
     }
     if (sel) sel.innerHTML = `<option value="">No Projects</option>`;
+    updateProjectSettingsMenuState();
     return;
   }
 
-  // When projects exist: hide standalone buttons, show dropdown container
+  // When projects exist: hide standalone new project button, show dropdown container
   if (initialBtn) {
     initialBtn.classList.add("hidden");
     initialBtn.classList.remove("flex");
-  }
-  if (initialImportBtn) {
-    initialImportBtn.classList.add("hidden");
-    initialImportBtn.classList.remove("flex");
   }
   if (dropdownContainer) {
     dropdownContainer.classList.remove("hidden");
@@ -2423,6 +2432,7 @@ function renderProjectSelect() {
 
   html += `<option value="__NEW_PROJECT__" class="font-bold text-blue-600 bg-blue-50">+ New Project…</option>`;
   if (sel) sel.innerHTML = html;
+  updateProjectSettingsMenuState();
 }
 
 async function selectProject(projectId) {
