@@ -26,6 +26,10 @@
 <!-- Vis.js Network -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.9/standalone/umd/vis-network.min.js"></script>
 
+<!-- html2canvas & jsPDF for Workstation & Map Image/PDF Exports -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 <!-- Google Identity Services (GIS) for Google OAuth Sign-In -->
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 
@@ -1725,6 +1729,47 @@
           </div>
         </div>
 
+        <!-- 3. Export / Save Dropdown for Workstation (PDF, PNG, JPEG) -->
+        <div class="relative" id="exportNetDropdownContainer">
+          <button id="btnExportNetDropdown" type="button" title="Save / Export Workstation Chart (PDF, PNG, JPEG)"
+            class="btn-secondary btn-chart-ctrl py-1.5 px-2.5 sm:px-3 text-xs flex items-center gap-1.5 sm:gap-2 font-bold transition shadow-sm cursor-pointer">
+            <i class="fi fi-rr-download text-xs text-blue-600"></i>
+            <span>Export</span>
+            <svg viewBox="0 0 20 20" class="w-3 h-3 fill-current opacity-70 shrink-0" aria-hidden="true">
+              <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/>
+            </svg>
+          </button>
+
+          <!-- Export Dropdown Menu -->
+          <div id="exportNetMenu" class="hidden absolute right-0 top-full mt-1.5 w-48 bg-white border-2 border-black rounded-xl shadow-2xl p-1.5 z-50 space-y-1">
+            <div class="px-2.5 py-1 text-[10px] font-bold text-black/50 uppercase tracking-wider">Save Workstation</div>
+            <button id="btnExportNetPDF" type="button" title="Save Workstation Chart as PDF document"
+              class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer text-left">
+              <div class="flex items-center gap-2">
+                <i class="fi fi-rr-document text-xs text-red-600 shrink-0"></i>
+                <span>Save as PDF</span>
+              </div>
+              <span class="text-[9px] font-bold text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded uppercase">PDF</span>
+            </button>
+            <button id="btnExportNetPNG" type="button" title="Save Workstation Chart as high-res PNG image"
+              class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer text-left">
+              <div class="flex items-center gap-2">
+                <i class="fi fi-rr-picture text-xs text-blue-600 shrink-0"></i>
+                <span>Image (PNG)</span>
+              </div>
+              <span class="text-[9px] font-mono text-black/50">PNG</span>
+            </button>
+            <button id="btnExportNetJPEG" type="button" title="Save Workstation Chart as JPEG image"
+              class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer text-left">
+              <div class="flex items-center gap-2">
+                <i class="fi fi-rr-picture text-xs text-emerald-600 shrink-0"></i>
+                <span>Image (JPEG)</span>
+              </div>
+              <span class="text-[9px] font-mono text-black/50">JPEG</span>
+            </button>
+          </div>
+        </div>
+
         <!-- 3. Exit Fullscreen Button (Shown in Fullscreen mode, aligned in toolbar with other buttons) -->
         <button id="btnExitFullscreenNet" type="button" title="Exit Full Screen (Esc)"
           class="hidden btn-primary btn-chart-ctrl py-1.5 px-2.5 sm:px-3 text-xs items-center gap-1.5 sm:gap-2 font-bold shadow-sm transition cursor-pointer">
@@ -1813,19 +1858,92 @@
       </button>
     </div>
 
-    <!-- Exit Fullscreen Button for Map -->
-    <button id="btnExitFullscreenMap" type="button" title="Exit Full Screen (Esc)" class="hidden absolute top-3 right-16 z-[1000] btn-primary py-1.5 px-3 text-xs shadow-2xl flex items-center gap-1.5">
-      <i class="fi fi-rr-cross text-xs"></i>
-      <span>Exit Full Screen</span>
-      <kbd class="ml-1 text-[10px] bg-white/20 px-1 py-0.5 rounded font-mono">Esc</kbd>
-    </button>
-
     <!-- Map Floating Deselect All Button (Visible when an entity/item is selected) -->
     <button id="btnMapDeselect" type="button" title="Deselect All (or click anywhere on the map to deselect)"
       class="hidden absolute top-3 left-14 z-[400] btn-secondary py-1 px-2.5 text-xs font-bold shadow-md bg-white border border-black/30 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-500 transition flex items-center gap-1.5 cursor-pointer">
       <i class="fi fi-rr-cross-circle text-xs text-blue-600"></i>
       <span>Deselect All</span>
     </button>
+
+    <!-- Map Floating Toolbar (View & Export next to each other, positioned cleanly left of layers control) -->
+    <div id="mapToolbarContainer" class="absolute top-2.5 right-14 sm:right-16 z-[500] pointer-events-auto flex items-center gap-1.5 sm:gap-2">
+      <!-- 1. Map View Dropdown (Fit Pins & Full Screen) -->
+      <div class="relative" id="viewMapDropdownContainer">
+        <button id="btnViewMapDropdown" type="button" title="Map View Options: Fit Pins & Full Screen"
+          class="btn-secondary btn-chart-ctrl py-1.5 px-2.5 sm:px-3 text-xs flex items-center gap-1.5 sm:gap-2 font-bold transition shadow-sm cursor-pointer">
+          <i class="fi fi-rr-eye text-xs"></i>
+          <span>View</span>
+          <svg viewBox="0 0 20 20" class="w-3 h-3 fill-current opacity-70 shrink-0" aria-hidden="true">
+            <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/>
+          </svg>
+        </button>
+
+        <!-- Map View Dropdown Menu -->
+        <div id="viewMapMenu" class="hidden absolute right-0 top-full mt-1.5 w-48 bg-white border-2 border-black rounded-xl shadow-2xl p-1.5 z-50 space-y-1">
+          <button id="btnFitMapPins" type="button" title="Fit map view to all pinned entities"
+            class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer text-left">
+            <i class="fi fi-rr-expand text-xs text-blue-600 shrink-0"></i>
+            <span>Fit All Pins</span>
+          </button>
+          <button id="btnFullscreenMapMenu" type="button" title="Toggle Full Screen Map (Esc to exit)"
+            class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer text-left">
+            <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 text-blue-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+            </svg>
+            <span id="btnFullscreenMapText">Full Screen Map</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 2. Map Export / Save Dropdown (Next to the View button) -->
+      <div class="relative" id="exportMapDropdownContainer">
+        <button id="btnExportMapDropdown" type="button" title="Save / Export Geospatial Map (PDF, PNG, JPEG)"
+          class="btn-secondary btn-chart-ctrl py-1.5 px-2.5 sm:px-3 text-xs flex items-center gap-1.5 sm:gap-2 font-bold transition shadow-sm cursor-pointer">
+          <i class="fi fi-rr-download text-xs text-blue-600"></i>
+          <span>Export</span>
+          <svg viewBox="0 0 20 20" class="w-3 h-3 fill-current opacity-70 shrink-0" aria-hidden="true">
+            <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/>
+          </svg>
+        </button>
+
+        <!-- Map Export Dropdown Menu -->
+        <div id="exportMapMenu" class="hidden absolute right-0 top-full mt-1.5 w-48 bg-white border-2 border-black rounded-xl shadow-2xl p-1.5 z-50 space-y-1">
+          <div class="px-2.5 py-1 text-[10px] font-bold text-black/50 uppercase tracking-wider">Save Geospatial Map</div>
+          <button id="btnExportMapPDF" type="button" title="Save Map view as PDF document"
+            class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer text-left">
+            <div class="flex items-center gap-2">
+              <i class="fi fi-rr-document text-xs text-red-600 shrink-0"></i>
+              <span>Save as PDF</span>
+            </div>
+            <span class="text-[9px] font-bold text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded uppercase">PDF</span>
+          </button>
+          <button id="btnExportMapPNG" type="button" title="Save Map view as high-res PNG image"
+            class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer text-left">
+            <div class="flex items-center gap-2">
+              <i class="fi fi-rr-picture text-xs text-blue-600 shrink-0"></i>
+              <span>Image (PNG)</span>
+            </div>
+            <span class="text-[9px] font-mono text-black/50">PNG</span>
+          </button>
+          <button id="btnExportMapJPEG" type="button" title="Save Map view as JPEG image"
+            class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer text-left">
+            <div class="flex items-center gap-2">
+              <i class="fi fi-rr-picture text-xs text-emerald-600 shrink-0"></i>
+              <span>Image (JPEG)</span>
+            </div>
+            <span class="text-[9px] font-mono text-black/50">JPEG</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 3. Exit Fullscreen Button for Map (Aligned in toolbar when in fullscreen) -->
+      <button id="btnExitFullscreenMap" type="button" title="Exit Full Screen (Esc)"
+        class="hidden btn-primary btn-chart-ctrl py-1.5 px-2.5 sm:px-3 text-xs items-center gap-1.5 sm:gap-2 font-bold shadow-sm transition cursor-pointer">
+        <i class="fi fi-rr-cross text-xs"></i>
+        <span>Exit Full Screen</span>
+        <kbd class="ml-1 text-[10px] bg-white/20 px-1 py-0.5 rounded font-mono">Esc</kbd>
+      </button>
+    </div>
 
     <!-- Map Leaflet Container -->
     <div id="map" class="flex-1 w-full h-full"></div>
@@ -3765,15 +3883,18 @@ function formatMgrsDisplay(mgrsStr) {
 function initMap() {
   const terrain = L.tileLayer("https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}", {
     maxZoom: 20,
-    attribution: "Map data © Google"
+    attribution: "Map data © Google",
+    crossOrigin: true
   });
   const sat = L.tileLayer("https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", {
     maxZoom: 20,
-    attribution: "Imagery © Google"
+    attribution: "Imagery © Google",
+    crossOrigin: true
   });
   const hybrid = L.tileLayer("https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}", {
     maxZoom: 20,
-    attribution: "Map data © Google"
+    attribution: "Map data © Google",
+    crossOrigin: true
   });
 
   map = L.map("map", {
@@ -8609,6 +8730,9 @@ window.addEventListener("keydown", e => {
   if (e.key === "Escape") {
     closeDrawToolsMenu();
     closeViewMenu();
+    closeExportNetMenu();
+    closeViewMapMenu();
+    closeExportMapMenu();
     if (isFullscreenNet) {
       exitFullscreenNet();
       return;
@@ -8971,7 +9095,11 @@ function enterFullscreenMap() {
     mapSec.classList.add("w-full", "h-full", "flex-1");
   }
 
-  if ($("btnExitFullscreenMap")) $("btnExitFullscreenMap").classList.remove("hidden");
+  if ($("btnExitFullscreenMap")) {
+    $("btnExitFullscreenMap").classList.remove("hidden");
+    $("btnExitFullscreenMap").classList.add("flex");
+  }
+  if ($("btnFullscreenMapText")) $("btnFullscreenMapText").textContent = "Exit Full Screen";
 
   setTimeout(() => {
     if (map) {
@@ -9005,7 +9133,11 @@ function exitFullscreenMap() {
 
   updateSidebarUI();
 
-  if ($("btnExitFullscreenMap")) $("btnExitFullscreenMap").classList.add("hidden");
+  if ($("btnExitFullscreenMap")) {
+    $("btnExitFullscreenMap").classList.add("hidden");
+    $("btnExitFullscreenMap").classList.remove("flex");
+  }
+  if ($("btnFullscreenMapText")) $("btnFullscreenMapText").textContent = "Full Screen Map";
 
   setTimeout(() => {
     if (map) {
@@ -9114,8 +9246,254 @@ if ($("btnFullscreenNet")) {
 if ($("btnExitFullscreenNet")) $("btnExitFullscreenNet").onclick = exitFullscreenNet;
 if ($("btnExitFullscreenMap")) $("btnExitFullscreenMap").onclick = exitFullscreenMap;
 
+if ($("btnExportNetDropdown")) $("btnExportNetDropdown").onclick = toggleExportNetMenu;
+if ($("btnExportNetPDF")) $("btnExportNetPDF").onclick = () => exportWorkstation("pdf");
+if ($("btnExportNetPNG")) $("btnExportNetPNG").onclick = () => exportWorkstation("png");
+if ($("btnExportNetJPEG")) $("btnExportNetJPEG").onclick = () => exportWorkstation("jpeg");
+
+if ($("btnViewMapDropdown")) $("btnViewMapDropdown").onclick = toggleViewMapMenu;
+if ($("btnFitMapPins")) $("btnFitMapPins").onclick = fitMapPins;
+if ($("btnFullscreenMapMenu")) $("btnFullscreenMapMenu").onclick = () => {
+  closeViewMapMenu();
+  toggleFullscreenMap();
+};
+
+if ($("btnExportMapDropdown")) $("btnExportMapDropdown").onclick = toggleExportMapMenu;
+if ($("btnExportMapPDF")) $("btnExportMapPDF").onclick = () => exportMap("pdf");
+if ($("btnExportMapPNG")) $("btnExportMapPNG").onclick = () => exportMap("png");
+if ($("btnExportMapJPEG")) $("btnExportMapJPEG").onclick = () => exportMap("jpeg");
+
+
 // Dropdown triggers & outside click listener
 if ($("btnDrawToolsDropdown")) $("btnDrawToolsDropdown").onclick = toggleDrawToolsMenu;
+
+/* ---------- Export Workstation & Map (PDF, PNG, JPEG) Implementation ---------- */
+function triggerFileDownload(dataUrl, filename) {
+  const link = document.createElement("a");
+  link.href = dataUrl;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+function getExportFilename(sourcePrefix, ext) {
+  const current = (typeof projects !== "undefined" && typeof currentProjectId !== "undefined" && projects)
+    ? projects.find(p => p.id === currentProjectId) : null;
+  const rawName = current && current.name ? current.name : "BluLink";
+  const safeName = rawName.replace(/[^a-zA-Z0-9_\-]/g, "_");
+  const now = new Date();
+  const dateStr = now.toISOString().slice(0, 10);
+  return `${safeName}_${sourcePrefix}_${dateStr}.${ext}`;
+}
+
+function toggleExportNetMenu() {
+  const menu = $("exportNetMenu");
+  if (menu) menu.classList.toggle("hidden");
+  closeDrawToolsMenu();
+  closeViewMenu();
+}
+
+function closeExportNetMenu() {
+  const menu = $("exportNetMenu");
+  if (menu) menu.classList.add("hidden");
+}
+
+function toggleViewMapMenu() {
+  const menu = $("viewMapMenu");
+  if (menu) menu.classList.toggle("hidden");
+  closeExportMapMenu();
+}
+
+function closeViewMapMenu() {
+  const menu = $("viewMapMenu");
+  if (menu) menu.classList.add("hidden");
+}
+
+function toggleExportMapMenu() {
+  const menu = $("exportMapMenu");
+  if (menu) menu.classList.toggle("hidden");
+  closeViewMapMenu();
+}
+
+function closeExportMapMenu() {
+  const menu = $("exportMapMenu");
+  if (menu) menu.classList.add("hidden");
+}
+
+function fitMapPins() {
+  closeViewMapMenu();
+  if (!map) return;
+  const pinLatLngs = [];
+  if (typeof data !== "undefined" && data && Array.isArray(data.entities)) {
+    data.entities.forEach(ent => {
+      if (ent.lat != null && ent.lng != null && !isNaN(ent.lat) && !isNaN(ent.lng)) {
+        pinLatLngs.push([Number(ent.lat), Number(ent.lng)]);
+      }
+    });
+  }
+  if (pinLatLngs.length > 0) {
+    const bounds = L.latLngBounds(pinLatLngs);
+    map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
+    setStatus("Map fitted to all pinned entities");
+  } else {
+    setStatus("No coordinates pinned on the map yet");
+  }
+}
+
+function exportWorkstation(format = "png") {
+  closeExportNetMenu();
+  const netCanvas = document.querySelector("#net canvas");
+  if (!netCanvas) {
+    alert("No active network chart canvas found to export.");
+    return;
+  }
+
+  setStatus(`Exporting Workstation as ${format.toUpperCase()}...`);
+
+  try {
+    const offCanvas = document.createElement("canvas");
+    offCanvas.width = netCanvas.width;
+    offCanvas.height = netCanvas.height;
+    const ctx = offCanvas.getContext("2d");
+
+    // Pure white background
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, offCanvas.width, offCanvas.height);
+    ctx.drawImage(netCanvas, 0, 0);
+
+    if (format === "png") {
+      const dataUrl = offCanvas.toDataURL("image/png");
+      triggerFileDownload(dataUrl, getExportFilename("Workstation", "png"));
+      setStatus("Workstation exported as PNG");
+    } else if (format === "jpeg") {
+      const dataUrl = offCanvas.toDataURL("image/jpeg", 0.95);
+      triggerFileDownload(dataUrl, getExportFilename("Workstation", "jpg"));
+      setStatus("Workstation exported as JPEG");
+    } else if (format === "pdf") {
+      const imgData = offCanvas.toDataURL("image/jpeg", 0.95);
+      if (window.jspdf && window.jspdf.jsPDF) {
+        const { jsPDF } = window.jspdf;
+        const isLandscape = offCanvas.width >= offCanvas.height;
+        const pdfWidth = isLandscape ? 842 : 595;
+        const pdfHeight = isLandscape ? 595 : 842;
+        const pdf = new jsPDF({
+          orientation: isLandscape ? "landscape" : "portrait",
+          unit: "pt",
+          format: "a4"
+        });
+        const margin = 20;
+        const availWidth = pdfWidth - margin * 2;
+        const availHeight = pdfHeight - margin * 2;
+        const imgRatio = offCanvas.width / offCanvas.height;
+        let drawWidth = availWidth;
+        let drawHeight = drawWidth / imgRatio;
+        if (drawHeight > availHeight) {
+          drawHeight = availHeight;
+          drawWidth = drawHeight * imgRatio;
+        }
+        const posX = margin + (availWidth - drawWidth) / 2;
+        const posY = margin + (availHeight - drawHeight) / 2;
+
+        pdf.addImage(imgData, "JPEG", posX, posY, drawWidth, drawHeight);
+        pdf.save(getExportFilename("Workstation", "pdf"));
+        setStatus("Workstation exported as PDF");
+      } else {
+        const printWin = window.open("", "_blank");
+        if (printWin) {
+          printWin.document.write(`<html><head><title>${getExportFilename("Workstation", "pdf")}</title><style>@page{size:landscape;margin:0}body{margin:0;display:flex;justify-content:center;align-items:center;height:100vh}img{max-width:100%;max-height:100%}</style></head><body><img src="${imgData}" onload="window.print();window.close();"/></body></html>`);
+          printWin.document.close();
+        }
+        setStatus("Workstation prepared for PDF printing");
+      }
+    }
+  } catch (err) {
+    console.error("Export workstation failed:", err);
+    alert("Export failed: " + err.message);
+    setStatus("Export failed", true);
+  }
+}
+
+function exportMap(format = "png") {
+  closeExportMapMenu();
+  const mapEl = $("map");
+  if (!mapEl) {
+    alert("No map element found to export.");
+    return;
+  }
+
+  setStatus(`Generating Map ${format.toUpperCase()} export...`);
+
+  if (typeof html2canvas === "undefined") {
+    alert("Export library is still loading. Please check your network connection and try again.");
+    setStatus("Export library not ready", true);
+    return;
+  }
+
+  html2canvas(mapEl, {
+    useCORS: true,
+    allowTaint: false,
+    scale: 2,
+    backgroundColor: "#ffffff",
+    ignoreElements: (el) => {
+      return el.id === "mapPickBanner" ||
+             el.id === "mapToolbarContainer" ||
+             el.id === "btnExitFullscreenMap" ||
+             el.id === "btnMapDeselect";
+    }
+  }).then(canvas => {
+    if (format === "png") {
+      const dataUrl = canvas.toDataURL("image/png");
+      triggerFileDownload(dataUrl, getExportFilename("GeospatialMap", "png"));
+      setStatus("Map exported as PNG");
+    } else if (format === "jpeg") {
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.95);
+      triggerFileDownload(dataUrl, getExportFilename("GeospatialMap", "jpg"));
+      setStatus("Map exported as JPEG");
+    } else if (format === "pdf") {
+      const imgData = canvas.toDataURL("image/jpeg", 0.95);
+      if (window.jspdf && window.jspdf.jsPDF) {
+        const { jsPDF } = window.jspdf;
+        const isLandscape = canvas.width >= canvas.height;
+        const pdfWidth = isLandscape ? 842 : 595;
+        const pdfHeight = isLandscape ? 595 : 842;
+        const pdf = new jsPDF({
+          orientation: isLandscape ? "landscape" : "portrait",
+          unit: "pt",
+          format: "a4"
+        });
+        const margin = 20;
+        const availWidth = pdfWidth - margin * 2;
+        const availHeight = pdfHeight - margin * 2;
+        const imgRatio = canvas.width / canvas.height;
+        let drawWidth = availWidth;
+        let drawHeight = drawWidth / imgRatio;
+        if (drawHeight > availHeight) {
+          drawHeight = availHeight;
+          drawWidth = drawHeight * imgRatio;
+        }
+        const posX = margin + (availWidth - drawWidth) / 2;
+        const posY = margin + (availHeight - drawHeight) / 2;
+
+        pdf.addImage(imgData, "JPEG", posX, posY, drawWidth, drawHeight);
+        pdf.save(getExportFilename("GeospatialMap", "pdf"));
+        setStatus("Map exported as PDF");
+      } else {
+        const printWin = window.open("", "_blank");
+        if (printWin) {
+          printWin.document.write(`<html><head><title>${getExportFilename("GeospatialMap", "pdf")}</title><style>@page{size:landscape;margin:0}body{margin:0;display:flex;justify-content:center;align-items:center;height:100vh}img{max-width:100%;max-height:100%}</style></head><body><img src="${imgData}" onload="window.print();window.close();"/></body></html>`);
+          printWin.document.close();
+        }
+        setStatus("Map prepared for PDF printing");
+      }
+    }
+  }).catch(err => {
+    console.error("Map export error:", err);
+    alert("Could not export map: " + err.message);
+    setStatus("Map export failed", true);
+  });
+}
+
 if ($("btnViewDropdown")) $("btnViewDropdown").onclick = toggleViewMenu;
 
 window.addEventListener("click", e => {
@@ -9131,6 +9509,30 @@ window.addEventListener("click", e => {
   if (viewMenu && !viewMenu.classList.contains("hidden")) {
     if (!viewMenu.contains(e.target) && (!btnViewDropdown || !btnViewDropdown.contains(e.target))) {
       closeViewMenu();
+    }
+  }
+
+  const exportNetMenu = $("exportNetMenu");
+  const btnExportNetDropdown = $("btnExportNetDropdown");
+  if (exportNetMenu && !exportNetMenu.classList.contains("hidden")) {
+    if (!exportNetMenu.contains(e.target) && (!btnExportNetDropdown || !btnExportNetDropdown.contains(e.target))) {
+      closeExportNetMenu();
+    }
+  }
+
+  const viewMapMenu = $("viewMapMenu");
+  const btnViewMapDropdown = $("btnViewMapDropdown");
+  if (viewMapMenu && !viewMapMenu.classList.contains("hidden")) {
+    if (!viewMapMenu.contains(e.target) && (!btnViewMapDropdown || !btnViewMapDropdown.contains(e.target))) {
+      closeViewMapMenu();
+    }
+  }
+
+  const exportMapMenu = $("exportMapMenu");
+  const btnExportMapDropdown = $("btnExportMapDropdown");
+  if (exportMapMenu && !exportMapMenu.classList.contains("hidden")) {
+    if (!exportMapMenu.contains(e.target) && (!btnExportMapDropdown || !btnExportMapDropdown.contains(e.target))) {
+      closeExportMapMenu();
     }
   }
 
