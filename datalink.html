@@ -408,7 +408,7 @@
 <body class="h-full flex flex-col bg-white text-black antialiased overflow-hidden select-none">
 
 <!-- ==================== SECURED AUTH / LOGIN SCREEN WITH PARTICLE CONSTELLATION ==================== -->
-<div id="auth" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white overflow-hidden">
+<div id="auth" class="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-white overflow-hidden">
   
   <!-- Interactive Connecting Dot-Network Background Canvas -->
   <canvas id="particleCanvas" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
@@ -1229,7 +1229,7 @@
 </div>
 
 <!-- ==================== HEADER ==================== -->
-<header id="headerApp" class="h-14 shrink-0 bg-white border-b-2 border-black/10 px-4 flex items-center justify-between z-30">
+<header id="headerApp" class="hidden h-14 shrink-0 bg-white border-b-2 border-black/10 px-4 flex items-center justify-between z-30">
   <div class="flex items-center gap-4">
     <!-- Brand (Uploaded Full Logo) -->
     <div class="flex items-center gap-2">
@@ -1865,37 +1865,9 @@
       <span>Deselect All</span>
     </button>
 
-    <!-- Map Floating Toolbar (View & Export next to each other, positioned cleanly left of layers control) -->
-    <div id="mapToolbarContainer" class="absolute top-2.5 right-14 sm:right-16 z-[500] pointer-events-auto flex items-center gap-1.5 sm:gap-2">
-      <!-- 1. Map View Dropdown (Fit Pins & Full Screen) -->
-      <div class="relative" id="viewMapDropdownContainer">
-        <button id="btnViewMapDropdown" type="button" title="Map View Options: Fit Pins & Full Screen"
-          class="btn-secondary btn-chart-ctrl py-1.5 px-2.5 sm:px-3 text-xs flex items-center gap-1.5 sm:gap-2 font-bold transition shadow-sm cursor-pointer">
-          <i class="fi fi-rr-eye text-xs"></i>
-          <span>View</span>
-          <svg viewBox="0 0 20 20" class="w-3 h-3 fill-current opacity-70 shrink-0" aria-hidden="true">
-            <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/>
-          </svg>
-        </button>
-
-        <!-- Map View Dropdown Menu -->
-        <div id="viewMapMenu" class="hidden absolute right-0 top-full mt-1.5 w-48 bg-white border-2 border-black rounded-xl shadow-2xl p-1.5 z-50 space-y-1">
-          <button id="btnFitMapPins" type="button" title="Fit map view to all pinned entities"
-            class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer text-left">
-            <i class="fi fi-rr-expand text-xs text-blue-600 shrink-0"></i>
-            <span>Fit All Pins</span>
-          </button>
-          <button id="btnFullscreenMapMenu" type="button" title="Toggle Full Screen Map (Esc to exit)"
-            class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer text-left">
-            <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 text-blue-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
-            </svg>
-            <span id="btnFullscreenMapText">Full Screen Map</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- 2. Map Export / Save Dropdown (Next to the View button) -->
+    <!-- Map Floating Toolbar (Export dropdown and Fullscreen exit) -->
+    <div id="mapToolbarContainer" class="absolute top-2.5 right-14 sm:right-16 z-30 pointer-events-auto flex items-center gap-1.5 sm:gap-2">
+      <!-- 1. Map Export / Save Dropdown -->
       <div class="relative" id="exportMapDropdownContainer">
         <button id="btnExportMapDropdown" type="button" title="Save / Export Geospatial Map (PDF, PNG, JPEG)"
           class="btn-secondary btn-chart-ctrl py-1.5 px-2.5 sm:px-3 text-xs flex items-center gap-1.5 sm:gap-2 font-bold transition shadow-sm cursor-pointer">
@@ -2265,6 +2237,10 @@ $("btnGoogleCustom").onclick = () => {
 async function checkCurrentSession() {
   if (!cfToken) {
     $("auth").classList.remove("hidden");
+    if ($("headerApp")) {
+      $("headerApp").classList.add("hidden");
+      $("headerApp").classList.remove("flex");
+    }
     $("app").classList.add("hidden");
     return;
   }
@@ -2288,6 +2264,10 @@ async function checkCurrentSession() {
   localStorage.removeItem("blulink_cf_token");
   cfToken = null;
   $("auth").classList.remove("hidden");
+  if ($("headerApp")) {
+    $("headerApp").classList.add("hidden");
+    $("headerApp").classList.remove("flex");
+  }
   $("app").classList.add("hidden");
 }
 checkCurrentSession();
@@ -3613,6 +3593,10 @@ window.addEventListener("keydown", ev => {
 async function openApp() {
   if (particleAnimId) cancelAnimationFrame(particleAnimId);
   $("auth").classList.add("hidden");
+  if ($("headerApp")) {
+    $("headerApp").classList.remove("hidden");
+    $("headerApp").classList.add("flex");
+  }
   $("app").classList.remove("hidden");
   $("app").classList.add("flex");
   if ($("who")) {
