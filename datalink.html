@@ -4363,60 +4363,69 @@ function drawMarqueeSelection(ctx, startPos, currPos) {
   ctx.restore();
 }
 
-/* ---------- Selected Entity Identifier Box (Broken Lines & 50% Gray) ---------- */
-function getEntityCanvasBounds(nodeId) {
-  if (net && net.getBoundingBox) {
-    try {
-      const bb = net.getBoundingBox(nodeId);
-      if (bb && typeof bb.top === "number" && isFinite(bb.top) && isFinite(bb.bottom) && isFinite(bb.left) && isFinite(bb.right) && bb.right > bb.left && bb.bottom > bb.top) {
-        return bb;
-      }
-    } catch (err) {}
-  }
+/* ---------- Selected Entity Identifier (Gray Display in the Corners Only) ---------- */
+function drawSelectedEntityIdentifier(ctx, entityId) {
   let pos = null;
   if (net && net.getPosition) {
-    try { pos = net.getPosition(nodeId); } catch (err) {}
+    try { pos = net.getPosition(entityId); } catch (err) {}
   }
   if (!pos || pos.x == null || pos.y == null || !isFinite(pos.x)) {
-    const ent = data.entities ? data.entities.find(x => x.id === nodeId) : null;
-    pos = ent ? { x: ent.x || 0, y: ent.y || 0 } : { x: 0, y: 0 };
+    const ent = data.entities ? data.entities.find(x => x.id === entityId) : null;
+    pos = ent ? { x: ent.x || 0, y: ent.y || 0 } : null;
   }
-  const ent = data.entities ? data.entities.find(x => x.id === nodeId) : null;
-  const displayName = ent ? getEntityDisplayName(ent) : "";
-  const halfTextW = Math.max(26, (displayName.length * 7.5) / 2);
-  return {
-    left: pos.x - halfTextW,
-    right: pos.x + halfTextW,
-    top: pos.y - 26,
-    bottom: pos.y + 36
-  };
-}
-
-function drawSelectedEntityIdentifier(ctx, entityId) {
-  const bb = getEntityCanvasBounds(entityId);
-  if (!bb) return;
+  if (!pos) return;
 
   const scale = (net && net.getScale) ? net.getScale() : 1;
-  const pad = 6;
-  const x = bb.left - pad;
-  const y = bb.top - pad;
-  const w = (bb.right - bb.left) + pad * 2;
-  const h = (bb.bottom - bb.top) + pad * 2;
-  const r = 6;
+  // Size of entity icon is radius 24 (diameter 48). With 4px padding, half-size is 28 (56x56 box)
+  const half = 28;
+  const x = pos.x - half;
+  const y = pos.y - half;
+  const size = half * 2;
+  const armLen = 9;
+  const lineWidth = Math.max(1.8, 2 / scale);
+  const handleSize = Math.max(3.5, 4 / scale);
+  const halfHandle = handleSize / 2;
 
   ctx.save();
-  // Fill: Gray with 50% opacity
-  ctx.fillStyle = "rgba(128, 128, 128, 0.5)";
-  ctx.beginPath();
-  if (ctx.roundRect) ctx.roundRect(x, y, w, h, r);
-  else ctx.rect(x, y, w, h);
-  ctx.fill();
+  // No fill, no full dashed border - only gray corner brackets and handles
+  ctx.setLineDash([]);
+  ctx.strokeStyle = "#6b7280"; // Neutral solid gray
+  ctx.fillStyle = "#6b7280";
+  ctx.lineWidth = lineWidth;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
 
-  // Border: Broken lines (dashed), gray
-  ctx.strokeStyle = "rgba(75, 85, 99, 0.9)";
-  ctx.lineWidth = Math.max(1, 1.5 / scale);
-  ctx.setLineDash([5 / scale, 4 / scale]);
+  // 1. Top-Left corner ┌
+  ctx.beginPath();
+  ctx.moveTo(x, y + armLen);
+  ctx.lineTo(x, y);
+  ctx.lineTo(x + armLen, y);
   ctx.stroke();
+  ctx.fillRect(x - halfHandle, y - halfHandle, handleSize, handleSize);
+
+  // 2. Top-Right corner ┐
+  ctx.beginPath();
+  ctx.moveTo(x + size - armLen, y);
+  ctx.lineTo(x + size, y);
+  ctx.lineTo(x + size, y + armLen);
+  ctx.stroke();
+  ctx.fillRect(x + size - halfHandle, y - halfHandle, handleSize, handleSize);
+
+  // 3. Bottom-Right corner ┘
+  ctx.beginPath();
+  ctx.moveTo(x + size, y + size - armLen);
+  ctx.lineTo(x + size, y + size);
+  ctx.lineTo(x + size - armLen, y + size);
+  ctx.stroke();
+  ctx.fillRect(x + size - halfHandle, y + size - halfHandle, handleSize, handleSize);
+
+  // 4. Bottom-Left corner └
+  ctx.beginPath();
+  ctx.moveTo(x + armLen, y + size);
+  ctx.lineTo(x, y + size);
+  ctx.lineTo(x, y + size - armLen);
+  ctx.stroke();
+  ctx.fillRect(x - halfHandle, y + size - halfHandle, handleSize, handleSize);
 
   ctx.restore();
 }
