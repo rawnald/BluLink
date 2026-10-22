@@ -4363,6 +4363,83 @@ function drawMarqueeSelection(ctx, startPos, currPos) {
   ctx.restore();
 }
 
+/* ---------- Selected Entity Identifier Box (Broken Lines & 50% Gray) ---------- */
+function getEntityCanvasBounds(nodeId) {
+  if (net && net.getBoundingBox) {
+    try {
+      const bb = net.getBoundingBox(nodeId);
+      if (bb && typeof bb.top === "number" && isFinite(bb.top) && isFinite(bb.bottom) && isFinite(bb.left) && isFinite(bb.right) && bb.right > bb.left && bb.bottom > bb.top) {
+        return bb;
+      }
+    } catch (err) {}
+  }
+  let pos = null;
+  if (net && net.getPosition) {
+    try { pos = net.getPosition(nodeId); } catch (err) {}
+  }
+  if (!pos || pos.x == null || pos.y == null || !isFinite(pos.x)) {
+    const ent = data.entities ? data.entities.find(x => x.id === nodeId) : null;
+    pos = ent ? { x: ent.x || 0, y: ent.y || 0 } : { x: 0, y: 0 };
+  }
+  const ent = data.entities ? data.entities.find(x => x.id === nodeId) : null;
+  const displayName = ent ? getEntityDisplayName(ent) : "";
+  const halfTextW = Math.max(26, (displayName.length * 7.5) / 2);
+  return {
+    left: pos.x - halfTextW,
+    right: pos.x + halfTextW,
+    top: pos.y - 26,
+    bottom: pos.y + 36
+  };
+}
+
+function drawSelectedEntityIdentifier(ctx, entityId) {
+  const bb = getEntityCanvasBounds(entityId);
+  if (!bb) return;
+
+  const scale = (net && net.getScale) ? net.getScale() : 1;
+  const pad = 6;
+  const x = bb.left - pad;
+  const y = bb.top - pad;
+  const w = (bb.right - bb.left) + pad * 2;
+  const h = (bb.bottom - bb.top) + pad * 2;
+  const r = 6;
+
+  ctx.save();
+  // Fill: Gray with 50% opacity
+  ctx.fillStyle = "rgba(128, 128, 128, 0.5)";
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(x, y, w, h, r);
+  else ctx.rect(x, y, w, h);
+  ctx.fill();
+
+  // Border: Broken lines (dashed), gray
+  ctx.strokeStyle = "rgba(75, 85, 99, 0.9)";
+  ctx.lineWidth = Math.max(1, 1.5 / scale);
+  ctx.setLineDash([5 / scale, 4 / scale]);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawSelectedEntitiesIdentifiers(ctx) {
+  if (!data || !data.entities || !net) return;
+  const selIds = [];
+  if (selected && !selIds.includes(selected)) {
+    selIds.push(selected);
+  }
+  if (multiSelectedEntityIds && multiSelectedEntityIds.length > 0) {
+    multiSelectedEntityIds.forEach(id => {
+      if (id && !selIds.includes(id)) selIds.push(id);
+    });
+  }
+  if (selIds.length === 0) return;
+
+  selIds.forEach(id => {
+    if (typeof id === "string" && (id.startsWith("box_") || id.startsWith("corner_") || id.startsWith("box_anchor_"))) return;
+    drawSelectedEntityIdentifier(ctx, id);
+  });
+}
+
 /* ---------- Text Box Operations & Modal ---------- */
 function openEditTextModal(boxId) {
   if (!boxId || !data.boxes) return;
@@ -6011,6 +6088,9 @@ function initNet() {
     // Keep GIF overlay images synchronized with vis.js canvas positions
     updateGifOverlayPositions();
 
+    // Draw broken line gray box identifier for all selected entities
+    drawSelectedEntitiesIdentifiers(ctx);
+
     // Draw 8 resize handles and pill buttons for all selected group boxes
     const boxesToDraw = [];
     if (selectedBoxId && data.boxes) {
@@ -7340,6 +7420,9 @@ function select(id, fromSource) {
 
   if (id) {
     switchTab("inspect");
+  }
+  if (net) {
+    net.redraw();
   }
 }
 
