@@ -804,36 +804,46 @@
 </ul>
 
 <h2>9.2 Exporting Analytical Products</h2>
-<p>Completed link and geospatial charts can be exported for tactical intelligence briefings and court evidentiary presentations:</p>
+<p>Completed link and geospatial charts can be exported for tactical intelligence briefings, GIS mapping systems, and court evidentiary presentations via the unified <strong>Export</strong> dropdown in both the Workstation and Geospatial Map toolbars:</p>
 <table>
   <thead>
     <tr>
-      <th style="width:25%;">Format</th>
-      <th style="width:30%;">Output Target</th>
-      <th>Recommended Operational Use</th>
+      <th style="width:20%;">Format</th>
+      <th style="width:25%;">Output Target</th>
+      <th>Recommended Operational Use &amp; Interoperability</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td><strong>JSON Backup</strong></td>
-      <td>Raw encrypted data file</td>
-      <td>Full forensic backup. Can be imported into another BluLink instance to restore 100% of the project.</td>
+      <td><strong>Save as PDF</strong></td>
+      <td>Vector Document (.pdf)</td>
+      <td>Formal intelligence dossiers, tactical briefs, and court-ready exhibits with crisp vector typography.</td>
     </tr>
     <tr>
-      <td><strong>High-Res PNG</strong></td>
-      <td>Raster Graphic Image</td>
-      <td>Briefing slides, PowerPoint presentations, printed intelligence summaries, and operational case files.</td>
+      <td><strong>Save as CSV</strong></td>
+      <td>Spreadsheet Table (.csv)</td>
+      <td>UTF-8 BOM encoded spreadsheet with Name, Type, Alias, Latitude, Longitude, MGRS, Notes, Connections, and Connection Count. Directly opens in <strong>Excel</strong>, <strong>ArcMap (Add XY Data)</strong>, <strong>ArcGIS Pro</strong>, and <strong>QGIS</strong>.</td>
     </tr>
     <tr>
-      <td><strong>CSV Spreadsheet</strong></td>
-      <td>Comma-Separated Values</td>
-      <td>Tabular export of entity profiles, phone numbers, MGRS coordinates, and relationship matrices for Excel.</td>
+      <td><strong>Image (PNG)</strong></td>
+      <td>Ultra-HD Raster (.png)</td>
+      <td>Lossless high-resolution briefing slides, PowerPoint presentations, printed intelligence summaries, and operational case files.</td>
+    </tr>
+    <tr>
+      <td><strong>Image (JPEG)</strong></td>
+      <td>Compressed Raster (.jpeg)</td>
+      <td>Lightweight visual snapshots optimized for field radio transmissions, web publishing, and bandwidth-constrained channels.</td>
+    </tr>
+    <tr>
+      <td><strong>Export Project</strong></td>
+      <td>JSON Package (.json)</td>
+      <td>Full forensic backup containing all entities, link topologies, custom coordinates, and group boxes. Restorable across any BluLink terminal.</td>
     </tr>
   </tbody>
 </table>
 
 <h2>9.3 Restoring Workspace from Backup</h2>
-<p>To restore or share a project, click <strong>"Import Backup"</strong> in the project menu. Select the <code>.json</code> file; BluLink verifies schema integrity, updates nodes and links, recalculates MGRS grids, and mounts the workspace immediately.</p>
+<p>To restore or share a project, click <strong>"Import Project"</strong> in the project settings menu. Select the <code>.json</code> file; BluLink verifies schema integrity, updates nodes and links, recalculates MGRS grids, and mounts the workspace immediately.</p>
 
 <div class="page-break"></div>
 

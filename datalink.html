@@ -1783,7 +1783,7 @@
           </button>
 
           <!-- Export Dropdown Menu -->
-          <div id="exportNetMenu" class="hidden absolute right-0 top-full mt-1.5 w-48 bg-white border-2 border-black rounded-xl shadow-2xl p-1.5 z-50 space-y-1">
+          <div id="exportNetMenu" class="hidden absolute right-0 top-full mt-1.5 w-52 bg-white border-2 border-black rounded-xl shadow-2xl p-1.5 z-50 space-y-1">
             <div class="px-2.5 py-1 text-[10px] font-bold text-black/50 uppercase tracking-wider">Save Workstation</div>
             <button id="btnExportNetPDF" type="button" title="Save Workstation Chart as PDF document"
               class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer text-left">
@@ -1792,6 +1792,14 @@
                 <span>Save as PDF</span>
               </div>
               <span class="text-[9px] font-bold text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded uppercase">PDF</span>
+            </button>
+            <button id="btnExportNetCSV" type="button" title="Save Entities & Coordinates as CSV spreadsheet (Excel / ArcMap compatible)"
+              class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-emerald-50 hover:text-emerald-700 transition cursor-pointer text-left">
+              <div class="flex items-center gap-2">
+                <i class="fi fi-rr-file-spreadsheet text-xs text-emerald-600 shrink-0"></i>
+                <span>Save as CSV</span>
+              </div>
+              <span class="text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-300 px-1.5 py-0.5 rounded uppercase">CSV</span>
             </button>
             <button id="btnExportNetPNG" type="button" title="Save Workstation Chart as high-res PNG image"
               class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer text-left">
@@ -1808,6 +1816,15 @@
                 <span>Image (JPEG)</span>
               </div>
               <span class="text-[9px] font-mono text-black/50">JPEG</span>
+            </button>
+            <div class="border-t border-black/10 my-1"></div>
+            <button id="btnExportNetProject" type="button" title="Download Active Project as JSON file (.json)"
+              class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-indigo-50 hover:text-indigo-700 transition cursor-pointer text-left">
+              <div class="flex items-center gap-2">
+                <i class="fi fi-rr-folder-download text-xs text-indigo-600 shrink-0"></i>
+                <span>Export Project</span>
+              </div>
+              <span class="text-[9px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-1.5 py-0.5 rounded uppercase">JSON</span>
             </button>
           </div>
         </div>
@@ -1910,7 +1927,7 @@
         </button>
 
         <!-- Map Export Dropdown Menu -->
-        <div id="exportMapMenu" class="hidden absolute right-0 top-full mt-1.5 w-48 bg-white border-2 border-black rounded-xl shadow-2xl p-1.5 z-[1001] space-y-1">
+        <div id="exportMapMenu" class="hidden absolute right-0 top-full mt-1.5 w-52 bg-white border-2 border-black rounded-xl shadow-2xl p-1.5 z-[1001] space-y-1">
           <div class="px-2.5 py-1 text-[10px] font-bold text-black/50 uppercase tracking-wider">Save Geospatial Map</div>
           <button id="btnExportMapPDF" type="button" title="Save Map view as PDF document"
             class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer text-left">
@@ -1919,6 +1936,14 @@
               <span>Save as PDF</span>
             </div>
             <span class="text-[9px] font-bold text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded uppercase">PDF</span>
+          </button>
+          <button id="btnExportMapCSV" type="button" title="Save Entities & Coordinates as CSV spreadsheet (Excel / ArcMap compatible)"
+            class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-emerald-50 hover:text-emerald-700 transition cursor-pointer text-left">
+            <div class="flex items-center gap-2">
+              <i class="fi fi-rr-file-spreadsheet text-xs text-emerald-600 shrink-0"></i>
+              <span>Save as CSV</span>
+            </div>
+            <span class="text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-300 px-1.5 py-0.5 rounded uppercase">CSV</span>
           </button>
           <button id="btnExportMapPNG" type="button" title="Save Map view as high-res PNG image"
             class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer text-left">
@@ -1935,6 +1960,15 @@
               <span>Image (JPEG)</span>
             </div>
             <span class="text-[9px] font-mono text-black/50">JPEG</span>
+          </button>
+          <div class="border-t border-black/10 my-1"></div>
+          <button id="btnExportMapProject" type="button" title="Download Active Project as JSON file (.json)"
+            class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-indigo-50 hover:text-indigo-700 transition cursor-pointer text-left">
+            <div class="flex items-center gap-2">
+              <i class="fi fi-rr-folder-download text-xs text-indigo-600 shrink-0"></i>
+              <span>Export Project</span>
+            </div>
+            <span class="text-[9px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-1.5 py-0.5 rounded uppercase">JSON</span>
           </button>
         </div>
       </div>
@@ -2625,11 +2659,14 @@ $("projectSelect").onchange = e => {
 
 /* ---------- Download / Export Project (.json) ---------- */
 function exportCurrentProject() {
-  if (!currentProjectId) {
+  const current = (typeof projects !== "undefined" && Array.isArray(projects) && typeof currentProjectId !== "undefined" && currentProjectId)
+    ? projects.find(p => p.id === currentProjectId) : null;
+  const hasData = data && ((data.entities && data.entities.length > 0) || (data.links && data.links.length > 0) || (data.boxes && data.boxes.length > 0));
+
+  if (!current && !hasData) {
     alert("Please select or open a project first to export.");
     return;
   }
-  const current = projects.find(p => p.id === currentProjectId);
   const projName = current ? current.name : "BluLink Project";
   const projDesc = current ? current.description : "";
 
@@ -9840,8 +9877,13 @@ if ($("btnExitFullscreenMap")) $("btnExitFullscreenMap").onclick = exitFullscree
 
 if ($("btnExportNetDropdown")) $("btnExportNetDropdown").onclick = toggleExportNetMenu;
 if ($("btnExportNetPDF")) $("btnExportNetPDF").onclick = () => exportWorkstation("pdf");
+if ($("btnExportNetCSV")) $("btnExportNetCSV").onclick = () => exportEntitiesCsv("Workstation_Entities");
 if ($("btnExportNetPNG")) $("btnExportNetPNG").onclick = () => exportWorkstation("png");
 if ($("btnExportNetJPEG")) $("btnExportNetJPEG").onclick = () => exportWorkstation("jpeg");
+if ($("btnExportNetProject")) $("btnExportNetProject").onclick = () => {
+  closeExportNetMenu();
+  exportCurrentProject();
+};
 
 if ($("btnViewMapDropdown")) $("btnViewMapDropdown").onclick = toggleViewMapMenu;
 if ($("btnFitMapPins")) $("btnFitMapPins").onclick = fitMapPins;
@@ -9852,14 +9894,19 @@ if ($("btnFullscreenMapMenu")) $("btnFullscreenMapMenu").onclick = () => {
 
 if ($("btnExportMapDropdown")) $("btnExportMapDropdown").onclick = toggleExportMapMenu;
 if ($("btnExportMapPDF")) $("btnExportMapPDF").onclick = () => exportMap("pdf");
+if ($("btnExportMapCSV")) $("btnExportMapCSV").onclick = () => exportEntitiesCsv("Map_Coordinates");
 if ($("btnExportMapPNG")) $("btnExportMapPNG").onclick = () => exportMap("png");
 if ($("btnExportMapJPEG")) $("btnExportMapJPEG").onclick = () => exportMap("jpeg");
+if ($("btnExportMapProject")) $("btnExportMapProject").onclick = () => {
+  closeExportMapMenu();
+  exportCurrentProject();
+};
 
 
 // Dropdown triggers & outside click listener
 if ($("btnDrawToolsDropdown")) $("btnDrawToolsDropdown").onclick = toggleDrawToolsMenu;
 
-/* ---------- Export Workstation & Map (PDF, PNG, JPEG) Implementation ---------- */
+/* ---------- Export Workstation & Map (PDF, PNG, JPEG, CSV) Implementation ---------- */
 function triggerFileDownload(dataUrl, filename) {
   const link = document.createElement("a");
   link.href = dataUrl;
@@ -9877,6 +9924,106 @@ function getExportFilename(sourcePrefix, ext) {
   const now = new Date();
   const dateStr = now.toISOString().slice(0, 10);
   return `${safeName}_${sourcePrefix}_${dateStr}.${ext}`;
+}
+
+/* ---------- Export Entities to CSV (ArcMap, Excel, QGIS Compatible) ---------- */
+function exportEntitiesCsv(sourcePrefix = "Entities") {
+  if (typeof closeExportNetMenu === "function") closeExportNetMenu();
+  if (typeof closeExportMapMenu === "function") closeExportMapMenu();
+
+  const entitiesList = (data && Array.isArray(data.entities)) ? data.entities : [];
+  if (entitiesList.length === 0) {
+    alert("No entities found to export in the current project.");
+    return;
+  }
+
+  const linksList = (data && Array.isArray(data.links)) ? data.links : [];
+
+  // Helper for CSV cell escaping (handles commas, quotes, newlines)
+  const escapeCell = (val) => {
+    if (val == null) return "";
+    let str = String(val).trim();
+    if (str.includes('"') || str.includes(',') || str.includes('\n') || str.includes('\r')) {
+      return '"' + str.replace(/"/g, '""') + '"';
+    }
+    return str;
+  };
+
+  // Standard CSV Headers compatible with Excel, Google Sheets, ArcMap (Add XY Data), and QGIS
+  const headers = [
+    "Name",
+    "Type",
+    "Alias",
+    "Latitude",
+    "Longitude",
+    "MGRS",
+    "Notes",
+    "Connections",
+    "Connection_Count",
+    "Workstation_X",
+    "Workstation_Y",
+    "Entity_ID"
+  ];
+
+  const rows = [headers.join(",")];
+
+  entitiesList.forEach(ent => {
+    // Determine connected entities
+    const connectedLinks = linksList.filter(l => {
+      const fId = l.from || (l.source && l.source.id ? l.source.id : l.source);
+      const tId = l.to || (l.target && l.target.id ? l.target.id : l.target);
+      return fId === ent.id || tId === ent.id;
+    });
+
+    const connectedNames = connectedLinks.map(l => {
+      const fId = l.from || (l.source && l.source.id ? l.source.id : l.source);
+      const tId = l.to || (l.target && l.target.id ? l.target.id : l.target);
+      const otherId = (fId === ent.id) ? tId : fId;
+      const otherEnt = entitiesList.find(e => e.id === otherId);
+      const labelPart = l.label && l.label !== "link" ? ` (${l.label})` : "";
+      return otherEnt ? `${otherEnt.name}${labelPart}` : `Unknown${labelPart}`;
+    });
+
+    const latVal = (ent.lat != null && !isNaN(ent.lat) && ent.lat !== "") ? Number(ent.lat).toFixed(6) : "";
+    const lngVal = (ent.lng != null && !isNaN(ent.lng) && ent.lng !== "") ? Number(ent.lng).toFixed(6) : "";
+    let mgrsVal = ent.mgrs || "";
+    if (!mgrsVal && latVal && lngVal && typeof toMgrs === "function") {
+      try { mgrsVal = toMgrs(parseFloat(latVal), parseFloat(lngVal)) || ""; } catch (e) {}
+    }
+
+    const row = [
+      escapeCell(ent.name || ""),
+      escapeCell(ent.type || ""),
+      escapeCell(ent.subName || ""),
+      escapeCell(latVal),
+      escapeCell(lngVal),
+      escapeCell(mgrsVal),
+      escapeCell(ent.note || ""),
+      escapeCell(connectedNames.join("; ")),
+      escapeCell(connectedLinks.length),
+      escapeCell(ent.x != null && !isNaN(ent.x) ? Math.round(ent.x) : ""),
+      escapeCell(ent.y != null && !isNaN(ent.y) ? Math.round(ent.y) : ""),
+      escapeCell(ent.id || "")
+    ];
+
+    rows.push(row.join(","));
+  });
+
+  // Prepend UTF-8 BOM (\uFEFF) so Microsoft Excel opens Unicode text properly
+  const csvContent = "\uFEFF" + rows.join("\r\n");
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const filename = getExportFilename(sourcePrefix, "csv");
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+  setStatus(`Exported ${entitiesList.length} entities to CSV (${filename})`);
 }
 
 function toggleExportNetMenu() {
