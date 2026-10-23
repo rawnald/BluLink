@@ -2050,7 +2050,7 @@ let isTextMode = false, isDrawingLiveText = false;
 let textDrawStartCanvasPos = null, textDrawCurrentCanvasPos = null;
 let editingBoxId = null, editingTextBoxId = null, isDraggingBox = false, draggingBoxId = null;
 let dragBoxStartPointer = null, dragBoxInitialX = 0, dragBoxInitialY = 0, dragBoxInitialPositions = {};
-let isDraggingMultiEntities = false, multiDragPrimaryNode = null, multiDragInitialPositions = {};
+let isDraggingMultiEntities = false, isPotentialMultiDrag = false, multiDragPrimaryNode = null, multiDragInitialPositions = {};
 let selectedBoxId = null, isResizingBox = false, activeResizeHandle = null;
 let multiSelectedEntityIds = [], multiSelectedBoxIds = [], multiSelectedLinkIds = [];
 let isMarqueeSelecting = false, marqueeStartCanvasPos = null, marqueeCurrentCanvasPos = null, isMarqueeMode = false, didMarqueeSelect = false;
@@ -5939,6 +5939,12 @@ function initNet() {
         selectedBoxId = null;
         net.redraw();
       }
+      if (isPotentialMultiDrag || isDraggingMultiEntities) {
+        if (multiSelectedEntityIds && multiSelectedEntityIds.length > 0) {
+          net.selectNodes(multiSelectedEntityIds);
+        }
+        return;
+      }
       selectedCornerNodeId = null;
       const realNodeIds = (p.nodes || []).filter(id => typeof id === "string" && !id.startsWith("corner_") && !id.startsWith("box_"));
       if (realNodeIds.length > 1) {
@@ -5959,6 +5965,12 @@ function initNet() {
 
   net.on("deselectNode", () => {
     if (!isLinkMode && !isDrawingLiveLine && !isCornerMode) {
+      if (isPotentialMultiDrag || isDraggingMultiEntities) {
+        if (multiSelectedEntityIds && multiSelectedEntityIds.length > 0) {
+          net.selectNodes(multiSelectedEntityIds);
+        }
+        return;
+      }
       selectedCornerNodeId = null;
       if (net && net.getSelectedNodes) {
         const remaining = net.getSelectedNodes().filter(id => typeof id === "string" && !id.startsWith("corner_") && !id.startsWith("box_"));
@@ -6054,12 +6066,18 @@ function initNet() {
 
       if (activeSelEnts.includes(draggedId) && (activeSelEnts.length > 1 || (multiSelectedBoxIds && multiSelectedBoxIds.length > 0))) {
         isDraggingMultiEntities = true;
+        isPotentialMultiDrag = false;
         multiDragPrimaryNode = draggedId;
         multiDragInitialPositions = {};
 
+        const curPosMap = net.getPositions(activeSelEnts);
         activeSelEnts.forEach(id => {
-          const ent = data.entities.find(e => e.id === id);
-          if (ent) multiDragInitialPositions[id] = { x: ent.x, y: ent.y };
+          if (curPosMap && curPosMap[id]) {
+            multiDragInitialPositions[id] = { x: curPosMap[id].x, y: curPosMap[id].y };
+          } else {
+            const ent = data.entities.find(e => e.id === id);
+            if (ent) multiDragInitialPositions[id] = { x: ent.x, y: ent.y };
+          }
         });
         if (multiSelectedBoxIds && multiSelectedBoxIds.length > 0 && data.boxes) {
           multiSelectedBoxIds.forEach(bId => {
@@ -6069,6 +6087,7 @@ function initNet() {
         }
       } else {
         isDraggingMultiEntities = false;
+        isPotentialMultiDrag = false;
         multiDragPrimaryNode = null;
         multiDragInitialPositions = {};
       }
@@ -6118,6 +6137,7 @@ function initNet() {
       clampNodesToWorkspace(isDraggingMultiEntities ? multiSelectedEntityIds : p.nodes);
       updateAllBoxAnchors();
       updateGifOverlayPositions();
+      net.redraw();
     }
   });
 
@@ -6136,8 +6156,10 @@ function initNet() {
         });
         net.selectNodes(multiSelectedEntityIds);
         isDraggingMultiEntities = false;
+        isPotentialMultiDrag = false;
         multiDragPrimaryNode = null;
         multiDragInitialPositions = {};
+        net.redraw();
       } else {
         clampNodesToWorkspace(p.nodes);
         const positions = net.getPositions(p.nodes);
@@ -6372,14 +6394,32 @@ function initNet() {
           net.unselectAll();
           net.redraw();
         } else {
+          isPotentialMultiDrag = false;
           selectedCornerNodeId = null;
           selectedLinkId = null;
           if (selectedBoxId) {
             selectedBoxId = null;
             net.redraw();
           }
-          select(clickedNode, "net");
-          updateEdgeVisuals();
+          const isMulti = params.event && params.event.srcEvent && (params.event.srcEvent.shiftKey || params.event.srcEvent.ctrlKey || params.event.srcEvent.metaKey);
+          if (isMulti) {
+            if (!multiSelectedEntityIds) multiSelectedEntityIds = [];
+            if (multiSelectedEntityIds.includes(clickedNode)) {
+              multiSelectedEntityIds = multiSelectedEntityIds.filter(id => id !== clickedNode);
+            } else {
+              multiSelectedEntityIds.push(clickedNode);
+            }
+            selected = multiSelectedEntityIds.length === 1 ? multiSelectedEntityIds[0] : null;
+            net.selectNodes(multiSelectedEntityIds);
+            updateEdgeVisuals();
+            updateSelectionUI();
+            if (selected) renderInspector();
+          } else {
+            multiSelectedEntityIds = [clickedNode];
+            select(clickedNode, "net");
+            updateEdgeVisuals();
+            updateSelectionUI();
+          }
         }
         return;
       }
@@ -6822,8 +6862,33 @@ function initNet() {
       const headerBorderBox = (!clickedNode && !clickedLink) ? findBoxHeaderOrBorderAt(cPos) : null;
       const hitBox = (!clickedNode && !clickedLink) ? (headerBorderBox || findBoxAt(cPos)) : null;
 
-      // 3-pre. Immediate Marquee Highlight Initiation (when in Marquee Mode or Right-Click Drag)
-      if (isMarqueeMode || isRightClick) {
+      // If user clicked on an already highlighted entity, initiate potential multi-drag instead of marquee!
+      if (clickedNode && typeof clickedNode === "string" && !clickedNode.startsWith("corner_") && !clickedNode.startsWith("box_") && !clickedNode.startsWith("box_anchor_")) {
+        if (multiSelectedEntityIds && multiSelectedEntityIds.length > 1 && multiSelectedEntityIds.includes(clickedNode) && !isMultiKey && !isRightClick) {
+          isPotentialMultiDrag = true;
+          multiDragPrimaryNode = clickedNode;
+          const curPosMap = net.getPositions(multiSelectedEntityIds);
+          multiDragInitialPositions = {};
+          multiSelectedEntityIds.forEach(id => {
+            if (curPosMap && curPosMap[id]) multiDragInitialPositions[id] = { x: curPosMap[id].x, y: curPosMap[id].y };
+          });
+          if (multiSelectedBoxIds && multiSelectedBoxIds.length > 0 && data.boxes) {
+            multiSelectedBoxIds.forEach(bId => {
+              const b = data.boxes.find(x => x.id === bId);
+              if (b) multiDragInitialPositions[bId] = { x: b.x, y: b.y };
+            });
+          }
+          net.setOptions({ interaction: { dragNodes: true, dragView: false } });
+          return;
+        } else {
+          isPotentialMultiDrag = false;
+        }
+      } else {
+        isPotentialMultiDrag = false;
+      }
+
+      // 3-pre. Immediate Marquee Highlight Initiation (when in Marquee Mode or Right-Click Drag on canvas)
+      if ((isMarqueeMode && !clickedNode) || isRightClick) {
         isMarqueeSelecting = true;
         didMarqueeSelect = false;
         marqueeStartCanvasPos = cPos;
@@ -7221,6 +7286,9 @@ function initNet() {
           const total = multiSelectedEntityIds.length + multiSelectedBoxIds.length + multiSelectedLinkIds.length;
           if (total > 0) {
             setStatus(`Highlighted and selected ${total} item${total > 1 ? 's' : ''}`);
+            if (isMarqueeMode) {
+              exitMarqueeMode();
+            }
           }
         }
       }
@@ -7871,6 +7939,14 @@ function render(fitAll = false) {
     const pts = data.entities.filter(e => e.lat != null && e.lng != null).map(e => [e.lat, e.lng]);
     if (pts.length) {
       map.fitBounds(pts, { padding: [50, 50], maxZoom: 12 });
+    }
+  }
+
+  if (net) {
+    if (multiSelectedEntityIds && multiSelectedEntityIds.length > 0) {
+      net.selectNodes(multiSelectedEntityIds);
+    } else if (selected) {
+      net.selectNodes([selected]);
     }
   }
 }
@@ -8964,16 +9040,21 @@ function pasteClipboard() {
   if (newlyPastedEntities.length > 0) {
     selected = newlyPastedEntities[0].id;
     selectedBoxId = null;
-    if (net) {
-      net.selectNodes(multiSelectedEntityIds);
-    }
   } else if (newlyPastedBoxes.length > 0) {
     selectedBoxId = newlyPastedBoxes[0].id;
     selected = null;
-    if (net) net.unselectAll();
   }
 
   render(false);
+
+  if (net) {
+    if (newlyPastedEntities.length > 0) {
+      net.selectNodes(multiSelectedEntityIds);
+    } else {
+      net.unselectAll();
+    }
+    net.redraw();
+  }
   renderInspector();
   renderList();
   queueSave();
