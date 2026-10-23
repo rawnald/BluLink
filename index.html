@@ -1826,31 +1826,6 @@
       </button>
     </div>
 
-    <!-- Floating Multi-Selection Action Bar (Group & Ungroup) -->
-    <div id="multiSelectBar" class="hidden absolute top-12 sm:top-14 left-1/2 -translate-x-1/2 z-40 bg-white border-2 border-black rounded-full shadow-2xl px-3 py-1.5 flex items-center gap-2 max-w-[90%] transition-all">
-      <div class="flex items-center gap-1.5 pl-1 shrink-0">
-        <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 text-blue-600 fill-none stroke-current" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="3" width="7" height="7"/>
-          <rect x="14" y="3" width="7" height="7"/>
-          <rect x="14" y="14" width="7" height="7"/>
-          <rect x="3" y="14" width="7" height="7"/>
-        </svg>
-        <span id="multiSelectCount" class="text-xs font-bold text-black">2 items selected</span>
-      </div>
-      <div class="h-4 w-px bg-black/20 shrink-0"></div>
-      <button id="btnGroupSelected" type="button" class="btn-primary py-1 px-3 text-xs flex items-center gap-1.5 rounded-full shadow-sm hover:scale-105 active:scale-95 transition" title="Group selected items into a container box (Ctrl+G)">
-        <span>Group</span>
-        <kbd class="text-[9px] opacity-75 font-mono">Ctrl+G</kbd>
-      </button>
-      <button id="btnUngroupSelected" type="button" class="btn-secondary py-1 px-3 text-xs flex items-center gap-1.5 rounded-full border-black/30 hover:border-amber-600 hover:text-amber-600 transition" title="Ungroup selected box (Ctrl+Shift+G)">
-        <span>Ungroup</span>
-        <kbd class="text-[9px] opacity-75 font-mono">Ctrl+⇧+G</kbd>
-      </button>
-      <button id="btnDeselectMulti" type="button" class="text-black/60 hover:text-black font-bold text-xs px-1.5 py-0.5 rounded-full hover:bg-black/5" title="Clear selection (Esc)">✕</button>
-    </div>
-
-
-
     <!-- Vis.Network Container (Pure White) -->
     <div id="net" class="flex-1 w-full h-full bg-white"></div>
   </section>
@@ -4244,8 +4219,6 @@ if ($("btnUngroupEditBox")) {
   };
 }
 
-if ($("btnGroupSelected")) $("btnGroupSelected").onclick = groupSelected;
-if ($("btnUngroupSelected")) $("btnUngroupSelected").onclick = () => ungroupSelected();
 if ($("btnGroupMenuOption")) {
   $("btnGroupMenuOption").onclick = () => {
     closeDrawToolsMenu();
@@ -4256,18 +4229,6 @@ if ($("btnUngroupMenuOption")) {
   $("btnUngroupMenuOption").onclick = () => {
     closeDrawToolsMenu();
     ungroupSelected();
-  };
-}
-if ($("btnDeselectMulti")) {
-  $("btnDeselectMulti").onclick = () => {
-    clearMultiSelection();
-    selected = null;
-    selectedBoxId = null;
-    selectedLinkId = null;
-    if (net) {
-      net.unselectAll();
-      net.redraw();
-    }
   };
 }
 
@@ -4313,10 +4274,6 @@ function clearMultiSelection() {
 
 function updateSelectionUI() {
   const { entities, boxes, links, totalCount } = getSelectedItems();
-  const bar = $("multiSelectBar");
-  const countText = $("multiSelectCount");
-  const btnGroup = $("btnGroupSelected");
-  const btnUngroup = $("btnUngroupSelected");
   const menuGroup = $("btnGroupMenuOption");
   const menuUngroup = $("btnUngroupMenuOption");
 
@@ -4326,27 +4283,6 @@ function updateSelectionUI() {
     canUngroup = true;
   } else if (entities.length > 0 && data.boxes && data.boxes.length > 0) {
     canUngroup = data.boxes.some(b => b.type !== "text" && entities.some(e => e.x >= b.x && e.x <= b.x + b.w && e.y >= b.y && e.y <= b.y + b.h));
-  }
-
-  if (bar) {
-    if (totalCount >= 2 || (canUngroup && totalCount >= 1)) {
-      bar.classList.remove("hidden");
-      if (countText) {
-        const parts = [];
-        if (entities.length > 0) parts.push(`${entities.length} ${entities.length === 1 ? 'entity' : 'entities'}`);
-        if (boxes.length > 0) parts.push(`${boxes.length} ${boxes.length === 1 ? 'box' : 'boxes'}`);
-        if (links.length > 0) parts.push(`${links.length} ${links.length === 1 ? 'link' : 'links'}`);
-        countText.textContent = parts.join(", ") || `${totalCount} items selected`;
-      }
-      if (btnGroup) {
-        btnGroup.style.display = totalCount >= 2 ? "inline-flex" : "none";
-      }
-      if (btnUngroup) {
-        btnUngroup.style.display = canUngroup ? "inline-flex" : "none";
-      }
-    } else {
-      bar.classList.add("hidden");
-    }
   }
 
   if (menuGroup) {
