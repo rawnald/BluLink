@@ -211,12 +211,15 @@
     background-color: #ffffff !important;
     font-family: 'DM Sans', sans-serif !important;
   }
-  /* Google Tactical Tile Filter: High-contrast military HUD basemap */
-  .tactical-tiles {
+  /* Google Tactical & Esri Tactical Tile Filters: High-contrast military HUD basemaps */
+  .tactical-tiles, .esri-tactical-tiles {
     background: #0f172a !important;
   }
   .tactical-tiles .leaflet-tile {
     filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(115%) !important;
+  }
+  .esri-tactical-tiles .leaflet-tile {
+    filter: invert(100%) hue-rotate(180deg) brightness(92%) contrast(125%) !important;
   }
   .leaflet-control-zoom a {
     background-color: #ffffff !important;
@@ -2043,7 +2046,7 @@ let isSignUpMode = false;
 let pendingEmail = "";
 let map, net, nodes, edges, markerLayer, lineLayer;
 let markersByEntityId = {}, linesByLinkId = {}, linkLabelsByLinkId = {};
-let isTacticalBasemap = false, tacticalTileLayer = null;
+let isTacticalBasemap = false, tacticalTileLayer = null, esriTacticalTileLayer = null;
 let isBoxMode = false, isDrawingLiveBox = false;
 let boxDrawStartCanvasPos = null, boxDrawCurrentCanvasPos = null;
 let isTextMode = false, isDrawingLiveText = false;
@@ -3897,7 +3900,7 @@ function formatMgrsDisplay(mgrsStr) {
   return clean;
 }
 
-/* ---------- Map Setup: Google Terrain, Satellite, Hybrid & Tactical ---------- */
+/* ---------- Map Setup: Google Terrain, Satellite, Hybrid & Tactical, Esri Tactical ---------- */
 function initMap() {
   const terrain = L.tileLayer("https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}", {
     maxZoom: 20,
@@ -3921,6 +3924,14 @@ function initMap() {
     className: "tactical-tiles"
   });
   tacticalTileLayer = tactical;
+
+  const esriTactical = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}", {
+    maxZoom: 19,
+    attribution: "Map data © Esri (Tactical Topo)",
+    crossOrigin: true,
+    className: "esri-tactical-tiles"
+  });
+  esriTacticalTileLayer = esriTactical;
 
   map = L.map("map", {
     layers: [hybrid],
@@ -3952,14 +3963,15 @@ function initMap() {
       "Google Hybrid": hybrid,
       "Google Satellite": sat,
       "Google Terrain": terrain,
-      "Google Tactical": tactical
+      "Google Tactical": tactical,
+      "Esri Tactical": esriTactical
     },
     null,
     { position: "topright" }
   ).addTo(map);
 
   map.on("baselayerchange", e => {
-    isTacticalBasemap = Boolean(e && e.name === "Google Tactical");
+    isTacticalBasemap = Boolean(e && (e.name === "Google Tactical" || e.name === "Esri Tactical"));
     if (typeof updateMapSelection === "function") {
       updateMapSelection();
     }
@@ -7605,7 +7617,7 @@ function getLinkAngle(a, b) {
   return Math.round(deg * 10) / 10;
 }
 
-/* Determine if link color is black/default so it dynamically adapts to white in Google Tactical mode */
+/* Determine if link color is black/default so it dynamically adapts to white in Google Tactical & Esri Tactical modes */
 function isBlackLinkColor(color) {
   if (!color) return true;
   const c = String(color).trim().toLowerCase();
@@ -7626,6 +7638,7 @@ function isBlackLinkColor(color) {
 
 function isTacticalActive() {
   if (tacticalTileLayer && map && map.hasLayer(tacticalTileLayer)) return true;
+  if (esriTacticalTileLayer && map && map.hasLayer(esriTacticalTileLayer)) return true;
   return Boolean(isTacticalBasemap);
 }
 
