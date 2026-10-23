@@ -754,14 +754,30 @@
   </div>
 </div>
 
-<h2>8.2 Grouping (<kbd>Ctrl+G</kbd>)</h2>
+<h2>8.2 Group Moving &amp; Dragging</h2>
+<p>When multiple entities and/or group boxes are highlighted or selected:</p>
+<ul>
+  <li><strong>Real-Time Synchronized Dragging:</strong> Clicking and dragging any one of the highlighted entities or boxes smoothly moves all selected items together across the canvas while preserving their relative layout, spacing, and connection geometry.</li>
+  <li><strong>Workspace Boundary Clamping:</strong> Multi-drag operations respect safety workspace borders, keeping all dragged nodes within visible analytical view bounds.</li>
+</ul>
+
+<h2>8.3 Unified Clipboard (<kbd>Ctrl+C</kbd>, <kbd>Ctrl+X</kbd>, <kbd>Ctrl+V</kbd>)</h2>
+<p>Analysts can rapidly replicate or relocate multi-item graph clusters:</p>
+<ul>
+  <li><strong>Copy (<kbd>Ctrl+C</kbd>):</strong> Copies all highlighted entities, group boxes, and any internal connection links between them directly into the BluLink clipboard.</li>
+  <li><strong>Cut (<kbd>Ctrl+X</kbd>):</strong> Copies the highlighted cluster to the clipboard and removes the entities, boxes, and associated links from the workspace with full undo snapshot protection.</li>
+  <li><strong>Paste (<kbd>Ctrl+V</kbd>):</strong> Generates duplicates with unique IDs, auto-offsets positions by +30px, preserves internal link topologies, and automatically highlights the new items for immediate dragging.</li>
+  <li><strong>Duplicate (<kbd>Ctrl+D</kbd>):</strong> Directly duplicates the active selection in a single keystroke.</li>
+</ul>
+
+<h2>8.4 Grouping (<kbd>Ctrl+G</kbd>)</h2>
 <p>When two or more items (entities, boxes, or links) are selected:</p>
 <ul>
   <li>Press <strong><kbd>Ctrl</kbd> + <kbd>G</kbd></strong> (or open the <em>Draw Tools</em> dropdown and click <em>Group Selected</em>).</li>
   <li>BluLink calculates the exact bounding box enclosing all selected items, adds standard 28px padding, and wraps them in a new Group Box automatically.</li>
 </ul>
 
-<h2>8.3 Ungrouping (<kbd>Ctrl+Shift+G</kbd> / <kbd>Ctrl+U</kbd>)</h2>
+<h2>8.5 Ungrouping (<kbd>Ctrl+Shift+G</kbd> / <kbd>Ctrl+U</kbd>)</h2>
 <p>To dissolve a group box without deleting the records inside:</p>
 <ul>
   <li>Select the Group Box (or select any entity inside it) and press <strong><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>G</kbd></strong> or <strong><kbd>Ctrl</kbd> + <kbd>U</kbd></strong>.</li>

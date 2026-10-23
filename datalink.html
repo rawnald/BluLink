@@ -2049,7 +2049,8 @@ let boxDrawStartCanvasPos = null, boxDrawCurrentCanvasPos = null;
 let isTextMode = false, isDrawingLiveText = false;
 let textDrawStartCanvasPos = null, textDrawCurrentCanvasPos = null;
 let editingBoxId = null, editingTextBoxId = null, isDraggingBox = false, draggingBoxId = null;
-let dragBoxStartPointer = null, dragBoxInitialX = 0, dragBoxInitialY = 0;
+let dragBoxStartPointer = null, dragBoxInitialX = 0, dragBoxInitialY = 0, dragBoxInitialPositions = {};
+let isDraggingMultiEntities = false, multiDragPrimaryNode = null, multiDragInitialPositions = {};
 let selectedBoxId = null, isResizingBox = false, activeResizeHandle = null;
 let multiSelectedEntityIds = [], multiSelectedBoxIds = [], multiSelectedLinkIds = [];
 let isMarqueeSelecting = false, marqueeStartCanvasPos = null, marqueeCurrentCanvasPos = null, isMarqueeMode = false, didMarqueeSelect = false;
@@ -4294,21 +4295,31 @@ if ($("btnDeleteEditBox")) {
 }
 
 /* ---------- Grouping & Ungrouping Operations ---------- */
-function getSelectedItems() {
-  const entities = (multiSelectedEntityIds && multiSelectedEntityIds.length)
-    ? (data.entities || []).filter(e => multiSelectedEntityIds.includes(e.id))
-    : (selected ? (data.entities || []).filter(e => e.id === selected) : []);
+function getSelectedItems(includeInternalLinks = false) {
+  const entityIds = (multiSelectedEntityIds && multiSelectedEntityIds.length)
+    ? multiSelectedEntityIds
+    : (selected ? [selected] : (net && net.getSelectedNodes ? net.getSelectedNodes().filter(id => typeof id === "string" && !id.startsWith("corner_") && !id.startsWith("box_") && !id.startsWith("box_anchor_")) : []));
 
-  const boxes = (multiSelectedBoxIds && multiSelectedBoxIds.length)
-    ? ((data.boxes || []).filter(b => multiSelectedBoxIds.includes(b.id)))
-    : (selectedBoxId && data.boxes ? data.boxes.filter(b => b.id === selectedBoxId) : []);
+  const entities = (data.entities || []).filter(e => entityIds.includes(e.id));
 
-  const links = (multiSelectedLinkIds && multiSelectedLinkIds.length)
-    ? ((data.links || []).filter(l => multiSelectedLinkIds.includes(l.id)))
-    : (selectedLinkId && data.links ? data.links.filter(l => l.id === selectedLinkId) : []);
+  const boxIds = (multiSelectedBoxIds && multiSelectedBoxIds.length)
+    ? multiSelectedBoxIds
+    : (selectedBoxId && data.boxes ? [selectedBoxId] : []);
+  const boxes = (data.boxes || []).filter(b => boxIds.includes(b.id));
+
+  const linkIds = (multiSelectedLinkIds && multiSelectedLinkIds.length)
+    ? multiSelectedLinkIds
+    : (selectedLinkId && data.links ? [selectedLinkId] : []);
+
+  const allNodeIds = [...entities.map(e => e.id), ...boxes.map(b => b.id)];
+  const links = (data.links || []).filter(l => {
+    if (linkIds.includes(l.id)) return true;
+    if (includeInternalLinks && allNodeIds.includes(l.from) && allNodeIds.includes(l.to)) return true;
+    return false;
+  });
 
   const totalCount = entities.length + boxes.length + links.length;
-  return { entities, boxes, links, totalCount };
+  return { entityIds, boxIds, linkIds, entities, boxes, links, totalCount };
 }
 
 function clearMultiSelection() {
@@ -6027,17 +6038,84 @@ function initNet() {
     }
   }
 
-  // Snapshot state before dragging starts for Undo support
+  // Snapshot state before dragging starts for Undo support and initiate group dragging if multi-selected
   net.on("dragStart", p => {
     if (p.nodes && p.nodes.length && !isDrawingLiveLine) {
       pushUndoSnapshot();
+      const draggedId = p.nodes[0];
+      let activeSelEnts = (multiSelectedEntityIds && multiSelectedEntityIds.length > 0) ? multiSelectedEntityIds : [];
+      if (activeSelEnts.length <= 1 && net.getSelectedNodes) {
+        const visSel = net.getSelectedNodes().filter(id => typeof id === "string" && !id.startsWith("corner_") && !id.startsWith("box_") && !id.startsWith("box_anchor_"));
+        if (visSel.length > 1 && visSel.includes(draggedId)) {
+          activeSelEnts = visSel;
+          multiSelectedEntityIds = [...visSel];
+        }
+      }
+
+      if (activeSelEnts.includes(draggedId) && (activeSelEnts.length > 1 || (multiSelectedBoxIds && multiSelectedBoxIds.length > 0))) {
+        isDraggingMultiEntities = true;
+        multiDragPrimaryNode = draggedId;
+        multiDragInitialPositions = {};
+
+        activeSelEnts.forEach(id => {
+          const ent = data.entities.find(e => e.id === id);
+          if (ent) multiDragInitialPositions[id] = { x: ent.x, y: ent.y };
+        });
+        if (multiSelectedBoxIds && multiSelectedBoxIds.length > 0 && data.boxes) {
+          multiSelectedBoxIds.forEach(bId => {
+            const b = data.boxes.find(x => x.id === bId);
+            if (b) multiDragInitialPositions[bId] = { x: b.x, y: b.y };
+          });
+        }
+      } else {
+        isDraggingMultiEntities = false;
+        multiDragPrimaryNode = null;
+        multiDragInitialPositions = {};
+      }
     }
   });
 
-  // Real-time clamping and box border anchor tracking while dragging nodes
+  // Real-time clamping and box border anchor tracking while dragging nodes (moves all highlighted entities together)
   net.on("dragging", p => {
     if (p.nodes && p.nodes.length && !isDrawingLiveLine) {
-      clampNodesToWorkspace(p.nodes);
+      if (isDraggingMultiEntities && multiDragPrimaryNode && multiDragInitialPositions[multiDragPrimaryNode]) {
+        const curPositions = net.getPositions([multiDragPrimaryNode]);
+        const curPos = curPositions[multiDragPrimaryNode];
+        if (curPos) {
+          const dx = curPos.x - multiDragInitialPositions[multiDragPrimaryNode].x;
+          const dy = curPos.y - multiDragInitialPositions[multiDragPrimaryNode].y;
+
+          const nodeUpdates = [];
+          multiSelectedEntityIds.forEach(id => {
+            if (id !== multiDragPrimaryNode && multiDragInitialPositions[id]) {
+              const newX = Math.round(multiDragInitialPositions[id].x + dx);
+              const newY = Math.round(multiDragInitialPositions[id].y + dy);
+              nodeUpdates.push({ id, x: newX, y: newY });
+              const ent = data.entities.find(e => e.id === id);
+              if (ent) { ent.x = newX; ent.y = newY; }
+            }
+          });
+          if (nodeUpdates.length > 0 && nodes) {
+            try { nodes.update(nodeUpdates); } catch (e) {}
+          }
+
+          if (multiSelectedBoxIds && multiSelectedBoxIds.length > 0 && data.boxes) {
+            multiSelectedBoxIds.forEach(bId => {
+              if (multiDragInitialPositions[bId]) {
+                const b = data.boxes.find(x => x.id === bId);
+                if (b) {
+                  b.x = Math.round(multiDragInitialPositions[bId].x + dx);
+                  b.y = Math.round(multiDragInitialPositions[bId].y + dy);
+                  if (nodes && nodes.get(b.id)) {
+                    nodes.update({ id: b.id, x: Math.round(b.x + b.w / 2), y: Math.round(b.y + b.h / 2) });
+                  }
+                }
+              }
+            });
+          }
+        }
+      }
+      clampNodesToWorkspace(isDraggingMultiEntities ? multiSelectedEntityIds : p.nodes);
       updateAllBoxAnchors();
       updateGifOverlayPositions();
     }
@@ -6046,29 +6124,45 @@ function initNet() {
   // Track entity and corner handle movement on dragEnd, clamp within workspace borders, and auto-save
   net.on("dragEnd", p => {
     if (p.nodes && p.nodes.length && !isDrawingLiveLine) {
-      clampNodesToWorkspace(p.nodes);
-      const positions = net.getPositions(p.nodes);
-      let linkMoved = false;
+      if (isDraggingMultiEntities) {
+        clampNodesToWorkspace(multiSelectedEntityIds);
+        const finalPositions = net.getPositions(multiSelectedEntityIds);
+        multiSelectedEntityIds.forEach(id => {
+          const ent = data.entities.find(e => e.id === id);
+          if (ent && finalPositions[id]) {
+            ent.x = Math.round(finalPositions[id].x);
+            ent.y = Math.round(finalPositions[id].y);
+          }
+        });
+        net.selectNodes(multiSelectedEntityIds);
+        isDraggingMultiEntities = false;
+        multiDragPrimaryNode = null;
+        multiDragInitialPositions = {};
+      } else {
+        clampNodesToWorkspace(p.nodes);
+        const positions = net.getPositions(p.nodes);
+        let linkMoved = false;
 
-      p.nodes.forEach(id => {
-        if (typeof id === "string" && id.startsWith("corner_")) {
-          const parts = id.split("_");
-          const linkId = parts[1];
-          const cornerIdx = parseInt(parts[2]) || 0;
-          const l = data.links.find(x => x.id === linkId);
-          if (l && l.corners && l.corners[cornerIdx] && positions[id]) {
-            l.corners[cornerIdx].x = Math.round(positions[id].x);
-            l.corners[cornerIdx].y = Math.round(positions[id].y);
-            linkMoved = true;
+        p.nodes.forEach(id => {
+          if (typeof id === "string" && id.startsWith("corner_")) {
+            const parts = id.split("_");
+            const linkId = parts[1];
+            const cornerIdx = parseInt(parts[2]) || 0;
+            const l = data.links.find(x => x.id === linkId);
+            if (l && l.corners && l.corners[cornerIdx] && positions[id]) {
+              l.corners[cornerIdx].x = Math.round(positions[id].x);
+              l.corners[cornerIdx].y = Math.round(positions[id].y);
+              linkMoved = true;
+            }
+          } else if (typeof id === "string" && !id.startsWith("box_") && !id.startsWith("box_anchor_")) {
+            const ent = data.entities.find(x => x.id === id);
+            if (ent && positions[id]) {
+              ent.x = Math.round(positions[id].x);
+              ent.y = Math.round(positions[id].y);
+            }
           }
-        } else if (typeof id === "string" && !id.startsWith("box_") && !id.startsWith("box_anchor_")) {
-          const ent = data.entities.find(x => x.id === id);
-          if (ent && positions[id]) {
-            ent.x = Math.round(positions[id].x);
-            ent.y = Math.round(positions[id].y);
-          }
-        }
-      });
+        });
+      }
       queueSave();
       updateAllBoxAnchors();
       updateGifOverlayPositions();
@@ -6801,6 +6895,23 @@ function initNet() {
           dragBoxStartPointer = cPos;
           dragBoxInitialX = boxToMove.x;
           dragBoxInitialY = boxToMove.y;
+          dragBoxInitialPositions = {};
+
+          if (multiSelectedBoxIds && multiSelectedBoxIds.includes(boxToMove.id)) {
+            multiSelectedBoxIds.forEach(bId => {
+              const b = data.boxes.find(x => x.id === bId);
+              if (b) dragBoxInitialPositions[bId] = { x: b.x, y: b.y };
+            });
+            if (multiSelectedEntityIds && multiSelectedEntityIds.length > 0) {
+              multiSelectedEntityIds.forEach(eId => {
+                const ent = data.entities.find(e => e.id === eId);
+                if (ent) dragBoxInitialPositions[eId] = { x: ent.x, y: ent.y };
+              });
+            }
+          } else {
+            dragBoxInitialPositions[boxToMove.id] = { x: boxToMove.x, y: boxToMove.y };
+          }
+
           ev.stopPropagation();
           ev.preventDefault();
           net.setOptions({ interaction: { dragNodes: false, dragView: false } });
@@ -6939,7 +7050,7 @@ function initNet() {
       return;
     }
 
-    // 2. Dragging/moving an existing Group Box or Text Box
+    // 2. Dragging/moving an existing Group Box or Text Box (supports group moving)
     if (isDraggingBox && net) {
       ev.stopPropagation();
       ev.preventDefault();
@@ -6948,16 +7059,34 @@ function initNet() {
       const cPos = net.DOMtoCanvas(domPos);
       const dx = cPos.x - dragBoxStartPointer.x;
       const dy = cPos.y - dragBoxStartPointer.y;
-      const b = data.boxes ? data.boxes.find(x => x.id === draggingBoxId) : null;
-      if (b) {
-        b.x = Math.round(dragBoxInitialX + dx);
-        b.y = Math.round(dragBoxInitialY + dy);
-        if (nodes && nodes.get(b.id)) {
-          nodes.update({ id: b.id, x: Math.round(b.x + b.w / 2), y: Math.round(b.y + b.h / 2) });
+
+      const nodeUpdates = [];
+      Object.keys(dragBoxInitialPositions).forEach(id => {
+        const initPos = dragBoxInitialPositions[id];
+        if (typeof id === "string" && id.startsWith("box_")) {
+          const b = data.boxes ? data.boxes.find(x => x.id === id) : null;
+          if (b) {
+            b.x = Math.round(initPos.x + dx);
+            b.y = Math.round(initPos.y + dy);
+            if (nodes && nodes.get(b.id)) {
+              nodeUpdates.push({ id: b.id, x: Math.round(b.x + b.w / 2), y: Math.round(b.y + b.h / 2) });
+            }
+          }
+        } else {
+          const ent = data.entities ? data.entities.find(x => x.id === id) : null;
+          if (ent) {
+            ent.x = Math.round(initPos.x + dx);
+            ent.y = Math.round(initPos.y + dy);
+            nodeUpdates.push({ id, x: ent.x, y: ent.y });
+          }
         }
-        updateAllBoxAnchors();
-        net.redraw();
+      });
+      if (nodeUpdates.length > 0 && nodes) {
+        try { nodes.update(nodeUpdates); } catch (e) {}
       }
+      updateAllBoxAnchors();
+      updateGifOverlayPositions();
+      net.redraw();
       return;
     }
 
@@ -8631,63 +8760,42 @@ function getSelectedEntityIds() {
 }
 
 function copySelected() {
-  // 1. Entities
-  const entIds = getSelectedEntityIds();
-  if (entIds.length > 0 && data.entities) {
-    const ents = data.entities.filter(x => entIds.includes(x.id));
-    if (ents.length > 0) {
-      const internalLinks = data.links ? data.links.filter(l => entIds.includes(l.from) && entIds.includes(l.to)) : [];
-      blulinkClipboard = {
-        kind: "entities",
-        data: {
-          entities: JSON.parse(JSON.stringify(ents)),
-          links: JSON.parse(JSON.stringify(internalLinks))
-        }
-      };
-      pasteOffsetCount = 1;
-      const desc = ents.length === 1 ? `"${getEntityDisplayName(ents[0])}"` : `${ents.length} entities`;
-      setStatus(`Copied ${desc} to clipboard (Ctrl+C)`);
-      return true;
-    }
+  const sel = getSelectedItems(true);
+  const totalCount = sel.entities.length + sel.boxes.length + sel.links.length;
+  if (totalCount === 0) {
+    setStatus("Nothing selected to copy. Select an entity, text box, or box first.", true);
+    return false;
   }
 
-  // 2. Group Box or Text Box
-  if (selectedBoxId && data.boxes) {
-    const b = data.boxes.find(x => x.id === selectedBoxId);
-    if (b) {
-      blulinkClipboard = {
-        kind: "box",
-        data: JSON.parse(JSON.stringify(b))
-      };
-      pasteOffsetCount = 1;
-      const label = b.type === "text"
-        ? (b.text ? `"${b.text.slice(0, 15)}..."` : "Text Box")
-        : (b.label || "Group Box");
-      setStatus(`Copied ${label} to clipboard (Ctrl+C)`);
-      return true;
+  blulinkClipboard = {
+    kind: "selection",
+    data: {
+      entities: JSON.parse(JSON.stringify(sel.entities)),
+      boxes: JSON.parse(JSON.stringify(sel.boxes)),
+      links: JSON.parse(JSON.stringify(sel.links))
     }
+  };
+  pasteOffsetCount = 1;
+
+  const parts = [];
+  if (sel.entities.length > 0) {
+    parts.push(sel.entities.length === 1 ? `"${getEntityDisplayName(sel.entities[0])}"` : `${sel.entities.length} entities`);
+  }
+  if (sel.boxes.length > 0) {
+    parts.push(sel.boxes.length === 1 ? `box "${sel.boxes[0].label || 'Box'}"` : `${sel.boxes.length} boxes`);
+  }
+  if (sel.links.length > 0 && sel.entities.length === 0 && sel.boxes.length === 0) {
+    parts.push(`link "${sel.links[0].label || 'link'}"`);
   }
 
-  // 3. Link
-  if (selectedLinkId && data.links) {
-    const l = data.links.find(x => x.id === selectedLinkId);
-    if (l) {
-      blulinkClipboard = {
-        kind: "link",
-        data: JSON.parse(JSON.stringify(l))
-      };
-      pasteOffsetCount = 1;
-      setStatus(`Copied link "${l.label || 'link'}" to clipboard (Ctrl+C)`);
-      return true;
-    }
-  }
-
-  setStatus("Nothing selected to copy. Select an entity, text box, or box first.", true);
-  return false;
+  setStatus(`Copied ${parts.join(" & ")} to clipboard (Ctrl+C)`);
+  return true;
 }
 
 function cutSelected() {
-  if (!selected && !selectedBoxId && !selectedLinkId && (!net || !net.getSelectedNodes || net.getSelectedNodes().length === 0)) {
+  const sel = getSelectedItems(true);
+  const totalCount = sel.entities.length + sel.boxes.length + sel.links.length;
+  if (totalCount === 0) {
     setStatus("Nothing selected to cut. Select an entity, text box, or box first.", true);
     return;
   }
@@ -8697,46 +8805,48 @@ function cutSelected() {
 
   pushUndoSnapshot();
 
-  // Delete copied entities
-  if (blulinkClipboard && (blulinkClipboard.kind === "entities" || blulinkClipboard.kind === "entity")) {
-    const srcList = blulinkClipboard.kind === "entities" ? blulinkClipboard.data.entities : [blulinkClipboard.data];
-    const cutIds = srcList.map(x => x.id);
-    data.entities = data.entities.filter(x => !cutIds.includes(x.id));
-    data.links = data.links.filter(l => !cutIds.includes(l.from) && !cutIds.includes(l.to));
-    selected = null;
-    if (net) net.unselectAll();
-    render(false);
-    renderInspector();
-    renderList();
-    queueSave();
-    switchTab("list");
-    const desc = cutIds.length === 1 ? "entity" : `${cutIds.length} entities`;
-    setStatus(`Cut ${desc} to clipboard (Ctrl+X)`);
-    return;
+  const cutEntIds = new Set(sel.entities.map(e => e.id));
+  const cutBoxIds = new Set(sel.boxes.map(b => b.id));
+  const cutLinkIds = new Set(sel.links.map(l => l.id));
+
+  // Delete entities
+  if (cutEntIds.size > 0 && data.entities) {
+    data.entities = data.entities.filter(e => !cutEntIds.has(e.id));
+    if (data.links) {
+      data.links = data.links.filter(l => !cutEntIds.has(l.from) && !cutEntIds.has(l.to));
+    }
   }
 
-  // Delete box
-  if (blulinkClipboard && blulinkClipboard.kind === "box") {
-    const bId = blulinkClipboard.data.id;
-    data.boxes = data.boxes.filter(x => x.id !== bId);
-    data.links = data.links.filter(l => l.from !== bId && l.to !== bId);
-    selectedBoxId = null;
-    render(false);
-    queueSave();
-    setStatus("Cut box to clipboard (Ctrl+X)");
-    return;
+  // Delete boxes
+  if (cutBoxIds.size > 0 && data.boxes) {
+    data.boxes = data.boxes.filter(b => !cutBoxIds.has(b.id));
+    if (data.links) {
+      data.links = data.links.filter(l => !cutBoxIds.has(l.from) && !cutBoxIds.has(l.to));
+    }
   }
 
-  // Delete link
-  if (blulinkClipboard && blulinkClipboard.kind === "link") {
-    const lId = blulinkClipboard.data.id;
-    data.links = data.links.filter(x => x.id !== lId);
-    selectedLinkId = null;
-    render(false);
-    queueSave();
-    setStatus("Cut link to clipboard (Ctrl+X)");
-    return;
+  // Delete standalone links
+  if (cutLinkIds.size > 0 && data.links) {
+    data.links = data.links.filter(l => !cutLinkIds.has(l.id));
   }
+
+  clearMultiSelection();
+  selected = null;
+  selectedBoxId = null;
+  selectedLinkId = null;
+  selectedCornerNodeId = null;
+  if (net) net.unselectAll();
+
+  render(false);
+  renderInspector();
+  renderList();
+  queueSave();
+  switchTab("list");
+
+  const parts = [];
+  if (cutEntIds.size > 0) parts.push(`${cutEntIds.size} ${cutEntIds.size === 1 ? 'entity' : 'entities'}`);
+  if (cutBoxIds.size > 0) parts.push(`${cutBoxIds.size} ${cutBoxIds.size === 1 ? 'box' : 'boxes'}`);
+  setStatus(`Cut ${parts.join(" & ") || 'selection'} to clipboard (Ctrl+X)`);
 }
 
 function pasteClipboard() {
@@ -8750,82 +8860,64 @@ function pasteClipboard() {
   const offset = pasteOffsetCount * 30;
   pasteOffsetCount++;
 
-  if (blulinkClipboard.kind === "entities" || blulinkClipboard.kind === "entity") {
-    const srcList = blulinkClipboard.kind === "entities" ? blulinkClipboard.data.entities : [blulinkClipboard.data];
-    const srcLinks = (blulinkClipboard.kind === "entities" && blulinkClipboard.data.links) ? blulinkClipboard.data.links : [];
+  const idMap = {};
+  const newlyPastedEntities = [];
+  const newlyPastedBoxes = [];
 
-    const idMap = {};
-    const newlyPasted = [];
+  let srcEntities = [];
+  let srcBoxes = [];
+  let srcLinks = [];
 
-    srcList.forEach(src => {
-      const newEnt = JSON.parse(JSON.stringify(src));
-      const oldId = newEnt.id;
-      newEnt.id = uid();
-      idMap[oldId] = newEnt.id;
-
-      newEnt.name = src.name ? `${src.name} (Copy)` : "Entity Copy";
-
-      if (newEnt.x != null && newEnt.y != null) {
-        newEnt.x = Math.round(newEnt.x + offset);
-        newEnt.y = Math.round(newEnt.y + offset);
-      } else if (net) {
-        const view = net.getViewPosition();
-        newEnt.x = Math.round(view.x + offset);
-        newEnt.y = Math.round(view.y + offset);
-      }
-
-      if (newEnt.lat != null && newEnt.lng != null) {
-        newEnt.lat = parseFloat((newEnt.lat + 0.00015 * pasteOffsetCount).toFixed(6));
-        newEnt.lng = parseFloat((newEnt.lng + 0.00015 * pasteOffsetCount).toFixed(6));
-        newEnt.mgrs = toMgrs(newEnt.lat, newEnt.lng) || newEnt.mgrs;
-      }
-
-      if (!data.entities) data.entities = [];
-      data.entities.push(newEnt);
-      newlyPasted.push(newEnt);
-    });
-
-    srcLinks.forEach(srcLink => {
-      if (idMap[srcLink.from] && idMap[srcLink.to]) {
-        const newL = JSON.parse(JSON.stringify(srcLink));
-        newL.id = uid();
-        newL.from = idMap[srcLink.from];
-        newL.to = idMap[srcLink.to];
-        if (newL.corners && newL.corners.length > 0) {
-          newL.corners = newL.corners.map(c => ({
-            x: Math.round(c.x + offset),
-            y: Math.round(c.y + offset)
-          }));
-        }
-        if (!data.links) data.links = [];
-        data.links.push(newL);
-      }
-    });
-
-    if (newlyPasted.length > 0) {
-      selected = newlyPasted[0].id;
-      selectedBoxId = null;
-      selectedLinkId = null;
-      if (net) {
-        net.selectNodes(newlyPasted.map(x => x.id));
-      }
-    }
-
-    render(false);
-    renderInspector();
-    renderList();
-    queueSave();
-    switchTab("inspect");
-
-    const desc = newlyPasted.length === 1 ? `"${getEntityDisplayName(newlyPasted[0])}"` : `${newlyPasted.length} entities`;
-    setStatus(`Pasted ${desc} (Ctrl+V)`);
-    return;
+  if (blulinkClipboard.kind === "selection") {
+    srcEntities = blulinkClipboard.data.entities || [];
+    srcBoxes = blulinkClipboard.data.boxes || [];
+    srcLinks = blulinkClipboard.data.links || [];
+  } else if (blulinkClipboard.kind === "entities") {
+    srcEntities = blulinkClipboard.data.entities || [];
+    srcLinks = blulinkClipboard.data.links || [];
+  } else if (blulinkClipboard.kind === "entity") {
+    srcEntities = [blulinkClipboard.data];
+  } else if (blulinkClipboard.kind === "box") {
+    srcBoxes = [blulinkClipboard.data];
+  } else if (blulinkClipboard.kind === "link") {
+    srcLinks = [blulinkClipboard.data];
   }
 
-  if (blulinkClipboard.kind === "box") {
-    const src = blulinkClipboard.data;
+  // Paste entities
+  srcEntities.forEach(src => {
+    const newEnt = JSON.parse(JSON.stringify(src));
+    const oldId = newEnt.id;
+    newEnt.id = uid();
+    idMap[oldId] = newEnt.id;
+
+    newEnt.name = src.name ? `${src.name} (Copy)` : "Entity Copy";
+
+    if (newEnt.x != null && newEnt.y != null) {
+      newEnt.x = Math.round(newEnt.x + offset);
+      newEnt.y = Math.round(newEnt.y + offset);
+    } else if (net) {
+      const view = net.getViewPosition();
+      newEnt.x = Math.round(view.x + offset);
+      newEnt.y = Math.round(view.y + offset);
+    }
+
+    if (newEnt.lat != null && newEnt.lng != null) {
+      newEnt.lat = parseFloat((newEnt.lat + 0.00015 * pasteOffsetCount).toFixed(6));
+      newEnt.lng = parseFloat((newEnt.lng + 0.00015 * pasteOffsetCount).toFixed(6));
+      newEnt.mgrs = toMgrs(newEnt.lat, newEnt.lng) || newEnt.mgrs;
+    }
+
+    if (!data.entities) data.entities = [];
+    data.entities.push(newEnt);
+    newlyPastedEntities.push(newEnt);
+  });
+
+  // Paste boxes
+  srcBoxes.forEach(src => {
     const newBox = JSON.parse(JSON.stringify(src));
+    const oldId = newBox.id;
     newBox.id = "box_" + uid();
+    idMap[oldId] = newBox.id;
 
     if (newBox.type === "text") {
       newBox.x = Math.round((newBox.x || 0) + offset);
@@ -8838,19 +8930,64 @@ function pasteClipboard() {
 
     if (!data.boxes) data.boxes = [];
     data.boxes.push(newBox);
+    newlyPastedBoxes.push(newBox);
+  });
 
-    selectedBoxId = newBox.id;
+  // Paste links
+  srcLinks.forEach(srcLink => {
+    const newFrom = idMap[srcLink.from] || ((data.entities.some(e => e.id === srcLink.from) || (data.boxes && data.boxes.some(b => b.id === srcLink.from))) ? srcLink.from : null);
+    const newTo = idMap[srcLink.to] || ((data.entities.some(e => e.id === srcLink.to) || (data.boxes && data.boxes.some(b => b.id === srcLink.to))) ? srcLink.to : null);
+
+    if (newFrom && newTo) {
+      const newL = JSON.parse(JSON.stringify(srcLink));
+      newL.id = uid();
+      newL.from = newFrom;
+      newL.to = newTo;
+      if (newL.corners && newL.corners.length > 0) {
+        newL.corners = newL.corners.map(c => ({
+          x: Math.round(c.x + offset),
+          y: Math.round(c.y + offset)
+        }));
+      }
+      if (!data.links) data.links = [];
+      data.links.push(newL);
+    }
+  });
+
+  // Highlight and multi-select all newly pasted items
+  selectedLinkId = null;
+  selectedCornerNodeId = null;
+  multiSelectedEntityIds = newlyPastedEntities.map(e => e.id);
+  multiSelectedBoxIds = newlyPastedBoxes.map(b => b.id);
+  multiSelectedLinkIds = [];
+
+  if (newlyPastedEntities.length > 0) {
+    selected = newlyPastedEntities[0].id;
+    selectedBoxId = null;
+    if (net) {
+      net.selectNodes(multiSelectedEntityIds);
+    }
+  } else if (newlyPastedBoxes.length > 0) {
+    selectedBoxId = newlyPastedBoxes[0].id;
     selected = null;
-    selectedLinkId = null;
     if (net) net.unselectAll();
-
-    render(false);
-    queueSave();
-
-    const label = newBox.type === "text" ? "Text Box" : `Group Box "${newBox.label}"`;
-    setStatus(`Pasted ${label} (Ctrl+V)`);
-    return;
   }
+
+  render(false);
+  renderInspector();
+  renderList();
+  queueSave();
+  updateSelectionUI();
+
+  if (newlyPastedEntities.length > 0) {
+    switchTab("inspect");
+  }
+
+  const parts = [];
+  if (newlyPastedEntities.length > 0) parts.push(`${newlyPastedEntities.length} ${newlyPastedEntities.length === 1 ? 'entity' : 'entities'}`);
+  if (newlyPastedBoxes.length > 0) parts.push(`${newlyPastedBoxes.length} ${newlyPastedBoxes.length === 1 ? 'box' : 'boxes'}`);
+  setStatus(`Pasted ${parts.join(" & ") || 'selection'} (Ctrl+V)`);
+  return;
 }
 
 function duplicateSelected() {
