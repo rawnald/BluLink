@@ -5939,7 +5939,8 @@ function initNet() {
         selectedBoxId = null;
         net.redraw();
       }
-      if (isPotentialMultiDrag || isDraggingMultiEntities) {
+      const isMultiEvent = p && p.event && (p.event.ctrlKey || p.event.shiftKey || p.event.metaKey || (p.event.srcEvent && (p.event.srcEvent.ctrlKey || p.event.srcEvent.shiftKey || p.event.metaKey)));
+      if (isPotentialMultiDrag || isDraggingMultiEntities || isMultiEvent) {
         if (multiSelectedEntityIds && multiSelectedEntityIds.length > 0) {
           net.selectNodes(multiSelectedEntityIds);
         }
@@ -5963,9 +5964,10 @@ function initNet() {
     }
   });
 
-  net.on("deselectNode", () => {
+  net.on("deselectNode", p => {
     if (!isLinkMode && !isDrawingLiveLine && !isCornerMode) {
-      if (isPotentialMultiDrag || isDraggingMultiEntities) {
+      const isMultiEvent = p && p.event && (p.event.ctrlKey || p.event.shiftKey || p.event.metaKey || (p.event.srcEvent && (p.event.srcEvent.ctrlKey || p.event.srcEvent.shiftKey || p.event.metaKey)));
+      if (isPotentialMultiDrag || isDraggingMultiEntities || isMultiEvent) {
         if (multiSelectedEntityIds && multiSelectedEntityIds.length > 0) {
           net.selectNodes(multiSelectedEntityIds);
         }
@@ -6401,7 +6403,8 @@ function initNet() {
             selectedBoxId = null;
             net.redraw();
           }
-          const isMulti = params.event && params.event.srcEvent && (params.event.srcEvent.shiftKey || params.event.srcEvent.ctrlKey || params.event.srcEvent.metaKey);
+          const srcEv = (params.event && params.event.srcEvent) ? params.event.srcEvent : params.event;
+          const isMulti = srcEv && (srcEv.shiftKey || srcEv.ctrlKey || srcEv.metaKey);
           if (isMulti) {
             if (!multiSelectedEntityIds) multiSelectedEntityIds = [];
             if (multiSelectedEntityIds.includes(clickedNode)) {
@@ -6864,7 +6867,34 @@ function initNet() {
 
       // If user clicked on an already highlighted entity, initiate potential multi-drag instead of marquee!
       if (clickedNode && typeof clickedNode === "string" && !clickedNode.startsWith("corner_") && !clickedNode.startsWith("box_") && !clickedNode.startsWith("box_anchor_")) {
-        if (multiSelectedEntityIds && multiSelectedEntityIds.length > 1 && multiSelectedEntityIds.includes(clickedNode) && !isMultiKey && !isRightClick) {
+        // 3-entity. Shift/Ctrl + Click on Entity: Multi-select toggle
+        if (isMultiKey) {
+          ev.stopPropagation();
+          ev.preventDefault();
+          if (!multiSelectedEntityIds) multiSelectedEntityIds = [];
+          if (selected && !multiSelectedEntityIds.includes(selected)) {
+            multiSelectedEntityIds.push(selected);
+          }
+          if (multiSelectedEntityIds.includes(clickedNode)) {
+            multiSelectedEntityIds = multiSelectedEntityIds.filter(id => id !== clickedNode);
+          } else {
+            multiSelectedEntityIds.push(clickedNode);
+          }
+          selected = multiSelectedEntityIds.length === 1 ? multiSelectedEntityIds[0] : (multiSelectedEntityIds.length > 1 ? multiSelectedEntityIds[multiSelectedEntityIds.length - 1] : null);
+          selectedBoxId = null;
+          selectedLinkId = null;
+          selectedCornerNodeId = null;
+          if (net) {
+            net.selectNodes(multiSelectedEntityIds);
+            net.redraw();
+          }
+          updateEdgeVisuals();
+          updateSelectionUI();
+          if (selected) renderInspector();
+          return;
+        }
+
+        if (multiSelectedEntityIds && multiSelectedEntityIds.length > 1 && multiSelectedEntityIds.includes(clickedNode) && !isRightClick) {
           isPotentialMultiDrag = true;
           multiDragPrimaryNode = clickedNode;
           const curPosMap = net.getPositions(multiSelectedEntityIds);
