@@ -2062,6 +2062,10 @@ const undoStack = [];
 const redoStack = [];
 const MAX_UNDO_STEPS = 60;
 let blulinkClipboard = null;
+try {
+  const savedClip = localStorage.getItem("blulink_cross_project_clipboard_v1");
+  if (savedClip) blulinkClipboard = JSON.parse(savedClip);
+} catch (e) {}
 let pasteOffsetCount = 1;
 
 function pushUndoSnapshot() {
@@ -2575,7 +2579,7 @@ async function selectProject(projectId) {
 
   undoStack.length = 0;
   redoStack.length = 0;
-  blulinkClipboard = null;
+  // Preserve blulinkClipboard across projects for cross-project copying and pasting!
   pasteOffsetCount = 1;
 
   setStatus("Loading Project from R2…");
@@ -8873,14 +8877,39 @@ function copySelected() {
     return false;
   }
 
+  // Capture connected external links and connected neighbor entities from the source project!
+  // This allows connecting directly to matching entities in another project!
+  const selEntIds = sel.entities.map(e => e.id);
+  const connectedLinks = (data.links || []).filter(l => (selEntIds.includes(l.from) && !selEntIds.includes(l.to)) || (selEntIds.includes(l.to) && !selEntIds.includes(l.from)));
+  const neighborEntityMap = {};
+  connectedLinks.forEach(l => {
+    const neighborId = selEntIds.includes(l.from) ? l.to : l.from;
+    const neighborEnt = (data.entities || []).find(e => e.id === neighborId);
+    if (neighborEnt && neighborEnt.name) {
+      neighborEntityMap[neighborId] = {
+        id: neighborEnt.id,
+        name: neighborEnt.name,
+        type: neighborEnt.type,
+        subName: neighborEnt.subName
+      };
+    }
+  });
+
   blulinkClipboard = {
     kind: "selection",
+    sourceProjectId: currentProjectId,
     data: {
       entities: JSON.parse(JSON.stringify(sel.entities)),
       boxes: JSON.parse(JSON.stringify(sel.boxes)),
-      links: JSON.parse(JSON.stringify(sel.links))
+      links: JSON.parse(JSON.stringify(sel.links)),
+      connectedLinks: JSON.parse(JSON.stringify(connectedLinks)),
+      neighborEntityMap: neighborEntityMap
     }
   };
+  try {
+    localStorage.setItem("blulink_cross_project_clipboard_v1", JSON.stringify(blulinkClipboard));
+  } catch (e) {}
+
   pasteOffsetCount = 1;
 
   const parts = [];
@@ -8894,7 +8923,7 @@ function copySelected() {
     parts.push(`link "${sel.links[0].label || 'link'}"`);
   }
 
-  setStatus(`Copied ${parts.join(" & ")} to clipboard (Ctrl+C)`);
+  setStatus(`Copied ${parts.join(" & ")} to clipboard (ready to paste across projects)`);
   return true;
 }
 
@@ -8957,6 +8986,12 @@ function cutSelected() {
 
 function pasteClipboard() {
   if (!blulinkClipboard || !blulinkClipboard.data) {
+    try {
+      const savedClip = localStorage.getItem("blulink_cross_project_clipboard_v1");
+      if (savedClip) blulinkClipboard = JSON.parse(savedClip);
+    } catch (e) {}
+  }
+  if (!blulinkClipboard || !blulinkClipboard.data) {
     setStatus("Clipboard is empty. Copy or cut an item first (Ctrl+C or Ctrl+X).", true);
     return;
   }
@@ -8989,6 +9024,17 @@ function pasteClipboard() {
     srcLinks = [blulinkClipboard.data];
   }
 
+  const isCrossProject = blulinkClipboard.sourceProjectId && (blulinkClipboard.sourceProjectId !== currentProjectId);
+  const directConnectedMatches = [];
+
+  // Match existing entity in current project by exact or case-insensitive trimmed name
+  function findMatchingEntityInCurrentProject(srcEnt) {
+    if (!srcEnt || !srcEnt.name || !data.entities) return null;
+    const clean = srcEnt.name.trim().toLowerCase();
+    if (!clean) return null;
+    return data.entities.find(e => e.name && e.name.trim().toLowerCase() === clean);
+  }
+
   // Paste entities
   srcEntities.forEach(src => {
     const newEnt = JSON.parse(JSON.stringify(src));
@@ -8996,7 +9042,14 @@ function pasteClipboard() {
     newEnt.id = uid();
     idMap[oldId] = newEnt.id;
 
-    newEnt.name = src.name ? `${src.name} (Copy)` : "Entity Copy";
+    // Check if the same entity already exists in this project
+    const existingMatch = findMatchingEntityInCurrentProject(src);
+
+    if (isCrossProject) {
+      newEnt.name = src.name || "Entity";
+    } else {
+      newEnt.name = src.name ? `${src.name} (Copy)` : "Entity Copy";
+    }
 
     if (newEnt.x != null && newEnt.y != null) {
       newEnt.x = Math.round(newEnt.x + offset);
@@ -9016,6 +9069,25 @@ function pasteClipboard() {
     if (!data.entities) data.entities = [];
     data.entities.push(newEnt);
     newlyPastedEntities.push(newEnt);
+
+    // If the same entity already exists in this project, CONNECT DIRECTLY!
+    if (existingMatch && existingMatch.id !== newEnt.id) {
+      const directSameLink = {
+        id: uid(),
+        from: newEnt.id,
+        to: existingMatch.id,
+        label: "Direct Link",
+        color: "#2563eb",
+        width: 2,
+        arrows: "none",
+        strength: "Confirmed"
+      };
+      if (!data.links) data.links = [];
+      data.links.push(directSameLink);
+      if (!directConnectedMatches.includes(existingMatch.name)) {
+        directConnectedMatches.push(existingMatch.name);
+      }
+    }
   });
 
   // Paste boxes
@@ -9039,7 +9111,7 @@ function pasteClipboard() {
     newlyPastedBoxes.push(newBox);
   });
 
-  // Paste links
+  // Paste internal links
   srcLinks.forEach(srcLink => {
     const newFrom = idMap[srcLink.from] || ((data.entities.some(e => e.id === srcLink.from) || (data.boxes && data.boxes.some(b => b.id === srcLink.from))) ? srcLink.from : null);
     const newTo = idMap[srcLink.to] || ((data.entities.some(e => e.id === srcLink.to) || (data.boxes && data.boxes.some(b => b.id === srcLink.to))) ? srcLink.to : null);
@@ -9057,6 +9129,47 @@ function pasteClipboard() {
       }
       if (!data.links) data.links = [];
       data.links.push(newL);
+    }
+  });
+
+  // Check for external links from source project connecting to entities with matching names in the destination project!
+  const neighborEntityMap = (blulinkClipboard.data && blulinkClipboard.data.neighborEntityMap) || {};
+  const connectedLinks = (blulinkClipboard.data && blulinkClipboard.data.connectedLinks) || [];
+
+  connectedLinks.forEach(cLink => {
+    const sourceEntId = idMap[cLink.from] ? cLink.from : (idMap[cLink.to] ? cLink.to : null);
+    if (!sourceEntId) return;
+    const neighborId = sourceEntId === cLink.from ? cLink.to : cLink.from;
+    const neighborInfo = neighborEntityMap[neighborId];
+
+    if (neighborInfo && neighborInfo.name && data.entities) {
+      const cleanNeighborName = neighborInfo.name.trim().toLowerCase();
+      const targetMatch = data.entities.find(e => e.name && e.name.trim().toLowerCase() === cleanNeighborName);
+      if (targetMatch) {
+        const pastedNewId = idMap[sourceEntId];
+        const newFrom = sourceEntId === cLink.from ? pastedNewId : targetMatch.id;
+        const newTo = sourceEntId === cLink.from ? targetMatch.id : pastedNewId;
+
+        // Ensure link doesn't already exist between them
+        const exists = (data.links || []).some(l => (l.from === newFrom && l.to === newTo) || (l.from === newTo && l.to === newFrom));
+        if (!exists) {
+          const directLink = {
+            id: uid(),
+            from: newFrom,
+            to: newTo,
+            label: cLink.label || "Direct Link",
+            color: cLink.color || "#2563eb",
+            width: cLink.width || 2,
+            arrows: cLink.arrows || "none",
+            strength: cLink.strength || "Confirmed"
+          };
+          if (!data.links) data.links = [];
+          data.links.push(directLink);
+          if (!directConnectedMatches.includes(targetMatch.name)) {
+            directConnectedMatches.push(targetMatch.name);
+          }
+        }
+      }
     }
   });
 
@@ -9097,7 +9210,11 @@ function pasteClipboard() {
   const parts = [];
   if (newlyPastedEntities.length > 0) parts.push(`${newlyPastedEntities.length} ${newlyPastedEntities.length === 1 ? 'entity' : 'entities'}`);
   if (newlyPastedBoxes.length > 0) parts.push(`${newlyPastedBoxes.length} ${newlyPastedBoxes.length === 1 ? 'box' : 'boxes'}`);
-  setStatus(`Pasted ${parts.join(" & ") || 'selection'} (Ctrl+V)`);
+  let msg = `Pasted ${parts.join(" & ") || 'selection'} (Ctrl+V)`;
+  if (directConnectedMatches.length > 0) {
+    msg += ` — Connected directly to: ${directConnectedMatches.join(", ")}`;
+  }
+  setStatus(msg);
   return;
 }
 

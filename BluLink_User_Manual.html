@@ -761,12 +761,17 @@
   <li><strong>Workspace Boundary Clamping:</strong> Multi-drag operations respect safety workspace borders, keeping all dragged nodes within visible analytical view bounds.</li>
 </ul>
 
-<h2>8.3 Unified Clipboard (<kbd>Ctrl+C</kbd>, <kbd>Ctrl+X</kbd>, <kbd>Ctrl+V</kbd>)</h2>
-<p>Analysts can rapidly replicate or relocate multi-item graph clusters:</p>
+<h2>8.3 Unified &amp; Cross-Project Clipboard (<kbd>Ctrl+C</kbd>, <kbd>Ctrl+X</kbd>, <kbd>Ctrl+V</kbd>)</h2>
+<p>Analysts can rapidly replicate or relocate multi-item graph clusters within a project or across separate investigative projects:</p>
 <ul>
-  <li><strong>Copy (<kbd>Ctrl+C</kbd>):</strong> Copies all highlighted entities, group boxes, and any internal connection links between them directly into the BluLink clipboard.</li>
+  <li><strong>Cross-Project Copy &amp; Paste:</strong> Highlight entities in Project A, press <kbd>Ctrl</kbd> + <kbd>C</kbd>, switch to Project B via the project dropdown, and press <kbd>Ctrl</kbd> + <kbd>V</kbd>. The clipboard persists across project switches, tab changes, and browser reloads via local storage.</li>
+  <li><strong>Automatic Direct Connection to Matching Entities:</strong> When pasting entities into a project:
+    <ul>
+      <li>If any pasted entity has the same name as an entity already existing in the destination project, BluLink automatically establishes a <strong>Direct Link</strong> connecting them directly.</li>
+      <li>If the copied entities had relationships in the source project to neighboring entities whose names exist in the target project, BluLink automatically connects them directly to those existing nodes as well.</li>
+    </ul>
+  </li>
   <li><strong>Cut (<kbd>Ctrl+X</kbd>):</strong> Copies the highlighted cluster to the clipboard and removes the entities, boxes, and associated links from the workspace with full undo snapshot protection.</li>
-  <li><strong>Paste (<kbd>Ctrl+V</kbd>):</strong> Generates duplicates with unique IDs, auto-offsets positions by +30px, preserves internal link topologies, and automatically highlights the new items for immediate dragging.</li>
   <li><strong>Duplicate (<kbd>Ctrl+D</kbd>):</strong> Directly duplicates the active selection in a single keystroke.</li>
 </ul>
 
