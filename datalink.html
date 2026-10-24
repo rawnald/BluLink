@@ -4599,7 +4599,7 @@ function openEditLinkModal(linkId) {
     }
   }
 
-  $("editLinkLabel").value = l.label != null && l.label !== "" ? l.label : "link";
+  $("editLinkLabel").value = l.label != null ? l.label : "";
   const curColor = l.color || "#000000";
   $("editLinkColor").value = curColor;
   $("editLinkColorText").value = curColor;
@@ -8190,7 +8190,7 @@ function renderMapLink(l, byIdMap) {
   const linkColor = getMapLinkColor(l, isConnectedToSel);
   const linkWidth = parseInt(l.width) || 1;
   const isUnconfirmed = l.strength === "Unconfirmed";
-  const labelText = (l.label != null && l.label !== "") ? l.label : "link";
+  const labelText = (l.label != null) ? l.label.trim() : "";
 
   const poly = L.polyline([[a.lat, a.lng], [b.lat, b.lng]], {
     color: linkColor,
@@ -8200,7 +8200,9 @@ function renderMapLink(l, byIdMap) {
   }).addTo(lineLayer);
   linesByLinkId[l.id] = poly;
 
-  const tooltipText = `${esc(getEntityDisplayName(a))} → [${esc(labelText)}] → ${esc(getEntityDisplayName(b))}`;
+  const tooltipText = labelText
+    ? `${esc(getEntityDisplayName(a))} → [${esc(labelText)}] → ${esc(getEntityDisplayName(b))}`
+    : `${esc(getEntityDisplayName(a))} ↔ ${esc(getEntityDisplayName(b))}`;
   poly.bindTooltip(tooltipText, { sticky: true });
 
   const onLinkSelect = ev => {
@@ -8231,27 +8233,29 @@ function renderMapLink(l, byIdMap) {
   poly.on("click", onLinkSelect);
   poly.on("dblclick", onLinkDblClick);
 
-  // Position label at midpoint of the link line aligned with the link direction
-  const midLat = (a.lat + b.lat) / 2;
-  const midLng = (a.lng + b.lng) / 2;
-  const angle = getLinkAngle(a, b);
+  // Position label at midpoint of the link line aligned with the link direction only if a label exists
+  if (labelText) {
+    const midLat = (a.lat + b.lat) / 2;
+    const midLng = (a.lng + b.lng) / 2;
+    const angle = getLinkAngle(a, b);
 
-  const labelIcon = L.divIcon({
-    className: "map-link-label-container",
-    iconSize: [0, 0],
-    iconAnchor: [0, 0],
-    html: `<div class="map-link-label-rotator" style="transform: translate(-50%, -50%) rotate(${angle}deg);"><span class="map-link-label-text ${isConnectedToSel ? 'is-selected' : ''}" title="${tooltipText}">${esc(labelText)}</span></div>`
-  });
+    const labelIcon = L.divIcon({
+      className: "map-link-label-container",
+      iconSize: [0, 0],
+      iconAnchor: [0, 0],
+      html: `<div class="map-link-label-rotator" style="transform: translate(-50%, -50%) rotate(${angle}deg);"><span class="map-link-label-text ${isConnectedToSel ? 'is-selected' : ''}" title="${tooltipText}">${esc(labelText)}</span></div>`
+    });
 
-  const labelMarker = L.marker([midLat, midLng], {
-    icon: labelIcon,
-    interactive: true,
-    zIndexOffset: 300
-  }).addTo(lineLayer);
-  linkLabelsByLinkId[l.id] = labelMarker;
+    const labelMarker = L.marker([midLat, midLng], {
+      icon: labelIcon,
+      interactive: true,
+      zIndexOffset: 300
+    }).addTo(lineLayer);
+    linkLabelsByLinkId[l.id] = labelMarker;
 
-  labelMarker.on("click", onLinkSelect);
-  labelMarker.on("dblclick", onLinkDblClick);
+    labelMarker.on("click", onLinkSelect);
+    labelMarker.on("dblclick", onLinkDblClick);
+  }
 
   return poly;
 }
@@ -8413,7 +8417,7 @@ function render(fitAll = false) {
         id: l.id,
         from: edgeFrom,
         to: edgeTo,
-        label: l.label != null && l.label !== "" ? l.label : "link",
+        label: (l.label != null && l.label !== "") ? l.label : "",
         smooth: false,
         dashes: isUnconfirmed ? [6, 6] : false,
         width: isConnectedToSel ? Math.max(linkWidth + 1, 2) : linkWidth,
@@ -8463,7 +8467,7 @@ function render(fitAll = false) {
           id: `${l.id}_seg${i}`,
           from: fromNode,
           to: toNode,
-          label: isLast ? (l.label != null && l.label !== "" ? l.label : "link") : "",
+          label: isLast ? ((l.label != null && l.label !== "") ? l.label : "") : "",
           smooth: false,
           dashes: isUnconfirmed ? [6, 6] : false,
           width: isConnectedToSel ? Math.max(linkWidth + 1, 2) : linkWidth,
@@ -8736,7 +8740,7 @@ function renderInspector() {
         <div class="flex items-center justify-between p-2 rounded bg-white border border-black/20 hover:border-blue-600 transition text-xs">
           <div class="truncate mr-2 flex items-center gap-1.5">
             <span class="text-blue-600 font-bold">${isOutgoing ? "→" : "←"}</span>
-            <span class="text-black/60 font-semibold">[${esc(l.label || "linked")}]</span>
+            ${(l.label && l.label.trim()) ? `<span class="text-black/60 font-semibold">[${esc(l.label)}]</span>` : ""}
             ${otherIconHtml}
             <span class="text-black font-bold">${esc(otherName)}</span>
           </div>
@@ -9128,7 +9132,7 @@ function createLinkBetween(fromId, toId) {
     id: uid(),
     from: fromId,
     to: toId,
-    label: "link",
+    label: "",
     color: "#000000",
     strength: "Confirmed",
     width: 1,
@@ -9148,7 +9152,7 @@ function createLinkBetween(fromId, toId) {
       id: newLink.id,
       from: edgeFrom,
       to: edgeTo,
-      label: "link",
+      label: "",
       smooth: false,
       dashes: false,
       width: 1,
@@ -9459,7 +9463,7 @@ function copySelected() {
     parts.push(sel.boxes.length === 1 ? `box "${sel.boxes[0].label || 'Box'}"` : `${sel.boxes.length} boxes`);
   }
   if (sel.links.length > 0 && sel.entities.length === 0 && sel.boxes.length === 0) {
-    parts.push(`link "${sel.links[0].label || 'link'}"`);
+    parts.push(sel.links[0].label ? `link "${sel.links[0].label}"` : "relationship link");
   }
 
   setStatus(`Copied ${parts.join(" & ")} to clipboard (ready to paste across projects)`);
@@ -10471,7 +10475,7 @@ function exportEntitiesCsv(sourcePrefix = "Entities") {
       const tId = l.to || (l.target && l.target.id ? l.target.id : l.target);
       const otherId = (fId === ent.id) ? tId : fId;
       const otherEnt = entitiesList.find(e => e.id === otherId);
-      const labelPart = l.label && l.label !== "link" ? ` (${l.label})` : "";
+      const labelPart = l.label && l.label.trim() ? ` (${l.label})` : "";
       return otherEnt ? `${otherEnt.name}${labelPart}` : `Unknown${labelPart}`;
     });
 
