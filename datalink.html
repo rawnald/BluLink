@@ -1094,6 +1094,70 @@
   </div>
 </div>
 
+<!-- ==================== IMPORT CSV MODAL (MGRS & ENTITIES) ==================== -->
+<div id="importCsvModal" class="hidden fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+  <div class="w-full max-w-lg bg-white border-2 border-black rounded-2xl p-6 shadow-2xl space-y-4 relative z-10">
+    <div class="flex items-center justify-between border-b border-black/15 pb-3">
+      <div class="flex items-center gap-2.5">
+        <div class="w-7 h-7 rounded-lg bg-emerald-50 border border-emerald-600 flex items-center justify-center text-emerald-600 text-sm">
+          <i class="fi fi-rr-file-spreadsheet text-xs"></i>
+        </div>
+        <div>
+          <h3 class="text-sm font-bold text-black uppercase tracking-wider">
+            Import CSV (MGRS & Entities)
+          </h3>
+          <p class="text-[10px] text-black/60">Upload a spreadsheet containing MGRS or Lat/Lng coordinates to create entities</p>
+        </div>
+      </div>
+      <button id="btnCloseImportCsvModal" class="text-black/60 hover:text-black font-bold text-sm cursor-pointer">✕</button>
+    </div>
+
+    <!-- Drop zone / File selector -->
+    <div id="importCsvDropZone" class="border-2 border-dashed border-black/30 hover:border-emerald-600 hover:bg-emerald-50/40 rounded-xl p-5 text-center cursor-pointer transition flex flex-col items-center justify-center gap-2">
+      <input id="importCsvFileInput" type="file" accept=".csv,text/csv,text/plain" class="hidden">
+      <div class="w-11 h-11 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center text-lg shadow-sm">
+        <i class="fi fi-rr-file-spreadsheet text-base"></i>
+      </div>
+      <div>
+        <p class="text-xs font-bold text-black">Click to choose a CSV file or drag & drop</p>
+        <p class="text-[10px] text-black/50 mt-0.5">Supports MGRS grids, Latitude/Longitude, Names, Types, Notes</p>
+      </div>
+      <span id="importCsvFileBadge" class="hidden text-[11px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300 px-3 py-1 rounded-full mt-1 max-w-[90%] truncate"></span>
+    </div>
+
+    <!-- CSV Preview & Column Mapping -->
+    <div id="importCsvDetailsSection" class="hidden space-y-3 border-t border-black/10 pt-3">
+      <!-- Data summary stats -->
+      <div id="importCsvStatsBadge" class="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-emerald-900 flex items-center justify-between">
+        <span class="font-bold flex items-center gap-1.5"><i class="fi fi-rr-check text-xs text-emerald-600"></i> CSV Validated</span>
+        <span id="importCsvStatsCounts" class="text-[11px] font-semibold text-black/70">0 entities • 0 with MGRS</span>
+      </div>
+
+      <!-- Preview table -->
+      <div class="max-h-40 overflow-y-auto border border-black/20 rounded-lg text-[11px]">
+        <table class="w-full text-left border-collapse" id="importCsvPreviewTable">
+          <!-- Populated dynamically -->
+        </table>
+      </div>
+
+      <div class="flex items-center gap-2 text-xs text-black/70 bg-slate-50 p-2 rounded border border-black/10">
+        <i class="fi fi-rr-info text-blue-600 shrink-0"></i>
+        <span>MGRS coordinates will be automatically converted to WGS-84 pins on the Geospatial Map and placed on the Workstation canvas.</span>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2 pt-2">
+      <button id="btnImportCsvSubmit" disabled class="flex-1 btn-primary py-2 text-xs opacity-50 cursor-not-allowed bg-emerald-600 hover:bg-emerald-700 border-emerald-700">
+        <i class="fi fi-rr-check text-xs"></i>
+        <span id="btnImportCsvSubmitLabel">Import Entities</span>
+      </button>
+      <button id="btnCancelImportCsvModal" class="btn-secondary py-2 text-xs cursor-pointer">
+        <span>Cancel</span>
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- ==================== BLULINK MANUAL / TUTORIAL MODAL ==================== -->
 <div id="manualModal" class="hidden fixed inset-0 z-[99999] flex items-center justify-center p-2 sm:p-6 bg-black/70 backdrop-blur-sm">
   <div class="w-full max-w-6xl h-[92vh] bg-white border-2 border-black rounded-2xl shadow-2xl flex flex-col overflow-hidden relative z-10">
@@ -1276,11 +1340,16 @@
         </button>
 
         <!-- Settings Dropdown Menu -->
-        <div id="projectSettingsMenu" class="hidden absolute left-0 sm:left-auto sm:right-0 top-full mt-1.5 w-56 bg-white border-2 border-black rounded-xl shadow-2xl p-1.5 z-50 space-y-1">
+        <div id="projectSettingsMenu" class="hidden absolute left-0 sm:left-auto sm:right-0 top-full mt-1.5 w-60 bg-white border-2 border-black rounded-xl shadow-2xl p-1.5 z-50 space-y-1">
           <button id="btnImportProject" type="button" title="Import Project from File (.json)"
             class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer text-left">
             <i class="fi fi-rr-upload text-xs text-blue-600 shrink-0"></i>
-            <span>Import Project</span>
+            <span>Import Project (.json)</span>
+          </button>
+          <button id="btnImportCsv" type="button" title="Import Entities & MGRS from CSV file (.csv)"
+            class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-emerald-50 hover:text-emerald-700 transition cursor-pointer text-left">
+            <i class="fi fi-rr-file-spreadsheet text-xs text-emerald-600 shrink-0"></i>
+            <span>Import CSV (MGRS)</span>
           </button>
           <button id="btnExportProject" type="button" title="Download Active Project (.json)"
             class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer text-left">
@@ -1591,9 +1660,14 @@
 
       <!-- ================= TAB 3: ENTITIES DIRECTORY ================= -->
       <div id="tabContentList" class="hidden space-y-3">
-        <div>
+        <div class="flex items-center gap-2">
           <input id="listSearch" placeholder="Search entities..."
-            class="w-full px-3 py-2 rounded-lg bg-white border border-black/30 text-black placeholder-black/30 text-xs focus:outline-none focus:border-blue-600">
+            class="flex-1 px-3 py-1.5 rounded-lg bg-white border border-black/30 text-black placeholder-black/30 text-xs focus:outline-none focus:border-blue-600">
+          <button id="btnListImportCsv" type="button" title="Import entities and MGRS from CSV spreadsheet"
+            class="btn-secondary py-1.5 px-2.5 text-xs flex items-center gap-1 font-bold text-black border-black/30 hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 transition cursor-pointer shrink-0 shadow-sm">
+            <i class="fi fi-rr-file-spreadsheet text-xs text-emerald-600"></i>
+            <span>Import CSV</span>
+          </button>
         </div>
         <div id="list" class="space-y-1"></div>
       </div>
@@ -2910,6 +2984,421 @@ if ($("btnCloseImportModal")) {
 }
 if ($("btnCancelImportModal")) {
   $("btnCancelImportModal").onclick = closeImportProjectModal;
+}
+
+/* ---------- Import CSV (MGRS & Coordinates) Engine ---------- */
+let pendingCsvEntities = [];
+
+function openImportCsvModal() {
+  closeProjectSettingsMenu();
+  pendingCsvEntities = [];
+  const fileInput = $("importCsvFileInput");
+  if (fileInput) fileInput.value = "";
+  const badge = $("importCsvFileBadge");
+  if (badge) { badge.classList.add("hidden"); badge.textContent = ""; }
+  const details = $("importCsvDetailsSection");
+  if (details) details.classList.add("hidden");
+  const submitBtn = $("btnImportCsvSubmit");
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.className = "flex-1 btn-primary py-2 text-xs opacity-50 cursor-not-allowed bg-emerald-600 hover:bg-emerald-700 border-emerald-700";
+    const label = $("btnImportCsvSubmitLabel");
+    if (label) label.textContent = "Import Entities";
+  }
+  const modal = $("importCsvModal");
+  if (modal) modal.classList.remove("hidden");
+}
+
+function closeImportCsvModal() {
+  const modal = $("importCsvModal");
+  if (modal) modal.classList.add("hidden");
+  pendingCsvEntities = [];
+}
+
+function parseCsvToEntities(csvText) {
+  if (!csvText || !csvText.trim()) return [];
+
+  // Remove UTF-8 BOM if present
+  let cleanText = csvText.replace(/^\uFEFF/, "");
+
+  // Split lines (handling \r\n, \r, \n)
+  const lines = cleanText.split(/\r\n|\n|\r/).filter(l => l.trim().length > 0);
+  if (lines.length === 0) return [];
+
+  // Helper to split CSV line respecting quotes
+  function splitCsvRow(line) {
+    const row = [];
+    let insideQuote = false;
+    let entry = "";
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      if (char === '"') {
+        if (insideQuote && line[i + 1] === '"') {
+          entry += '"';
+          i++;
+        } else {
+          insideQuote = !insideQuote;
+        }
+      } else if (char === ',' && !insideQuote) {
+        row.push(entry.trim());
+        entry = "";
+      } else {
+        entry += char;
+      }
+    }
+    row.push(entry.trim());
+    return row;
+  }
+
+  const rawRows = lines.map(splitCsvRow);
+  if (rawRows.length === 0) return [];
+
+  // Determine headers
+  const firstRow = rawRows[0];
+  const normalizedFirstRow = firstRow.map(c => c.toLowerCase().replace(/[^a-z0-9]/g, ""));
+
+  // Check if first row contains a valid MGRS coordinate (meaning no header row)
+  let hasHeader = true;
+  let hasMgrsInFirstRow = false;
+  if (typeof fromMgrs === "function") {
+    hasMgrsInFirstRow = firstRow.some(cell => {
+      const pt = fromMgrs(cell);
+      return pt !== null;
+    });
+  }
+
+  const knownHeaderTerms = ["name", "entity", "type", "category", "mgrs", "grid", "lat", "latitude", "lng", "lon", "longitude", "note", "notes", "alias", "connections"];
+  const headerTermMatches = normalizedFirstRow.filter(cell => knownHeaderTerms.some(term => cell.includes(term)));
+
+  if (hasMgrsInFirstRow && headerTermMatches.length < 2) {
+    hasHeader = false;
+  }
+
+  let headers = [];
+  let dataRows = [];
+  if (hasHeader) {
+    headers = normalizedFirstRow;
+    dataRows = rawRows.slice(1);
+  } else {
+    headers = firstRow.map((_, i) => `col_${i}`);
+    dataRows = rawRows;
+  }
+
+  const findIdx = (aliases) => {
+    for (const a of aliases) {
+      const target = a.toLowerCase().replace(/[^a-z0-9]/g, "");
+      const idx = headers.findIndex(h => h === target || h.includes(target));
+      if (idx !== -1) return idx;
+    }
+    return -1;
+  };
+
+  let nameIdx = findIdx(["name", "entity", "label", "title", "callsign", "target", "id"]);
+  let typeIdx = findIdx(["type", "category", "role", "classification", "class"]);
+  let mgrsIdx = findIdx(["mgrs", "grid", "coordinate", "location", "militarygrid", "mgrscoord"]);
+  let latIdx = findIdx(["lat", "latitude", "y", "northing"]);
+  let lngIdx = findIdx(["lng", "lon", "longitude", "x", "easting"]);
+  let aliasIdx = findIdx(["alias", "subname", "nickname", "codename"]);
+  let notesIdx = findIdx(["note", "notes", "description", "remarks", "details", "info"]);
+  let xIdx = findIdx(["workstationx", "posx", "canvasx"]);
+  let yIdx = findIdx(["workstationy", "posy", "canvasy"]);
+
+  // Auto-detect coordinate column by inspection if not explicitly named
+  if (mgrsIdx === -1 && typeof fromMgrs === "function" && dataRows.length > 0) {
+    for (let c = 0; c < (dataRows[0] || []).length; c++) {
+      if (c === nameIdx) continue;
+      const val = dataRows[0][c] || "";
+      if (fromMgrs(val)) {
+        mgrsIdx = c;
+        break;
+      }
+    }
+  }
+
+  // Fallback name column
+  if (nameIdx === -1) {
+    for (let c = 0; c < (dataRows[0] || []).length; c++) {
+      if (c !== mgrsIdx && c !== latIdx && c !== lngIdx) {
+        nameIdx = c;
+        break;
+      }
+    }
+    if (nameIdx === -1) nameIdx = 0;
+  }
+
+  // Fallback type column if not found
+  if (typeIdx === -1 && dataRows.length > 0) {
+    for (let c = 0; c < (dataRows[0] || []).length; c++) {
+      if (c !== nameIdx && c !== mgrsIdx && c !== latIdx && c !== lngIdx && c !== notesIdx && c !== aliasIdx) {
+        typeIdx = c;
+        break;
+      }
+    }
+  }
+
+  const parsedEntities = [];
+  const total = dataRows.length;
+
+  dataRows.forEach((row, i) => {
+    if (!row || row.every(cell => !cell || !cell.trim())) return;
+
+    const rawName = (nameIdx !== -1 && row[nameIdx]) ? row[nameIdx].trim() : `Entity ${i + 1}`;
+    const rawType = (typeIdx !== -1 && row[typeIdx]) ? row[typeIdx].trim() : "Male";
+    const rawSubName = (aliasIdx !== -1 && row[aliasIdx]) ? row[aliasIdx].trim() : "";
+    const rawNote = (notesIdx !== -1 && row[notesIdx]) ? row[notesIdx].trim() : "";
+
+    let lat = null;
+    let lng = null;
+    let mgrsStr = "";
+
+    // 1. MGRS resolution
+    if (mgrsIdx !== -1 && row[mgrsIdx]) {
+      const cleanM = row[mgrsIdx].trim();
+      if (typeof fromMgrs === "function") {
+        const pt = fromMgrs(cleanM);
+        if (pt) {
+          lat = parseFloat(pt.lat.toFixed(6));
+          lng = parseFloat(pt.lng.toFixed(6));
+          mgrsStr = pt.mgrs;
+        } else {
+          mgrsStr = cleanM.toUpperCase();
+        }
+      } else {
+        mgrsStr = cleanM.toUpperCase();
+      }
+    }
+
+    // 2. Lat/Lng resolution
+    if ((lat == null || lng == null) && latIdx !== -1 && lngIdx !== -1 && row[latIdx] && row[lngIdx]) {
+      const pLat = parseFloat(row[latIdx]);
+      const pLng = parseFloat(row[lngIdx]);
+      if (!isNaN(pLat) && !isNaN(pLng)) {
+        lat = parseFloat(pLat.toFixed(6));
+        lng = parseFloat(pLng.toFixed(6));
+        if (!mgrsStr && typeof toMgrs === "function") {
+          mgrsStr = toMgrs(lat, lng);
+        }
+      }
+    }
+
+    // Workstation canvas coordinate positioning
+    let posX = (xIdx !== -1 && !isNaN(parseFloat(row[xIdx]))) ? parseFloat(row[xIdx]) : null;
+    let posY = (yIdx !== -1 && !isNaN(parseFloat(row[yIdx]))) ? parseFloat(row[yIdx]) : null;
+
+    if (posX == null || posY == null) {
+      const cols = 5;
+      const col = i % cols;
+      const rowIdx = Math.floor(i / cols);
+      posX = (col - 2) * 160;
+      posY = (rowIdx - Math.floor(total / (cols * 2))) * 140;
+    }
+
+    const entityObj = {
+      id: uid(),
+      name: rawName,
+      subName: rawSubName,
+      type: rawType,
+      note: rawNote,
+      x: Math.round(posX),
+      y: Math.round(posY)
+    };
+
+    if (lat != null && lng != null) {
+      entityObj.lat = lat;
+      entityObj.lng = lng;
+    }
+    if (mgrsStr) {
+      entityObj.mgrs = mgrsStr;
+    }
+
+    parsedEntities.push(entityObj);
+  });
+
+  return parsedEntities;
+}
+
+function processImportedCsv(file) {
+  if (!file) return;
+  const badge = $("importCsvFileBadge");
+  if (badge) {
+    badge.textContent = file.name;
+    badge.classList.remove("hidden");
+  }
+
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const text = ev.target.result;
+      const parsed = parseCsvToEntities(text);
+
+      if (!parsed || parsed.length === 0) {
+        alert("No valid entity rows could be parsed from this CSV file. Please ensure it contains data rows.");
+        return;
+      }
+
+      pendingCsvEntities = parsed;
+
+      const mgrsCount = parsed.filter(e => e.lat != null && e.lng != null).length;
+      const stats = $("importCsvStatsCounts");
+      if (stats) {
+        stats.textContent = `${parsed.length} entities • ${mgrsCount} with MGRS coordinates`;
+      }
+
+      // Build preview table (first 5 rows)
+      const table = $("importCsvPreviewTable");
+      if (table) {
+        const previewRows = parsed.slice(0, 5);
+        let tableHtml = `
+          <thead>
+            <tr class="bg-slate-100 text-black/70 border-b border-black/20 font-bold">
+              <th class="p-1.5">Name</th>
+              <th class="p-1.5">Type</th>
+              <th class="p-1.5">MGRS</th>
+              <th class="p-1.5">Coordinates (WGS-84)</th>
+            </tr>
+          </thead>
+          <tbody>
+        `;
+        previewRows.forEach(e => {
+          const coordStr = (e.lat != null && e.lng != null) ? `${e.lat}, ${e.lng}` : '<span class="text-black/40 italic">None</span>';
+          tableHtml += `
+            <tr class="border-b border-black/10 hover:bg-slate-50">
+              <td class="p-1.5 font-bold text-black">${esc(e.name)}</td>
+              <td class="p-1.5 text-blue-600 font-medium">${esc(e.type)}</td>
+              <td class="p-1.5 font-mono text-black/80 font-bold">${esc(e.mgrs || '-')}</td>
+              <td class="p-1.5 font-mono text-xs text-black/70">${coordStr}</td>
+            </tr>
+          `;
+        });
+        if (parsed.length > 5) {
+          tableHtml += `
+            <tr>
+              <td colspan="4" class="p-1.5 text-center text-[10px] text-black/50 italic bg-slate-50">
+                ... and ${parsed.length - 5} more entities
+              </td>
+            </tr>
+          `;
+        }
+        tableHtml += `</tbody>`;
+        table.innerHTML = tableHtml;
+      }
+
+      const details = $("importCsvDetailsSection");
+      if (details) details.classList.remove("hidden");
+
+      const submitBtn = $("btnImportCsvSubmit");
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.className = "flex-1 btn-primary py-2 text-xs bg-emerald-600 hover:bg-emerald-700 border-emerald-700 cursor-pointer";
+        const label = $("btnImportCsvSubmitLabel");
+        if (label) label.textContent = `Import ${parsed.length} Entities`;
+      }
+    } catch (err) {
+      alert("Error parsing CSV: " + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+function commitImportCsv() {
+  if (!pendingCsvEntities || pendingCsvEntities.length === 0) return;
+
+  if (!data) data = { entities: [], links: [], boxes: [] };
+  if (!Array.isArray(data.entities)) data.entities = [];
+  if (!Array.isArray(data.links)) data.links = [];
+  if (!Array.isArray(data.boxes)) data.boxes = [];
+
+  pushUndoSnapshot();
+
+  const count = pendingCsvEntities.length;
+  let mgrsCount = 0;
+  const coordsList = [];
+
+  pendingCsvEntities.forEach(ent => {
+    data.entities.push(ent);
+    if (ent.lat != null && ent.lng != null) {
+      mgrsCount++;
+      coordsList.push([ent.lat, ent.lng]);
+    }
+  });
+
+  closeImportCsvModal();
+
+  // Re-render Workstation link network chart
+  render(false);
+
+  // Re-render Geospatial Map & auto-center on newly imported MGRS pins
+  renderMap();
+  if (coordsList.length > 0 && typeof map !== "undefined" && map) {
+    try {
+      const bounds = L.latLngBounds(coordsList);
+      if (bounds.isValid()) {
+        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
+      }
+    } catch (e) {}
+  }
+
+  // Switch to list tab to see all imported entities immediately
+  switchTab("list");
+
+  queueSave();
+  setStatus(`Imported ${count} entities (${mgrsCount} with MGRS coordinates) from CSV`);
+}
+
+// Wire CSV import triggers
+if ($("btnImportCsv")) {
+  $("btnImportCsv").onclick = () => {
+    closeProjectSettingsMenu();
+    openImportCsvModal();
+  };
+}
+if ($("btnListImportCsv")) {
+  $("btnListImportCsv").onclick = openImportCsvModal;
+}
+if ($("btnCloseImportCsvModal")) {
+  $("btnCloseImportCsvModal").onclick = closeImportCsvModal;
+}
+if ($("btnCancelImportCsvModal")) {
+  $("btnCancelImportCsvModal").onclick = closeImportCsvModal;
+}
+if ($("btnImportCsvSubmit")) {
+  $("btnImportCsvSubmit").onclick = commitImportCsv;
+}
+
+const csvDropZone = $("importCsvDropZone");
+const csvFileInput = $("importCsvFileInput");
+if (csvDropZone && csvFileInput) {
+  csvDropZone.onclick = () => csvFileInput.click();
+  csvFileInput.onchange = ev => {
+    const file = ev.target.files && ev.target.files[0];
+    if (file) processImportedCsv(file);
+  };
+
+  csvDropZone.ondragover = ev => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    csvDropZone.classList.add("border-emerald-600", "bg-emerald-50/60");
+  };
+  csvDropZone.ondragleave = ev => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    csvDropZone.classList.remove("border-emerald-600", "bg-emerald-50/60");
+  };
+  csvDropZone.ondrop = ev => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    csvDropZone.classList.remove("border-emerald-600", "bg-emerald-50/60");
+    const file = ev.dataTransfer.files && ev.dataTransfer.files[0];
+    if (file) processImportedCsv(file);
+  };
+}
+
+if ($("importCsvModal")) {
+  $("importCsvModal").addEventListener("click", ev => {
+    if (ev.target === $("importCsvModal")) {
+      closeImportCsvModal();
+    }
+  });
 }
 
 /* ---------- BluLink Manual Modal ---------- */
@@ -9361,6 +9850,8 @@ window.addEventListener("keydown", e => {
     closeExportNetMenu();
     closeViewMapMenu();
     closeExportMapMenu();
+    closeImportProjectModal();
+    closeImportCsvModal();
     if (isFullscreenNet) {
       exitFullscreenNet();
       return;

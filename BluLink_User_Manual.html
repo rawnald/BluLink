@@ -845,6 +845,21 @@
 <h2>9.3 Restoring Workspace from Backup</h2>
 <p>To restore or share a project, click <strong>"Import Project"</strong> in the project settings menu. Select the <code>.json</code> file; BluLink verifies schema integrity, updates nodes and links, recalculates MGRS grids, and mounts the workspace immediately.</p>
 
+<h2>9.4 Importing Entities &amp; MGRS Coordinates from CSV</h2>
+<p>To batch-import intelligence records, field targets, safehouses, or GPS/MGRS coordinates into your current project:</p>
+<ol>
+  <li>Click <strong>"Import CSV (MGRS)"</strong> in the <strong>Project Settings Menu</strong> (top navigation) or click <strong>"Import CSV"</strong> in the <strong>Entities Directory</strong> tab in the left sidebar.</li>
+  <li>Drag and drop your <code>.csv</code> spreadsheet or click to browse your file.</li>
+  <li>BluLink automatically scans and detects columns such as <code>Name</code>, <code>Type</code>, <code>MGRS</code>, <code>Latitude</code>, <code>Longitude</code>, and <code>Notes</code>.</li>
+  <li><strong>Automatic MGRS Conversion:</strong> Every MGRS grid string (e.g. <code>51PTS8284914993</code>) is decoded into standard WGS-84 decimal latitude and longitude using BluLink's military grid conversion engine.</li>
+  <li>Click <strong>"Import Entities"</strong>:
+    <ul>
+      <li>All entities are placed onto the <strong>Workstation Link Chart</strong>, arranged cleanly across the canvas.</li>
+      <li>All entities with valid MGRS coordinates are immediately plotted as interactive tactical pins on the <strong>Geospatial Map</strong>, with the map automatically zooming to fit all coordinates.</li>
+    </ul>
+  </li>
+</ol>
+
 <div class="page-break"></div>
 
 <!-- ==================== CHAPTER 10 ==================== -->
