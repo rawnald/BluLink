@@ -383,13 +383,13 @@
 
   /* Custom Map Flag (Clean Flag Display Without Location Pin Teardrop Wrapper) */
   .custom-map-flag {
-    width: 34px;
-    height: 24px;
+    width: 14px;
+    height: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     background: transparent;
-    filter: drop-shadow(0 2px 5px rgba(0,0,0,0.45));
+    filter: drop-shadow(0 1px 3px rgba(0,0,0,0.45));
     transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.2s ease;
     cursor: pointer;
   }
@@ -397,7 +397,7 @@
     width: 100%;
     height: 100%;
     object-fit: contain;
-    border-radius: 3px;
+    border-radius: 2px;
     border: 1px solid rgba(0, 0, 0, 0.35);
     background-color: #ffffff;
     display: block;
@@ -405,12 +405,12 @@
     pointer-events: none;
   }
   .custom-map-flag.is-selected {
-    transform: scale(1.25);
+    transform: scale(1.35);
     z-index: 1000 !important;
   }
   .custom-map-flag.is-selected img {
-    border: 2px solid #2563eb !important;
-    box-shadow: 0 0 0 3px #2563eb, 0 6px 16px rgba(0,0,0,0.4) !important;
+    border: 1.5px solid #2563eb !important;
+    box-shadow: 0 0 0 2px #2563eb, 0 3px 8px rgba(0,0,0,0.4) !important;
   }
 
   .pick-crosshair {
@@ -8383,9 +8383,9 @@ function render(fitAll = false) {
         `;
         icon = L.divIcon({
           className: "",
-          iconSize: [34, 24],
-          iconAnchor: [17, 12],
-          popupAnchor: [0, -14],
+          iconSize: [14, 12],
+          iconAnchor: [7, 6],
+          popupAnchor: [0, -8],
           html: pinHtml
         });
       } else {
