@@ -381,6 +381,38 @@
     color: #ffffff !important;
   }
 
+  /* Custom Map Flag (Clean Flag Display Without Location Pin Teardrop Wrapper) */
+  .custom-map-flag {
+    width: 34px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    filter: drop-shadow(0 2px 5px rgba(0,0,0,0.45));
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.2s ease;
+    cursor: pointer;
+  }
+  .custom-map-flag img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 3px;
+    border: 1px solid rgba(0, 0, 0, 0.35);
+    background-color: #ffffff;
+    display: block;
+    user-select: none;
+    pointer-events: none;
+  }
+  .custom-map-flag.is-selected {
+    transform: scale(1.25);
+    z-index: 1000 !important;
+  }
+  .custom-map-flag.is-selected img {
+    border: 2px solid #2563eb !important;
+    box-shadow: 0 0 0 3px #2563eb, 0 6px 16px rgba(0,0,0,0.4) !important;
+  }
+
   .pick-crosshair {
     cursor: crosshair !important;
   }
@@ -4202,6 +4234,19 @@ function isGifUrl(url) {
 function getEntityIcon(e) {
   if (!e) return ENTITY_ICONS.Male;
   return e.customImage || e.icon || ENTITY_ICONS[e.type] || ENTITY_ICONS[e.name] || ENTITY_ICONS.Male;
+}
+
+function isFlagEntity(e) {
+  if (!e) return false;
+  if (e.category && e.category.toLowerCase().includes("flag")) return true;
+  if (e.type && (e.type.toLowerCase() === "flag" || e.type.toLowerCase().startsWith("flags_") || e.type.toLowerCase().includes("flag"))) return true;
+  const icon = e.customImage || e.icon || "";
+  if (icon && (icon.toLowerCase().includes("flags_") || icon.toLowerCase().includes("/flag") || icon.toLowerCase().includes("flag"))) return true;
+  if (typeof ALL_ENTITIES_DATA !== "undefined" && Array.isArray(ALL_ENTITIES_DATA)) {
+    const match = ALL_ENTITIES_DATA.find(item => item.id === e.type || item.name === e.type || item.name === e.name || item.id === e.id);
+    if (match && match.category && match.category.toLowerCase() === "flags") return true;
+  }
+  return false;
 }
 
 function processUploadedImage(file, callback) {
@@ -8326,18 +8371,37 @@ function render(fitAll = false) {
 
     if (e.lat != null && e.lng != null && !isNaN(e.lat) && !isNaN(e.lng)) {
       mappedCount++;
-      const pinHtml = `
-        <div class="custom-map-pin ${isSel ? 'is-selected' : ''}">
-          <img src="${iconUri}" class="w-5 h-5 object-contain" alt="">
-        </div>
-      `;
-      const icon = L.divIcon({
-        className: "",
-        iconSize: [36, 36],
-        iconAnchor: [18, 36],
-        popupAnchor: [0, -36],
-        html: pinHtml
-      });
+      const isFlag = isFlagEntity(e);
+      let pinHtml = "";
+      let icon = null;
+
+      if (isFlag) {
+        pinHtml = `
+          <div class="custom-map-flag ${isSel ? 'is-selected' : ''}">
+            <img src="${iconUri}" alt="">
+          </div>
+        `;
+        icon = L.divIcon({
+          className: "",
+          iconSize: [34, 24],
+          iconAnchor: [17, 12],
+          popupAnchor: [0, -14],
+          html: pinHtml
+        });
+      } else {
+        pinHtml = `
+          <div class="custom-map-pin ${isSel ? 'is-selected' : ''}">
+            <img src="${iconUri}" class="w-5 h-5 object-contain" alt="">
+          </div>
+        `;
+        icon = L.divIcon({
+          className: "",
+          iconSize: [36, 36],
+          iconAnchor: [18, 36],
+          popupAnchor: [0, -36],
+          html: pinHtml
+        });
+      }
 
       const marker = L.marker([e.lat, e.lng], { icon, title: getEntityDisplayName(e) }).addTo(markerLayer);
       markersByEntityId[e.id] = marker;
@@ -8536,7 +8600,7 @@ function updateMapSelection() {
     if (m) {
       const el = m.getElement();
       if (el) {
-        const pin = el.querySelector(".custom-map-pin");
+        const pin = el.querySelector(".custom-map-pin, .custom-map-flag");
         if (pin) {
           if (e.id === selected) pin.classList.add("is-selected");
           else pin.classList.remove("is-selected");
