@@ -1883,13 +1883,6 @@
       <!-- Chart Control Buttons (Responsive Toolbar with Dropdowns) -->
       <div class="chart-ctrl-bar pointer-events-auto ml-auto flex items-center gap-1.5 sm:gap-2">
       
-        <!-- 00. Workstation Analysis & Assessment Button -->
-        <button id="btnChartAnalysis" type="button" title="Generate Analysis & Tactical Assessment based on links and map"
-          class="btn-secondary btn-chart-ctrl py-1.5 px-2.5 sm:px-3 text-xs flex items-center gap-1.5 sm:gap-2 font-bold transition shadow-sm cursor-pointer hover:border-blue-600 hover:text-blue-600">
-          <i class="fi fi-rr-chart-pie text-xs text-blue-600 shrink-0"></i>
-          <span class="hidden sm:inline">Analysis</span>
-        </button>
-
         <!-- 0. Mouse Highlight / Area Select Tool Button -->
         <button id="btnMarqueeTool" type="button" title="Highlight / Area Select: Click and drag with mouse to highlight and select entities, boxes, and lines (or hold Shift on canvas)"
           class="btn-secondary btn-chart-ctrl py-1.5 px-2.5 sm:px-3 text-xs flex items-center gap-1.5 sm:gap-2 font-bold transition shadow-sm cursor-pointer">
@@ -2193,13 +2186,6 @@
 
     <!-- Map Floating Toolbar (Export dropdown and Fullscreen exit) -->
     <div id="mapToolbarContainer" class="absolute top-2.5 right-14 sm:right-16 z-[1000] pointer-events-auto flex items-center gap-1.5 sm:gap-2">
-      <!-- 0. Map Analysis & Assessment Button -->
-      <button id="btnMapAnalysis" type="button" title="Generate Analysis & Tactical Assessment based on map and links"
-        class="btn-secondary btn-chart-ctrl py-1.5 px-2.5 sm:px-3 text-xs flex items-center gap-1.5 sm:gap-2 font-bold transition shadow-sm cursor-pointer hover:border-blue-600 hover:text-blue-600 bg-white">
-        <i class="fi fi-rr-chart-pie text-xs text-blue-600"></i>
-        <span class="hidden sm:inline">Analysis</span>
-      </button>
-
       <!-- 1. Map Export / Save Dropdown -->
       <div class="relative" id="exportMapDropdownContainer">
         <button id="btnExportMapDropdown" type="button" title="Save / Export Geospatial Map (PDF, PNG, JPEG)"
@@ -12409,8 +12395,6 @@ if ($("btnMenuAnalysis")) {
     openAnalysisModal();
   };
 }
-if ($("btnChartAnalysis")) $("btnChartAnalysis").onclick = openAnalysisModal;
-if ($("btnMapAnalysis")) $("btnMapAnalysis").onclick = openAnalysisModal;
 
 if ($("btnCloseAnalysisModal")) $("btnCloseAnalysisModal").onclick = closeAnalysisModal;
 if ($("btnDismissAnalysisModal")) $("btnDismissAnalysisModal").onclick = closeAnalysisModal;
