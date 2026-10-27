@@ -16,3 +16,9 @@ desktop.ini
 
 files.zip
 files/
+
+# Temporary Microsoft Office files
+~$*
+~*.tmp
+*.tmp
+

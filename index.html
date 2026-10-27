@@ -444,6 +444,57 @@
     margin-right: auto !important;
     display: block !important;
   }
+
+  /* Analysis & Assessment Modal & Print Styles */
+  #analysisModal {
+    z-index: 99999 !important;
+  }
+  .analysis-tab-btn.active {
+    background-color: #2563eb !important;
+    color: #ffffff !important;
+    box-shadow: 0 1px 3px 0 rgba(37, 99, 235, 0.3) !important;
+  }
+
+  @media print {
+    body * {
+      visibility: hidden !important;
+    }
+    #analysisModal, #analysisModal * {
+      visibility: visible !important;
+    }
+    #analysisModal {
+      position: absolute !important;
+      left: 0 !important;
+      top: 0 !important;
+      width: 100% !important;
+      height: auto !important;
+      padding: 0 !important;
+      background: #ffffff !important;
+      backdrop-filter: none !important;
+      z-index: 999999 !important;
+      display: block !important;
+    }
+    #analysisModal > div {
+      max-width: 100% !important;
+      height: auto !important;
+      max-height: none !important;
+      border: none !important;
+      box-shadow: none !important;
+      border-radius: 0 !important;
+    }
+    #analysisModalBody {
+      overflow: visible !important;
+      height: auto !important;
+    }
+    .analysis-tab-panel {
+      display: block !important;
+      margin-bottom: 2rem !important;
+      page-break-inside: avoid;
+    }
+    .analysis-tab-btn, #btnCloseAnalysisModal, #btnDismissAnalysisModal, #btnRefreshAnalysis, #btnCopyAnalysis, #btnPrintAnalysis, #fullMatrixFilterInput {
+      display: none !important;
+    }
+  }
 </style>
 </head>
 
@@ -1334,6 +1385,107 @@
   </div>
 </div>
 
+<!-- ==================== ANALYSIS AND ASSESSMENT MODAL ==================== -->
+<div id="analysisModal" class="hidden fixed inset-0 z-[99999] flex items-center justify-center p-2 sm:p-4 md:p-6 bg-black/60 backdrop-blur-sm">
+  <div class="w-full max-w-6xl h-[92vh] max-h-[920px] bg-white border-2 border-black rounded-2xl shadow-2xl flex flex-col overflow-hidden relative z-10">
+    
+    <!-- Modal Header -->
+    <div class="px-5 py-3.5 border-b border-black/15 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white shrink-0">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-blue-50 border border-blue-600/30 flex items-center justify-center text-blue-600 shrink-0">
+          <i class="fi fi-rr-chart-pie text-xl"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <h3 class="text-sm font-bold text-black uppercase tracking-wider">
+              Intelligence Analysis & Assessment
+            </h3>
+            <span id="analysisProjectBadge" class="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">Active Project</span>
+            <span class="text-[9px] font-bold text-neutral-600 bg-neutral-100 border border-neutral-300 px-1.5 py-0.5 rounded uppercase">OPERATIONAL DOSSIER</span>
+          </div>
+          <p id="analysisSubtitle" class="text-[11px] text-black/60 mt-0.5">
+            Integrated analytical assessment synthesizing link relationships and geospatial intelligence
+          </p>
+        </div>
+      </div>
+
+      <!-- Action Tools (Refresh, Copy, Print/PDF, Close) -->
+      <div class="flex items-center gap-2 shrink-0">
+        <button id="btnRefreshAnalysis" type="button" title="Refresh Analysis with latest map & link data"
+          class="btn-secondary py-1.5 px-3 text-xs flex items-center gap-1.5 font-bold hover:border-blue-600 hover:text-blue-600">
+          <i class="fi fi-rr-refresh text-xs text-blue-600"></i>
+          <span class="hidden sm:inline">Refresh</span>
+        </button>
+        <button id="btnCopyAnalysis" type="button" title="Copy Assessment Summary to Clipboard"
+          class="btn-secondary py-1.5 px-3 text-xs flex items-center gap-1.5 font-bold hover:border-blue-600 hover:text-blue-600">
+          <i class="fi fi-rr-copy text-xs text-blue-600"></i>
+          <span id="btnCopyAnalysisLabel" class="hidden sm:inline">Copy Brief</span>
+        </button>
+        <button id="btnPrintAnalysis" type="button" title="Print or Save Assessment as PDF"
+          class="btn-primary py-1.5 px-3.5 text-xs flex items-center gap-1.5 shadow-sm font-bold">
+          <i class="fi fi-rr-document text-xs"></i>
+          <span>Print / PDF</span>
+        </button>
+        <button id="btnCloseAnalysisModal" type="button" title="Close (Esc)"
+          class="w-8 h-8 rounded-xl border border-black/15 hover:border-black/30 hover:bg-neutral-100 flex items-center justify-center text-black/70 hover:text-black font-bold transition ml-1 cursor-pointer">
+          ✕
+        </button>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs Bar -->
+    <div class="px-5 py-2 border-b border-black/10 bg-neutral-50 flex items-center gap-2 overflow-x-auto shrink-0 select-none">
+      <button type="button" class="analysis-tab-btn active px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-blue-600 text-white shadow-sm cursor-pointer" data-tab="overview">
+        <i class="fi fi-rr-apps text-xs"></i>
+        <span>Executive Summary</span>
+      </button>
+      <button type="button" class="analysis-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold text-black/70 hover:text-black hover:bg-black/5 transition flex items-center gap-1.5 cursor-pointer" data-tab="linkAnalysis">
+        <i class="fi fi-rr-link-alt text-xs text-blue-600"></i>
+        <span>Link Analysis</span>
+        <span id="analysisBadgeLinksCount" class="text-[10px] font-mono px-1.5 py-0.2 bg-black/10 rounded-full">0</span>
+      </button>
+      <button type="button" class="analysis-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold text-black/70 hover:text-black hover:bg-black/5 transition flex items-center gap-1.5 cursor-pointer" data-tab="geoAssessment">
+        <i class="fi fi-rr-map-marker text-xs text-emerald-600"></i>
+        <span>Geospatial Assessment</span>
+        <span id="analysisBadgeMappedCount" class="text-[10px] font-mono px-1.5 py-0.2 bg-black/10 rounded-full">0</span>
+      </button>
+      <button type="button" class="analysis-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold text-black/70 hover:text-black hover:bg-black/5 transition flex items-center gap-1.5 cursor-pointer" data-tab="targetPriorities">
+        <i class="fi fi-rr-crosshairs text-xs text-red-600"></i>
+        <span>Target Prioritization (HVTs)</span>
+        <span id="analysisBadgeHvtCount" class="text-[10px] font-mono px-1.5 py-0.2 bg-red-100 text-red-700 rounded-full">0</span>
+      </button>
+      <button type="button" class="analysis-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold text-black/70 hover:text-black hover:bg-black/5 transition flex items-center gap-1.5 cursor-pointer" data-tab="fullMatrix">
+        <i class="fi fi-rr-table-pivot text-xs text-indigo-600"></i>
+        <span>Complete Matrix</span>
+      </button>
+    </div>
+
+    <!-- Modal Body (Tab Panels) -->
+    <div id="analysisModalBody" class="flex-1 overflow-y-auto p-5 bg-neutral-50/50 space-y-5">
+      <div id="tabContent_overview" class="analysis-tab-panel space-y-5"></div>
+      <div id="tabContent_linkAnalysis" class="analysis-tab-panel hidden space-y-5"></div>
+      <div id="tabContent_geoAssessment" class="analysis-tab-panel hidden space-y-5"></div>
+      <div id="tabContent_targetPriorities" class="analysis-tab-panel hidden space-y-5"></div>
+      <div id="tabContent_fullMatrix" class="analysis-tab-panel hidden space-y-4"></div>
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="px-5 py-3 border-t border-black/10 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-black/60 shrink-0">
+      <div class="flex items-center gap-4 flex-wrap">
+        <span id="analysisFooterStats" class="font-semibold text-black/70">0 Entities | 0 Links | 0 Coordinates</span>
+        <span class="text-neutral-300 hidden sm:inline">|</span>
+        <span id="analysisGeneratedTimestamp" class="text-[11px] text-black/50">Generated just now</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="btnDismissAnalysisModal" type="button" class="btn-secondary py-1.5 px-4 text-xs font-bold cursor-pointer">
+          Close
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
 <!-- ==================== HEADER ==================== -->
 <header id="headerApp" class="hidden h-14 shrink-0 bg-white border-b-2 border-black/10 px-4 flex items-center justify-between z-30">
   <div class="flex items-center gap-4">
@@ -1373,6 +1525,12 @@
 
         <!-- Settings Dropdown Menu -->
         <div id="projectSettingsMenu" class="hidden absolute left-0 sm:left-auto sm:right-0 top-full mt-1.5 w-60 bg-white border-2 border-black rounded-xl shadow-2xl p-1.5 z-50 space-y-1">
+          <button id="btnMenuAnalysis" type="button" title="Generate Comprehensive Intelligence Analysis and Tactical Assessment"
+            class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold text-blue-600 hover:bg-blue-50 transition cursor-pointer text-left">
+            <i class="fi fi-rr-chart-pie text-xs text-blue-600 shrink-0"></i>
+            <span>Analysis & Assessment</span>
+          </button>
+          <div class="border-t border-black/10 my-1"></div>
           <button id="btnImportProject" type="button" title="Import Project from File (.json)"
             class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer text-left">
             <i class="fi fi-rr-upload text-xs text-blue-600 shrink-0"></i>
@@ -1424,6 +1582,13 @@
 
   <!-- Header Right (Actions & Status) -->
   <div class="flex items-center gap-3">
+    <!-- Generate Analysis & Assessment Button -->
+    <button id="btnHeaderAnalysis" type="button" title="Generate Intelligence Analysis & Tactical Assessment based on links and map"
+      class="btn-primary py-1 px-3 text-xs flex items-center gap-1.5 shadow-sm hover:shadow transition cursor-pointer">
+      <i class="fi fi-rr-chart-pie text-xs"></i>
+      <span>Analysis & Assessment</span>
+    </button>
+
     <!-- Autosave Status Dot (Minimal) -->
     <div id="statusContainer" class="hidden items-center gap-1.5 text-xs">
       <span id="statusDot" class="w-2 h-2 rounded-full bg-blue-600"></span>
@@ -1718,6 +1883,13 @@
       <!-- Chart Control Buttons (Responsive Toolbar with Dropdowns) -->
       <div class="chart-ctrl-bar pointer-events-auto ml-auto flex items-center gap-1.5 sm:gap-2">
       
+        <!-- 00. Workstation Analysis & Assessment Button -->
+        <button id="btnChartAnalysis" type="button" title="Generate Analysis & Tactical Assessment based on links and map"
+          class="btn-secondary btn-chart-ctrl py-1.5 px-2.5 sm:px-3 text-xs flex items-center gap-1.5 sm:gap-2 font-bold transition shadow-sm cursor-pointer hover:border-blue-600 hover:text-blue-600">
+          <i class="fi fi-rr-chart-pie text-xs text-blue-600 shrink-0"></i>
+          <span class="hidden sm:inline">Analysis</span>
+        </button>
+
         <!-- 0. Mouse Highlight / Area Select Tool Button -->
         <button id="btnMarqueeTool" type="button" title="Highlight / Area Select: Click and drag with mouse to highlight and select entities, boxes, and lines (or hold Shift on canvas)"
           class="btn-secondary btn-chart-ctrl py-1.5 px-2.5 sm:px-3 text-xs flex items-center gap-1.5 sm:gap-2 font-bold transition shadow-sm cursor-pointer">
@@ -2021,6 +2193,13 @@
 
     <!-- Map Floating Toolbar (Export dropdown and Fullscreen exit) -->
     <div id="mapToolbarContainer" class="absolute top-2.5 right-14 sm:right-16 z-[1000] pointer-events-auto flex items-center gap-1.5 sm:gap-2">
+      <!-- 0. Map Analysis & Assessment Button -->
+      <button id="btnMapAnalysis" type="button" title="Generate Analysis & Tactical Assessment based on map and links"
+        class="btn-secondary btn-chart-ctrl py-1.5 px-2.5 sm:px-3 text-xs flex items-center gap-1.5 sm:gap-2 font-bold transition shadow-sm cursor-pointer hover:border-blue-600 hover:text-blue-600 bg-white">
+        <i class="fi fi-rr-chart-pie text-xs text-blue-600"></i>
+        <span class="hidden sm:inline">Analysis</span>
+      </button>
+
       <!-- 1. Map Export / Save Dropdown -->
       <div class="relative" id="exportMapDropdownContainer">
         <button id="btnExportMapDropdown" type="button" title="Save / Export Geospatial Map (PDF, PNG, JPEG)"
@@ -4180,6 +4359,10 @@ window.addEventListener("keydown", ev => {
     const modal = $("allEntitiesModal");
     if (modal && !modal.classList.contains("hidden")) {
       closeAllEntitiesModal();
+    }
+    const anModal = $("analysisModal");
+    if (anModal && !anModal.classList.contains("hidden")) {
+      closeAnalysisModal();
     }
   }
 });
@@ -9920,6 +10103,7 @@ window.addEventListener("keydown", e => {
     closeExportMapMenu();
     closeImportProjectModal();
     closeImportCsvModal();
+    closeAnalysisModal();
     if (isFullscreenNet) {
       exitFullscreenNet();
       return;
@@ -10896,6 +11080,1369 @@ function exportMap(format = "png") {
     setStatus("Map export failed", true);
   });
 }
+
+/* ==================== INTELLIGENCE ANALYSIS & ASSESSMENT MODULE ==================== */
+
+let activeAnalysisTab = "overview";
+let currentAssessmentData = null;
+let currentMatrixFilter = "";
+
+/* Haversine distance in kilometers */
+function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
+  if (lat1 == null || lon1 == null || lat2 == null || lon2 == null) return null;
+  const p1 = parseFloat(lat1);
+  const l1 = parseFloat(lon1);
+  const p2 = parseFloat(lat2);
+  const l2 = parseFloat(lon2);
+  if (isNaN(p1) || isNaN(l1) || isNaN(p2) || isNaN(l2)) return null;
+
+  const R = 6371; // Earth's mean radius in km
+  const dLat = (p2 - p1) * Math.PI / 180;
+  const dLon = (l2 - l1) * Math.PI / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(p1 * Math.PI / 180) * Math.cos(p2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+function formatHaversineDistance(distKm) {
+  if (distKm == null || isNaN(distKm)) return "N/A";
+  if (distKm < 0.001) return "< 1 m";
+  if (distKm < 1) {
+    const meters = Math.round(distKm * 1000);
+    return `${meters} m`;
+  }
+  return `${distKm.toFixed(2)} km`;
+}
+
+function openAnalysisModal() {
+  const modal = $("analysisModal");
+  if (!modal) return;
+
+  if (!currentProjectId) {
+    showNoProjectError();
+    return;
+  }
+
+  const assessment = generateAnalysisAndAssessment();
+  currentAssessmentData = assessment;
+  currentMatrixFilter = "";
+
+  renderAnalysisModal(assessment);
+  switchAnalysisTab("overview");
+
+  modal.classList.remove("hidden");
+  setStatus("Analysis & Assessment dossier generated");
+}
+
+function closeAnalysisModal() {
+  const modal = $("analysisModal");
+  if (!modal) return;
+  modal.classList.add("hidden");
+}
+
+function switchAnalysisTab(tabName) {
+  activeAnalysisTab = tabName;
+  const tabBtns = document.querySelectorAll(".analysis-tab-btn");
+  tabBtns.forEach(btn => {
+    if (btn.dataset.tab === tabName) {
+      btn.classList.add("active", "bg-blue-600", "text-white", "shadow-sm");
+      btn.classList.remove("text-black/70", "hover:bg-black/5");
+    } else {
+      btn.classList.remove("active", "bg-blue-600", "text-white", "shadow-sm");
+      btn.classList.add("text-black/70", "hover:bg-black/5");
+    }
+  });
+
+  const tabPanels = document.querySelectorAll(".analysis-tab-panel");
+  tabPanels.forEach(panel => {
+    if (panel.id === `tabContent_${tabName}`) {
+      panel.classList.remove("hidden");
+    } else {
+      panel.classList.add("hidden");
+    }
+  });
+
+  const body = $("analysisModalBody");
+  if (body) body.scrollTop = 0;
+}
+
+function generateAnalysisAndAssessment() {
+  const currentProject = (projects && Array.isArray(projects) && currentProjectId)
+    ? projects.find(p => p.id === currentProjectId)
+    : null;
+  const projectName = (currentProject && currentProject.name) || "Active Investigation";
+  const projectDesc = (currentProject && currentProject.description) || "Geospatial and Link Intelligence Analysis";
+
+  const entities = (data && Array.isArray(data.entities)) ? data.entities : [];
+  const links = (data && Array.isArray(data.links)) ? data.links : [];
+  const boxes = (data && Array.isArray(data.boxes)) ? data.boxes : [];
+
+  const byId = {};
+  entities.forEach(e => { byId[e.id] = e; });
+
+  // 1. Degree & Adjacency
+  const adj = {};
+  const inDegree = {};
+  const outDegree = {};
+  const totalDegree = {};
+  const incidentLinks = {};
+
+  entities.forEach(e => {
+    adj[e.id] = new Set();
+    inDegree[e.id] = 0;
+    outDegree[e.id] = 0;
+    totalDegree[e.id] = 0;
+    incidentLinks[e.id] = [];
+  });
+
+  let confirmedLinksCount = 0;
+  let unconfirmedLinksCount = 0;
+  let directedLinksCount = 0;
+  let bidirectionalLinksCount = 0;
+  let undirectedLinksCount = 0;
+  const relationshipTypeCounts = {};
+
+  links.forEach(l => {
+    const fromId = l.from;
+    const toId = l.to;
+    const isConfirmed = !(l.dashes || l.lineType === "dashed" || l.lineType === "unconfirmed");
+    if (isConfirmed) confirmedLinksCount++;
+    else unconfirmedLinksCount++;
+
+    const arrow = l.arrows || l.direction || "none";
+    if (arrow === "to" || arrow === "from") directedLinksCount++;
+    else if (arrow === "both") bidirectionalLinksCount++;
+    else undirectedLinksCount++;
+
+    const relType = (l.label && l.label.trim()) || l.type || l.relationshipType || "Association";
+    relationshipTypeCounts[relType] = (relationshipTypeCounts[relType] || 0) + 1;
+
+    if (byId[fromId] && byId[toId]) {
+      adj[fromId].add(toId);
+      adj[toId].add(fromId);
+      outDegree[fromId] = (outDegree[fromId] || 0) + 1;
+      inDegree[toId] = (inDegree[toId] || 0) + 1;
+      totalDegree[fromId] = (totalDegree[fromId] || 0) + 1;
+      totalDegree[toId] = (totalDegree[toId] || 0) + 1;
+      incidentLinks[fromId].push(l);
+      incidentLinks[toId].push(l);
+    }
+  });
+
+  // 2. Connected Components (Operational Cells)
+  const visited = new Set();
+  const components = [];
+  entities.forEach(e => {
+    if (!visited.has(e.id)) {
+      const compNodeIds = [];
+      const queue = [e.id];
+      visited.add(e.id);
+      while (queue.length > 0) {
+        const curr = queue.shift();
+        compNodeIds.push(curr);
+        if (adj[curr]) {
+          adj[curr].forEach(neighbor => {
+            if (!visited.has(neighbor)) {
+              visited.add(neighbor);
+              queue.push(neighbor);
+            }
+          });
+        }
+      }
+      const nodeSet = new Set(compNodeIds);
+      const internalLinks = links.filter(l => nodeSet.has(l.from) && nodeSet.has(l.to));
+      let leadNode = compNodeIds[0];
+      let maxDeg = -1;
+      compNodeIds.forEach(id => {
+        if ((totalDegree[id] || 0) > maxDeg) {
+          maxDeg = totalDegree[id] || 0;
+          leadNode = id;
+        }
+      });
+      components.push({
+        nodeIds: compNodeIds,
+        size: compNodeIds.length,
+        internalLinksCount: internalLinks.length,
+        leadEntity: byId[leadNode],
+        isIsolated: compNodeIds.length === 1 && (totalDegree[compNodeIds[0]] || 0) === 0
+      });
+    }
+  });
+  components.sort((a, b) => b.size - a.size);
+
+  // 3. Tarjan's Articulation Points & Bridges (Choke Points)
+  const cutVertices = new Set();
+  const bridgeLinks = [];
+  const disc = {};
+  const low = {};
+  let timer = 0;
+  const parent = {};
+
+  function tarjanDFS(u) {
+    disc[u] = low[u] = ++timer;
+    let children = 0;
+    if (adj[u]) {
+      adj[u].forEach(v => {
+        if (disc[v] === undefined) {
+          children++;
+          parent[v] = u;
+          tarjanDFS(v);
+          low[u] = Math.min(low[u], low[v]);
+          if (parent[u] === undefined && children > 1) {
+            cutVertices.add(u);
+          }
+          if (parent[u] !== undefined && low[v] >= disc[u]) {
+            cutVertices.add(u);
+          }
+          if (low[v] > disc[u]) {
+            const matching = links.filter(l => (l.from === u && l.to === v) || (l.from === v && l.to === u));
+            matching.forEach(ml => bridgeLinks.push(ml));
+          }
+        } else if (v !== parent[u]) {
+          low[u] = Math.min(low[u], disc[v]);
+        }
+      });
+    }
+  }
+
+  entities.forEach(e => {
+    if (disc[e.id] === undefined) {
+      tarjanDFS(e.id);
+    }
+  });
+
+  // 4. Geospatial Intelligence
+  const mappedEntities = entities.filter(e => e.lat != null && e.lng != null && !isNaN(parseFloat(e.lat)) && !isNaN(parseFloat(e.lng)));
+  const unmappedEntities = entities.filter(e => e.lat == null || e.lng == null || isNaN(parseFloat(e.lat)) || isNaN(parseFloat(e.lng)));
+  const geoCoveragePct = entities.length > 0 ? Math.round((mappedEntities.length / entities.length) * 100) : 0;
+
+  let centroid = null;
+  let boundingBox = null;
+  let maxSpanKm = 0;
+
+  if (mappedEntities.length > 0) {
+    let minLat = 90, maxLat = -90, minLng = 180, maxLng = -180;
+    let sumLat = 0, sumLng = 0;
+
+    mappedEntities.forEach(e => {
+      const lat = parseFloat(e.lat);
+      const lng = parseFloat(e.lng);
+      if (lat < minLat) minLat = lat;
+      if (lat > maxLat) maxLat = lat;
+      if (lng < minLng) minLng = lng;
+      if (lng > maxLng) maxLng = lng;
+      sumLat += lat;
+      sumLng += lng;
+    });
+
+    const avgLat = sumLat / mappedEntities.length;
+    const avgLng = sumLng / mappedEntities.length;
+    centroid = {
+      lat: avgLat,
+      lng: avgLng,
+      mgrs: (typeof toMgrs === "function" ? toMgrs(avgLat, avgLng) : "")
+    };
+
+    boundingBox = { minLat, maxLat, minLng, maxLng };
+
+    for (let i = 0; i < mappedEntities.length; i++) {
+      for (let j = i + 1; j < mappedEntities.length; j++) {
+        const d = calculateHaversineDistance(
+          mappedEntities[i].lat, mappedEntities[i].lng,
+          mappedEntities[j].lat, mappedEntities[j].lng
+        );
+        if (d != null && d > maxSpanKm) maxSpanKm = d;
+      }
+    }
+  }
+
+  // 5. Co-Location Hotspots (within 80m / 0.08km)
+  const coLocationClusters = [];
+  const assigned = new Set();
+
+  mappedEntities.forEach((e1, i) => {
+    if (assigned.has(e1.id)) return;
+    const cluster = [e1];
+    assigned.add(e1.id);
+    for (let j = i + 1; j < mappedEntities.length; j++) {
+      const e2 = mappedEntities[j];
+      if (!assigned.has(e2.id)) {
+        const d = calculateHaversineDistance(e1.lat, e1.lng, e2.lat, e2.lng);
+        if (d != null && d <= 0.08) {
+          cluster.push(e2);
+          assigned.add(e2.id);
+        }
+      }
+    }
+    if (cluster.length >= 2) {
+      coLocationClusters.push({
+        lat: e1.lat,
+        lng: e1.lng,
+        mgrs: e1.mgrs || (typeof toMgrs === "function" ? toMgrs(e1.lat, e1.lng) : ""),
+        entities: cluster,
+        count: cluster.length
+      });
+    }
+  });
+
+  // 6. Spatial-Link Correlation (Ground Distance of Relationships)
+  const spatialLinks = [];
+  let totalLinkDistKm = 0;
+  let longestLink = null;
+  let shortestLink = null;
+
+  links.forEach(l => {
+    const a = byId[l.from];
+    const b = byId[l.to];
+    if (a && b && a.lat != null && a.lng != null && b.lat != null && b.lng != null) {
+      const dist = calculateHaversineDistance(a.lat, a.lng, b.lat, b.lng);
+      if (dist != null) {
+        let cat = "Regional";
+        if (dist < 0.1) cat = "Co-Located (< 100m)";
+        else if (dist <= 5.0) cat = "Tactical (< 5km)";
+        else if (dist <= 50.0) cat = "Regional (5-50km)";
+        else cat = "Strategic Long-Range (> 50km)";
+
+        const sl = {
+          link: l,
+          source: a,
+          target: b,
+          distKm: dist,
+          category: cat
+        };
+        spatialLinks.push(sl);
+        totalLinkDistKm += dist;
+
+        if (!longestLink || dist > longestLink.distKm) longestLink = sl;
+        if (!shortestLink || dist < shortestLink.distKm) shortestLink = sl;
+      }
+    }
+  });
+
+  const avgLinkDistKm = spatialLinks.length > 0 ? (totalLinkDistKm / spatialLinks.length) : 0;
+
+  // 7. Target Prioritization (HVTs)
+  const targetScores = entities.map(e => {
+    const deg = totalDegree[e.id] || 0;
+    const isCut = cutVertices.has(e.id);
+    const isMapped = e.lat != null && e.lng != null && !isNaN(parseFloat(e.lat)) && !isNaN(parseFloat(e.lng));
+    const inHotspot = coLocationClusters.some(c => c.entities.some(x => x.id === e.id));
+
+    let score = Math.min(35, deg * 7);
+    if (isCut) score += 25;
+    if (isMapped) score += 20;
+    if (inHotspot) score += 5;
+
+    const inc = incidentLinks[e.id] || [];
+    if (inc.length > 0) {
+      const confInc = inc.filter(l => !(l.dashes || l.lineType === "dashed" || l.lineType === "unconfirmed")).length;
+      score += Math.round((confInc / inc.length) * 10);
+    }
+
+    const highTypes = ["Male", "Female", "Organisation", "Account", "Building", "Office", "House", "Anonymous"];
+    if (highTypes.includes(e.type)) score += 5;
+
+    score = Math.min(100, Math.max(10, score));
+
+    let tier = "Tier 3 (Peripheral Support)";
+    let tierBadgeClass = "bg-neutral-100 text-neutral-800 border-neutral-300";
+    if (score >= 65) {
+      tier = "Tier 1 (High-Value Target)";
+      tierBadgeClass = "bg-red-50 text-red-700 border-red-300";
+    } else if (score >= 40) {
+      tier = "Tier 2 (Operational Facilitator)";
+      tierBadgeClass = "bg-amber-50 text-amber-700 border-amber-300";
+    }
+
+    return {
+      entity: e,
+      degree: deg,
+      inDegree: inDegree[e.id] || 0,
+      outDegree: outDegree[e.id] || 0,
+      isCutVertex: isCut,
+      isMapped,
+      inHotspot,
+      score,
+      tier,
+      tierBadgeClass
+    };
+  });
+  targetScores.sort((a, b) => b.score - a.score);
+
+  // 8. Density & Structural Topology
+  const N = entities.length;
+  const M = links.length;
+  const maxPossibleEdges = (N * (N - 1)) / 2;
+  const density = (N > 1 && maxPossibleEdges > 0) ? (M / maxPossibleEdges) : 0;
+  const densityPct = (density * 100).toFixed(1);
+
+  let topologyType = "Hybrid Link Network";
+  let topologyDesc = "Demonstrates mixed connectivity patterns with both clustered associations and extended conduits.";
+  if (N <= 2) {
+    topologyType = "Emerging Dyad";
+    topologyDesc = "Initial investigation stage with limited recorded connections.";
+  } else if (components.length > 1 && (components[0].size / N) < 0.6) {
+    topologyType = "Cellular / Compartmentalized Architecture";
+    topologyDesc = "Multiple autonomous operational cells operating with limited inter-cluster cross-talk to minimize compromise risk.";
+  } else if (targetScores.length > 0 && targetScores[0].degree >= (N - 1) * 0.5) {
+    topologyType = "Hub-and-Spoke / Centralized Hierarchy";
+    topologyDesc = `Centralized hierarchy anchored around dominant coordinator ${getEntityDisplayName(targetScores[0].entity)}, controlling communication flow.`;
+  } else if (density > 0.35) {
+    topologyType = "Dense Distributed Mesh";
+    topologyDesc = "Highly cohesive network with dense multi-channel redundancy across participants.";
+  }
+
+  // Generate Executive Intelligence Narrative
+  const topHub = targetScores.length > 0 ? targetScores[0] : null;
+  const cutVertexNames = Array.from(cutVertices).map(id => getEntityDisplayName(byId[id]));
+  const primaryCellCount = components.filter(c => !c.isIsolated).length;
+  const isolatedCount = components.filter(c => c.isIsolated).length;
+
+  const narrative = {
+    overview: `Project "${projectName}" encompasses ${N} tracked entities (${mappedEntities.length} geolocated, ${unmappedEntities.length} unmapped) interconnected by ${M} relationship links (${confirmedLinksCount} confirmed, ${unconfirmedLinksCount} unconfirmed). The operational theater spans an estimated geographic diameter of ${formatHaversineDistance(maxSpanKm)}${centroid && centroid.mgrs ? ` centered near MGRS grid ${formatMgrsDisplay(centroid.mgrs)}` : (centroid ? ` at coordinates [${centroid.lat.toFixed(4)}, ${centroid.lng.toFixed(4)}]` : "")}.`,
+    topology: `Structural network analysis reveals a ${topologyType} profile with an overall link density of ${densityPct}%. The topology is ${topHub && topHub.degree > 0 ? `primarily anchored by ${getEntityDisplayName(topHub.entity)} (${topHub.entity.type}) possessing ${topHub.degree} direct connections (${topHub.inDegree} in-bound, ${topHub.outDegree} out-bound)` : "decentralized across several dispersed nodes"}. The network currently partitions into ${primaryCellCount} active operational cell(s) and ${isolatedCount} isolated/dormant entity record(s).`,
+    geospatial: mappedEntities.length > 0
+      ? `Geospatial intelligence correlates ${spatialLinks.length} relationship links directly to physical ground movement. ${coLocationClusters.length > 0 ? `Identified ${coLocationClusters.length} co-location hotspot(s) where multiple targets converge at identical coordinates, indicating high-probability operational safehouses or meeting grounds.` : "No co-located meeting clusters currently detected; targets remain physically dispersed."} ${longestLink ? `The longest recorded connection spans ${formatHaversineDistance(longestLink.distKm)} between ${getEntityDisplayName(longestLink.source)} and ${getEntityDisplayName(longestLink.target)}.` : ""}`
+      : `Geospatial coordinate coverage is currently at 0%. Entities exist purely in logical link space without physical geolocation mapping. Immediate reconnaissance is advised to anchor targets onto the map.`,
+    vulnerabilities: cutVertices.size > 0
+      ? `Critical vulnerability assessment identified ${cutVertices.size} single-point-of-failure gatekeeper node(s): ${cutVertexNames.join(", ")}. Interdicting or wiretapping these specific cut-vertices will fracture communications between independent sub-cells and isolate leadership.`
+      : `Network redundancy is robust with no single point of failure node detected. Disruption will require coordinated simultaneous action across multiple secondary links.`,
+    recommendations: [
+      topHub && topHub.degree > 0 ? `Prioritize high-gain electronic surveillance and financial tracking on top coordinator ${getEntityDisplayName(topHub.entity)}.` : "Expand relationship collection across peripheral entities.",
+      cutVertices.size > 0 ? `Exploit identified choke point(s) [${cutVertexNames.join(", ")}] for tactical interdiction or intelligence insertion.` : "Monitor multi-path links to identify secondary communication channels.",
+      unmappedEntities.length > 0 ? `Target prioritized geolocation reconnaissance against ${unmappedEntities.filter(e => (totalDegree[e.id] || 0) > 0).length} connected unmapped targets.` : "Maintain continuous GPS/MGRS tracking across all established operational sites.",
+      unconfirmedLinksCount > 0 ? `Corroborate ${unconfirmedLinksCount} unconfirmed (dashed) intelligence associations via secondary human or SIGINT sources.` : "All recorded intelligence relationships are validated and confirmed."
+    ]
+  };
+
+  return {
+    projectName,
+    projectDesc,
+    entities,
+    links,
+    boxes,
+    byId,
+    totalDegree,
+    inDegree,
+    outDegree,
+    incidentLinks,
+    confirmedLinksCount,
+    unconfirmedLinksCount,
+    directedLinksCount,
+    bidirectionalLinksCount,
+    undirectedLinksCount,
+    relationshipTypeCounts,
+    components,
+    cutVertices: Array.from(cutVertices),
+    bridgeLinks,
+    mappedEntities,
+    unmappedEntities,
+    geoCoveragePct,
+    centroid,
+    boundingBox,
+    maxSpanKm,
+    coLocationClusters,
+    spatialLinks,
+    avgLinkDistKm,
+    longestLink,
+    shortestLink,
+    targetScores,
+    density,
+    densityPct,
+    topologyType,
+    topologyDesc,
+    narrative
+  };
+}
+
+function renderAnalysisModal(assessment) {
+  if ($("analysisProjectBadge")) {
+    $("analysisProjectBadge").textContent = assessment.projectName || "Active Project";
+  }
+  if ($("analysisBadgeLinksCount")) {
+    $("analysisBadgeLinksCount").textContent = assessment.links.length;
+  }
+  if ($("analysisBadgeMappedCount")) {
+    $("analysisBadgeMappedCount").textContent = `${assessment.mappedEntities.length}/${assessment.entities.length}`;
+  }
+  if ($("analysisBadgeHvtCount")) {
+    $("analysisBadgeHvtCount").textContent = assessment.targetScores.filter(t => t.score >= 65).length;
+  }
+  if ($("analysisFooterStats")) {
+    $("analysisFooterStats").textContent = `${assessment.entities.length} Entities | ${assessment.links.length} Links | ${assessment.mappedEntities.length} Geolocated Coordinates`;
+  }
+  if ($("analysisGeneratedTimestamp")) {
+    $("analysisGeneratedTimestamp").textContent = `Generated: ${new Date().toLocaleString()}`;
+  }
+
+  // Handle empty state
+  if (!assessment.entities || assessment.entities.length === 0) {
+    const emptyHtml = `
+      <div class="p-12 text-center bg-white rounded-2xl border-2 border-dashed border-black/20 space-y-3">
+        <div class="w-14 h-14 rounded-full bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center mx-auto text-2xl shadow-sm">
+          <i class="fi fi-rr-info"></i>
+        </div>
+        <h4 class="text-base font-bold text-black uppercase tracking-wider">No Workspace Entities Found</h4>
+        <p class="text-xs text-black/60 max-w-md mx-auto">
+          To generate an intelligence analysis and assessment, add entities to the link network chart and assign coordinates on the geospatial map.
+        </p>
+      </div>
+    `;
+    ["overview", "linkAnalysis", "geoAssessment", "targetPriorities", "fullMatrix"].forEach(tab => {
+      const panel = $(`tabContent_${tab}`);
+      if (panel) panel.innerHTML = emptyHtml;
+    });
+    return;
+  }
+
+  // Render Tab 1: Executive Summary
+  renderTabOverview(assessment);
+
+  // Render Tab 2: Link Analysis
+  renderTabLinkAnalysis(assessment);
+
+  // Render Tab 3: Geospatial Assessment
+  renderTabGeoAssessment(assessment);
+
+  // Render Tab 4: Target Prioritization (HVTs)
+  renderTabTargetPriorities(assessment);
+
+  // Render Tab 5: Complete Intelligence Matrix
+  renderTabFullMatrix(assessment);
+}
+
+function renderTabOverview(a) {
+  const container = $("tabContent_overview");
+  if (!container) return;
+
+  const hvtCount = a.targetScores.filter(t => t.score >= 65).length;
+  const facilitatorCount = a.targetScores.filter(t => t.score >= 40 && t.score < 65).length;
+  const confirmedRatio = a.links.length > 0 ? Math.round((a.confirmedLinksCount / a.links.length) * 100) : 0;
+
+  container.innerHTML = `
+    <!-- Top KPI Highlights Bar (6 Cards) -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      <!-- 1. Total Entities -->
+      <div class="p-3.5 bg-white border-2 border-black/15 rounded-xl shadow-sm flex flex-col justify-between">
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] font-bold text-black/50 uppercase tracking-wider">Entities</span>
+          <i class="fi fi-rr-apps text-xs text-blue-600"></i>
+        </div>
+        <div class="mt-2">
+          <div class="text-xl font-bold text-black">${a.entities.length}</div>
+          <div class="text-[10px] text-black/60 font-medium mt-0.5">${a.mappedEntities.length} Mapped (${a.geoCoveragePct}%)</div>
+        </div>
+      </div>
+
+      <!-- 2. Relationships -->
+      <div class="p-3.5 bg-white border-2 border-black/15 rounded-xl shadow-sm flex flex-col justify-between">
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] font-bold text-black/50 uppercase tracking-wider">Links</span>
+          <i class="fi fi-rr-link-alt text-xs text-blue-600"></i>
+        </div>
+        <div class="mt-2">
+          <div class="text-xl font-bold text-black">${a.links.length}</div>
+          <div class="text-[10px] text-black/60 font-medium mt-0.5">${a.confirmedLinksCount} Confirmed (${confirmedRatio}%)</div>
+        </div>
+      </div>
+
+      <!-- 3. Operational Span -->
+      <div class="p-3.5 bg-white border-2 border-black/15 rounded-xl shadow-sm flex flex-col justify-between">
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] font-bold text-black/50 uppercase tracking-wider">Ground Span</span>
+          <i class="fi fi-rr-map-marker text-xs text-emerald-600"></i>
+        </div>
+        <div class="mt-2">
+          <div class="text-xl font-bold text-black truncate" title="${formatHaversineDistance(a.maxSpanKm)}">${formatHaversineDistance(a.maxSpanKm)}</div>
+          <div class="text-[10px] text-black/60 font-medium mt-0.5 truncate">${a.centroid && a.centroid.mgrs ? a.centroid.mgrs : 'Geographic Center'}</div>
+        </div>
+      </div>
+
+      <!-- 4. Network Topology -->
+      <div class="p-3.5 bg-white border-2 border-black/15 rounded-xl shadow-sm flex flex-col justify-between">
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] font-bold text-black/50 uppercase tracking-wider">Topology</span>
+          <i class="fi fi-rr-network text-xs text-indigo-600"></i>
+        </div>
+        <div class="mt-2">
+          <div class="text-xs font-bold text-black truncate leading-tight mt-1" title="${a.topologyType}">${a.topologyType}</div>
+          <div class="text-[10px] text-black/60 font-medium mt-1">Density: ${a.densityPct}%</div>
+        </div>
+      </div>
+
+      <!-- 5. Co-Location Hotspots -->
+      <div class="p-3.5 bg-white border-2 border-black/15 rounded-xl shadow-sm flex flex-col justify-between">
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] font-bold text-black/50 uppercase tracking-wider">Hotspots</span>
+          <i class="fi fi-rr-building text-xs text-amber-600"></i>
+        </div>
+        <div class="mt-2">
+          <div class="text-xl font-bold text-black">${a.coLocationClusters.length}</div>
+          <div class="text-[10px] text-black/60 font-medium mt-0.5">${a.coLocationClusters.reduce((acc, c) => acc + c.count, 0)} Co-located Targets</div>
+        </div>
+      </div>
+
+      <!-- 6. Priority HVTs -->
+      <div class="p-3.5 bg-white border-2 border-black/15 rounded-xl shadow-sm flex flex-col justify-between">
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] font-bold text-black/50 uppercase tracking-wider">Critical HVTs</span>
+          <i class="fi fi-rr-crosshairs text-xs text-red-600"></i>
+        </div>
+        <div class="mt-2">
+          <div class="text-xl font-bold text-red-600">${hvtCount}</div>
+          <div class="text-[10px] text-black/60 font-medium mt-0.5">${a.cutVertices.length} Critical Choke Points</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Official Intelligence Memorandum Narrative Card -->
+    <div class="bg-white border-2 border-black/15 rounded-2xl p-6 shadow-md space-y-4">
+      <div class="flex items-center justify-between border-b border-black/10 pb-3 flex-wrap gap-2">
+        <div class="flex items-center gap-2">
+          <div class="w-6 h-6 rounded-md bg-blue-600 text-white flex items-center justify-center text-xs font-bold">
+            <i class="fi fi-rr-shield-check"></i>
+          </div>
+          <h4 class="text-xs font-bold text-black uppercase tracking-wider">
+            BLULINK OPERATIONAL INTELLIGENCE MEMORANDUM
+          </h4>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-[10px] font-bold text-neutral-600 bg-neutral-100 border border-neutral-300 px-2 py-0.5 rounded uppercase">RESTRICTED // ANALYST WORKSPACE</span>
+        </div>
+      </div>
+
+      <!-- Narrative Sections -->
+      <div class="space-y-4 text-xs text-black/80 leading-relaxed font-normal">
+        <div>
+          <h5 class="font-bold text-black text-xs uppercase tracking-wider mb-1 flex items-center gap-1.5">
+            <span class="text-blue-600">I.</span> Strategic Overview & Theater Context
+          </h5>
+          <p class="bg-neutral-50/70 p-3 rounded-xl border border-black/5 text-black/85">
+            ${esc(a.narrative.overview)}
+          </p>
+        </div>
+
+        <div>
+          <h5 class="font-bold text-black text-xs uppercase tracking-wider mb-1 flex items-center gap-1.5">
+            <span class="text-blue-600">II.</span> Structural Topology & Command Dynamics
+          </h5>
+          <p class="bg-neutral-50/70 p-3 rounded-xl border border-black/5 text-black/85">
+            ${esc(a.narrative.topology)}
+          </p>
+        </div>
+
+        <div>
+          <h5 class="font-bold text-black text-xs uppercase tracking-wider mb-1 flex items-center gap-1.5">
+            <span class="text-blue-600">III.</span> Geospatial Footprint & Movement Analysis
+          </h5>
+          <p class="bg-neutral-50/70 p-3 rounded-xl border border-black/5 text-black/85">
+            ${esc(a.narrative.geospatial)}
+          </p>
+        </div>
+
+        <div>
+          <h5 class="font-bold text-black text-xs uppercase tracking-wider mb-1 flex items-center gap-1.5">
+            <span class="text-blue-600">IV.</span> Vulnerabilities & Choke-Point Exploitation
+          </h5>
+          <p class="bg-neutral-50/70 p-3 rounded-xl border border-black/5 text-black/85">
+            ${esc(a.narrative.vulnerabilities)}
+          </p>
+        </div>
+
+        <div>
+          <h5 class="font-bold text-black text-xs uppercase tracking-wider mb-1 flex items-center gap-1.5">
+            <span class="text-blue-600">V.</span> Key Operational Recommendations
+          </h5>
+          <div class="bg-blue-50/40 p-3.5 rounded-xl border border-blue-200/70 space-y-2">
+            ${a.narrative.recommendations.map((rec, i) => `
+              <div class="flex items-start gap-2">
+                <span class="w-4 h-4 rounded-full bg-blue-600 text-white font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">${i + 1}</span>
+                <span class="text-black/90 font-medium">${esc(rec)}</span>
+              </div>
+            `).join("")}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderTabLinkAnalysis(a) {
+  const container = $("tabContent_linkAnalysis");
+  if (!container) return;
+
+  const topHubs = a.targetScores.slice(0, 6);
+  const activeCells = a.components.filter(c => !c.isIsolated);
+  const isolatedCells = a.components.filter(c => c.isIsolated);
+
+  container.innerHTML = `
+    <!-- Hubs & Key Influencers -->
+    <div class="bg-white border-2 border-black/15 rounded-2xl p-5 shadow-sm space-y-4">
+      <div class="flex items-center justify-between border-b border-black/10 pb-2.5">
+        <div class="flex items-center gap-2">
+          <i class="fi fi-rr-network text-blue-600 text-sm"></i>
+          <h4 class="text-xs font-bold text-black uppercase tracking-wider">Primary Network Hubs (Degree Centrality)</h4>
+        </div>
+        <span class="text-[10px] text-black/50 font-bold uppercase">Sorted by Total Connections</span>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        ${topHubs.map((t, idx) => `
+          <div class="p-3 bg-neutral-50 border border-black/10 rounded-xl flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-white border border-black/15 flex items-center justify-center shrink-0 p-1">
+              <img src="${getEntityIcon(t.entity)}" alt="" class="w-7 h-7 object-contain">
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-black truncate" title="${esc(getEntityDisplayName(t.entity))}">${esc(getEntityDisplayName(t.entity))}</span>
+                <span class="text-[10px] font-bold text-blue-600 font-mono">#${idx + 1}</span>
+              </div>
+              <div class="text-[10px] text-black/50 truncate">${esc(t.entity.type)}</div>
+              <div class="flex items-center gap-2 mt-1 text-[10px]">
+                <span class="font-bold text-blue-700 bg-blue-50 border border-blue-200 px-1.5 py-0.2 rounded font-mono">${t.degree} Links</span>
+                <span class="text-black/50">${t.inDegree} in / ${t.outDegree} out</span>
+              </div>
+            </div>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+
+    <!-- Gatekeepers (Cut-Vertices) & Bridge Links -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <!-- Cut-Vertices Card -->
+      <div class="bg-white border-2 border-black/15 rounded-2xl p-5 shadow-sm space-y-3">
+        <div class="flex items-center justify-between border-b border-black/10 pb-2">
+          <div class="flex items-center gap-2">
+            <i class="fi fi-rr-crosshairs text-red-600 text-sm"></i>
+            <h4 class="text-xs font-bold text-black uppercase tracking-wider">Critical Gatekeeper Nodes (Cut-Vertices)</h4>
+          </div>
+          <span class="text-[10px] font-bold text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">${a.cutVertices.length} Nodes</span>
+        </div>
+        <p class="text-[11px] text-black/60">
+          Nodes that act as critical single points of failure. Disconnecting any of these nodes will fragment the network into disconnected cells.
+        </p>
+        <div class="space-y-2 max-h-48 overflow-y-auto pr-1">
+          ${a.cutVertices.length > 0 ? a.cutVertices.map(id => {
+            const e = a.byId[id];
+            return `
+              <div class="flex items-center justify-between p-2.5 bg-red-50/50 border border-red-200 rounded-lg text-xs">
+                <div class="flex items-center gap-2.5 truncate">
+                  <img src="${getEntityIcon(e)}" alt="" class="w-6 h-6 object-contain shrink-0">
+                  <div class="truncate">
+                    <span class="font-bold text-black truncate">${esc(getEntityDisplayName(e))}</span>
+                    <span class="text-[10px] text-black/50 ml-1">(${esc(e.type)})</span>
+                  </div>
+                </div>
+                <span class="text-[10px] font-bold text-red-700 font-mono uppercase bg-red-100 px-2 py-0.5 rounded">Choke Point</span>
+              </div>
+            `;
+          }).join("") : `
+            <div class="p-3 text-center text-xs text-black/50 bg-neutral-50 rounded-lg">
+              No single points of failure detected. Network possesses alternative multi-path connectivity.
+            </div>
+          `}
+        </div>
+      </div>
+
+      <!-- Operational Cells / Components Card -->
+      <div class="bg-white border-2 border-black/15 rounded-2xl p-5 shadow-sm space-y-3">
+        <div class="flex items-center justify-between border-b border-black/10 pb-2">
+          <div class="flex items-center gap-2">
+            <i class="fi fi-rr-layers text-blue-600 text-sm"></i>
+            <h4 class="text-xs font-bold text-black uppercase tracking-wider">Operational Cells (Sub-Networks)</h4>
+          </div>
+          <span class="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">${activeCells.length} Cells</span>
+        </div>
+        <p class="text-[11px] text-black/60">
+          Independent clusters operating with internal communication lines.
+        </p>
+        <div class="space-y-2 max-h-48 overflow-y-auto pr-1">
+          ${activeCells.map((c, idx) => `
+            <div class="flex items-center justify-between p-2.5 bg-neutral-50 border border-black/10 rounded-lg text-xs">
+              <div>
+                <span class="font-bold text-black">Cell #${idx + 1}</span>
+                <span class="text-[10px] text-black/50 ml-1">Anchor: ${esc(getEntityDisplayName(c.leadEntity))}</span>
+              </div>
+              <div class="flex items-center gap-2 text-[10px] font-mono">
+                <span class="bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded font-bold">${c.size} Entities</span>
+                <span class="bg-neutral-100 text-black/60 px-1.5 py-0.5 rounded">${c.internalLinksCount} Links</span>
+              </div>
+            </div>
+          `).join("")}
+          ${isolatedCells.length > 0 ? `
+            <div class="flex items-center justify-between p-2.5 bg-neutral-100/60 border border-black/5 rounded-lg text-xs text-black/60">
+              <span>Isolated / Dormant Targets (No Links)</span>
+              <span class="font-bold font-mono">${isolatedCells.length} Entities</span>
+            </div>
+          ` : ""}
+        </div>
+      </div>
+    </div>
+
+    <!-- Relationship Types Distribution -->
+    <div class="bg-white border-2 border-black/15 rounded-2xl p-5 shadow-sm space-y-3">
+      <div class="flex items-center justify-between border-b border-black/10 pb-2">
+        <div class="flex items-center gap-2">
+          <i class="fi fi-rr-document-signed text-blue-600 text-sm"></i>
+          <h4 class="text-xs font-bold text-black uppercase tracking-wider">Relationship Classification Matrix</h4>
+        </div>
+        <span class="text-[10px] font-bold text-black/50">${Object.keys(a.relationshipTypeCounts).length} Distinct Types</span>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
+        ${Object.entries(a.relationshipTypeCounts).map(([type, count]) => `
+          <div class="p-2.5 bg-neutral-50 border border-black/10 rounded-xl flex items-center justify-between">
+            <span class="text-xs font-bold text-black truncate max-w-[120px]" title="${esc(type)}">${esc(type)}</span>
+            <span class="text-xs font-mono font-bold bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded">${count}</span>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function renderTabGeoAssessment(a) {
+  const container = $("tabContent_geoAssessment");
+  if (!container) return;
+
+  if (a.mappedEntities.length === 0) {
+    container.innerHTML = `
+      <div class="p-12 text-center bg-white rounded-2xl border-2 border-dashed border-black/20 space-y-3">
+        <div class="w-14 h-14 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center mx-auto text-2xl shadow-sm">
+          <i class="fi fi-rr-map-marker"></i>
+        </div>
+        <h4 class="text-base font-bold text-black uppercase tracking-wider">No Geospatial Coordinates Found</h4>
+        <p class="text-xs text-black/60 max-w-md mx-auto">
+          None of the entities in this project have been pinned to the map. To activate the geospatial intelligence assessment, drag or pick coordinates on the map or import CSV with MGRS coordinates.
+        </p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = `
+    <!-- Theater Footprint & Bounding Box -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div class="p-4 bg-white border-2 border-black/15 rounded-xl shadow-sm space-y-1">
+        <div class="text-[10px] font-bold text-black/50 uppercase tracking-wider">Operational Centroid</div>
+        <div class="text-sm font-bold text-black">
+          ${a.centroid ? `${a.centroid.lat.toFixed(4)}, ${a.centroid.lng.toFixed(4)}` : 'N/A'}
+        </div>
+        <div class="text-xs font-mono text-emerald-700 font-bold">
+          ${a.centroid && a.centroid.mgrs ? `MGRS: ${formatMgrsDisplay(a.centroid.mgrs)}` : ''}
+        </div>
+      </div>
+
+      <div class="p-4 bg-white border-2 border-black/15 rounded-xl shadow-sm space-y-1">
+        <div class="text-[10px] font-bold text-black/50 uppercase tracking-wider">Theater Diameter (Max Span)</div>
+        <div class="text-xl font-bold text-emerald-700 font-mono">
+          ${formatHaversineDistance(a.maxSpanKm)}
+        </div>
+        <div class="text-[10px] text-black/50">Maximum straight-line distance across mapped targets</div>
+      </div>
+
+      <div class="p-4 bg-white border-2 border-black/15 rounded-xl shadow-sm space-y-1">
+        <div class="text-[10px] font-bold text-black/50 uppercase tracking-wider">Geographic Bounding Box</div>
+        <div class="text-xs font-mono text-black font-semibold">
+          Lat: [${a.boundingBox.minLat.toFixed(3)}° to ${a.boundingBox.maxLat.toFixed(3)}°]
+        </div>
+        <div class="text-xs font-mono text-black font-semibold">
+          Lng: [${a.boundingBox.minLng.toFixed(3)}° to ${a.boundingBox.maxLng.toFixed(3)}°]
+        </div>
+      </div>
+    </div>
+
+    <!-- Co-Location Hotspots -->
+    <div class="bg-white border-2 border-black/15 rounded-2xl p-5 shadow-sm space-y-3">
+      <div class="flex items-center justify-between border-b border-black/10 pb-2.5">
+        <div class="flex items-center gap-2">
+          <i class="fi fi-rr-building text-emerald-600 text-sm"></i>
+          <h4 class="text-xs font-bold text-black uppercase tracking-wider">Co-Location Hotspots & Convergence Grounds</h4>
+        </div>
+        <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">${a.coLocationClusters.length} Hotspots</span>
+      </div>
+
+      ${a.coLocationClusters.length > 0 ? `
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          ${a.coLocationClusters.map((c, idx) => `
+            <div class="p-3.5 bg-neutral-50 border border-black/10 rounded-xl space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-black">Convergence Site #${idx + 1}</span>
+                <span class="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">${c.count} Targets</span>
+              </div>
+              <div class="text-[11px] font-mono text-black/60">
+                ${parseFloat(c.lat).toFixed(5)}, ${parseFloat(c.lng).toFixed(5)} ${c.mgrs ? `(${formatMgrsDisplay(c.mgrs)})` : ''}
+              </div>
+              <div class="flex items-center gap-1.5 flex-wrap pt-1 border-t border-black/5">
+                ${c.entities.map(e => `
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-white border border-black/15 rounded-lg text-[10px] font-bold text-black">
+                    <img src="${getEntityIcon(e)}" alt="" class="w-3.5 h-3.5 object-contain">
+                    <span class="truncate max-w-[100px]">${esc(getEntityDisplayName(e))}</span>
+                  </span>
+                `).join("")}
+              </div>
+            </div>
+          `).join("")}
+        </div>
+      ` : `
+        <div class="p-4 text-center text-xs text-black/50 bg-neutral-50 rounded-xl">
+          No targets are currently co-located at identical coordinates (within 80m threshold). All assets maintain separate physical footings.
+        </div>
+      `}
+    </div>
+
+    <!-- Spatial-Link Distance Matrix -->
+    <div class="bg-white border-2 border-black/15 rounded-2xl p-5 shadow-sm space-y-3">
+      <div class="flex items-center justify-between border-b border-black/10 pb-2.5">
+        <div class="flex items-center gap-2">
+          <i class="fi fi-rr-route text-blue-600 text-sm"></i>
+          <h4 class="text-xs font-bold text-black uppercase tracking-wider">Spatial-Link Correlation (Relationship Ground Distance)</h4>
+        </div>
+        <span class="text-[10px] font-bold text-blue-700 font-mono">Avg: ${formatHaversineDistance(a.avgLinkDistKm)}</span>
+      </div>
+
+      ${a.spatialLinks.length > 0 ? `
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="border-b border-black/10 text-[10px] font-bold text-black/50 uppercase">
+                <th class="py-2 px-3">Source Target</th>
+                <th class="py-2 px-3">Relationship</th>
+                <th class="py-2 px-3">Destination Target</th>
+                <th class="py-2 px-3">Ground Distance</th>
+                <th class="py-2 px-3">Range Category</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-black/5">
+              ${a.spatialLinks.slice(0, 15).map(sl => `
+                <tr class="hover:bg-neutral-50/70">
+                  <td class="py-2 px-3 font-bold text-black">
+                    <div class="flex items-center gap-2">
+                      <img src="${getEntityIcon(sl.source)}" alt="" class="w-4 h-4 object-contain">
+                      <span class="truncate max-w-[130px]">${esc(getEntityDisplayName(sl.source))}</span>
+                    </div>
+                  </td>
+                  <td class="py-2 px-3 text-black/70">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-neutral-100 border border-black/10">${esc(sl.link.label || 'Link')}</span>
+                  </td>
+                  <td class="py-2 px-3 font-bold text-black">
+                    <div class="flex items-center gap-2">
+                      <img src="${getEntityIcon(sl.target)}" alt="" class="w-4 h-4 object-contain">
+                      <span class="truncate max-w-[130px]">${esc(getEntityDisplayName(sl.target))}</span>
+                    </div>
+                  </td>
+                  <td class="py-2 px-3 font-mono font-bold text-emerald-700">
+                    ${formatHaversineDistance(sl.distKm)}
+                  </td>
+                  <td class="py-2 px-3">
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      sl.category.includes('Co-Located') ? 'bg-amber-100 text-amber-800' :
+                      sl.category.includes('Tactical') ? 'bg-emerald-100 text-emerald-800' :
+                      sl.category.includes('Regional') ? 'bg-blue-100 text-blue-800' :
+                      'bg-purple-100 text-purple-800'
+                    }">${esc(sl.category)}</span>
+                  </td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </div>
+      ` : `
+        <div class="p-4 text-center text-xs text-black/50 bg-neutral-50 rounded-xl">
+          No relationship links connect two geolocated endpoints. Assign coordinates to connected entities to compute ground distance vectors.
+        </div>
+      `}
+    </div>
+
+    <!-- Geospatial Reconnaissance Gaps -->
+    ${a.unmappedEntities.filter(e => (a.totalDegree[e.id] || 0) > 0).length > 0 ? `
+      <div class="bg-amber-50/50 border border-amber-200 rounded-2xl p-4 space-y-2">
+        <div class="flex items-center gap-2 text-xs font-bold text-amber-800 uppercase tracking-wider">
+          <i class="fi fi-rr-exclamation text-amber-600"></i>
+          <span>Reconnaissance Collection Gaps (Unmapped Active Targets)</span>
+        </div>
+        <p class="text-[11px] text-amber-900/80">
+          The following targets hold established operational links but lack GPS/MGRS coordinates. Priority geolocation reconnaissance is recommended:
+        </p>
+        <div class="flex items-center gap-2 flex-wrap pt-1">
+          ${a.unmappedEntities.filter(e => (a.totalDegree[e.id] || 0) > 0).map(e => `
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white border border-amber-300 rounded-lg text-xs font-bold text-black shadow-2xs">
+              <img src="${getEntityIcon(e)}" alt="" class="w-4 h-4 object-contain">
+              <span>${esc(getEntityDisplayName(e))}</span>
+              <span class="text-[10px] text-amber-700 font-mono">(${a.totalDegree[e.id]} links)</span>
+            </span>
+          `).join("")}
+        </div>
+      </div>
+    ` : ''}
+  `;
+}
+
+function renderTabTargetPriorities(a) {
+  const container = $("tabContent_targetPriorities");
+  if (!container) return;
+
+  container.innerHTML = `
+    <!-- Top Prioritization Matrix -->
+    <div class="bg-white border-2 border-black/15 rounded-2xl p-5 shadow-sm space-y-4">
+      <div class="flex items-center justify-between border-b border-black/10 pb-2.5">
+        <div class="flex items-center gap-2">
+          <i class="fi fi-rr-crosshairs text-red-600 text-sm"></i>
+          <h4 class="text-xs font-bold text-black uppercase tracking-wider">High-Value Target (HVT) Priority Matrix</h4>
+        </div>
+        <span class="text-[10px] text-black/50 font-bold uppercase">Multi-Factor Criticality Scoring (0 - 100)</span>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="border-b border-black/10 text-[10px] font-bold text-black/50 uppercase">
+              <th class="py-2.5 px-3">Rank</th>
+              <th class="py-2.5 px-3">Target Entity</th>
+              <th class="py-2.5 px-3">Type</th>
+              <th class="py-2.5 px-3">Priority Tier</th>
+              <th class="py-2.5 px-3">Score</th>
+              <th class="py-2.5 px-3">Degree</th>
+              <th class="py-2.5 px-3">Geospatial Status</th>
+              <th class="py-2.5 px-3">Role Assessment</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-black/5">
+            ${a.targetScores.map((t, idx) => `
+              <tr class="hover:bg-neutral-50/80 transition">
+                <td class="py-2.5 px-3 font-mono font-bold text-black/60">#${idx + 1}</td>
+                <td class="py-2.5 px-3 font-bold text-black">
+                  <div class="flex items-center gap-2.5">
+                    <img src="${getEntityIcon(t.entity)}" alt="" class="w-5 h-5 object-contain shrink-0">
+                    <span class="truncate max-w-[150px]" title="${esc(getEntityDisplayName(t.entity))}">${esc(getEntityDisplayName(t.entity))}</span>
+                  </div>
+                </td>
+                <td class="py-2.5 px-3 text-black/60">${esc(t.entity.type)}</td>
+                <td class="py-2.5 px-3">
+                  <span class="text-[10px] font-bold border px-2 py-0.5 rounded-full ${t.tierBadgeClass}">
+                    ${esc(t.tier)}
+                  </span>
+                </td>
+                <td class="py-2.5 px-3 font-mono font-bold ${t.score >= 65 ? 'text-red-600' : (t.score >= 40 ? 'text-amber-600' : 'text-neutral-600')}">
+                  ${t.score} / 100
+                </td>
+                <td class="py-2.5 px-3 font-mono text-black font-semibold">
+                  ${t.degree} links
+                </td>
+                <td class="py-2.5 px-3">
+                  ${t.isMapped ? `
+                    <span class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">
+                      <i class="fi fi-rr-check text-[9px]"></i> Geolocated
+                    </span>
+                  ` : `
+                    <span class="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded">
+                      Missing GPS
+                    </span>
+                  `}
+                </td>
+                <td class="py-2.5 px-3 text-black/80 font-medium">
+                  ${t.isCutVertex ? `
+                    <span class="text-[10px] font-bold text-red-700 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded">Critical Gatekeeper</span>
+                  ` : (t.degree >= 3 ? 'Operational Hub' : 'Peripheral Node')}
+                </td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Disruption & Interdiction Guidance -->
+    <div class="bg-white border-2 border-black/15 rounded-2xl p-5 shadow-sm space-y-3">
+      <div class="flex items-center justify-between border-b border-black/10 pb-2">
+        <div class="flex items-center gap-2">
+          <i class="fi fi-rr-bolt text-red-600 text-sm"></i>
+          <h4 class="text-xs font-bold text-black uppercase tracking-wider">Tactical Interdiction & Disruption Guidance</h4>
+        </div>
+      </div>
+      <div class="text-xs text-black/80 space-y-2.5 leading-relaxed">
+        ${a.cutVertices.length > 0 ? `
+          <div class="p-3 bg-red-50/50 border border-red-200 rounded-xl space-y-1">
+            <div class="font-bold text-red-800 text-xs uppercase tracking-wider">High-Yield Disruption Opportunity</div>
+            <p>
+              Neutralizing or placing comprehensive electronic surveillance upon <strong class="text-red-900">${a.cutVertices.map(id => getEntityDisplayName(a.byId[id])).join(", ")}</strong> delivers maximum asymmetric impact, severing cross-cell coordination with minimal effort.
+            </p>
+          </div>
+        ` : `
+          <div class="p-3 bg-neutral-50 border border-black/10 rounded-xl space-y-1">
+            <div class="font-bold text-black text-xs uppercase tracking-wider">Decentralized Interdiction Requirement</div>
+            <p>
+              Due to multi-channel redundancy across participants, disruption of any single asset will not fracture the operation. Multi-target simultaneous action is recommended.
+            </p>
+          </div>
+        `}
+      </div>
+    </div>
+  `;
+}
+
+function renderTabFullMatrix(assessment) {
+  const container = $("tabContent_fullMatrix");
+  if (!container) return;
+
+  const filter = (currentMatrixFilter || "").toLowerCase().trim();
+  const filteredEntities = assessment.entities.filter(e => {
+    if (!filter) return true;
+    const name = (getEntityDisplayName(e) || "").toLowerCase();
+    const type = (e.type || "").toLowerCase();
+    const mgrs = (e.mgrs || "").toLowerCase();
+    const notes = (e.notes || "").toLowerCase();
+    return name.includes(filter) || type.includes(filter) || mgrs.includes(filter) || notes.includes(filter);
+  });
+
+  const filteredLinks = assessment.links.filter(l => {
+    if (!filter) return true;
+    const a = assessment.byId[l.from];
+    const b = assessment.byId[l.to];
+    const aName = a ? getEntityDisplayName(a).toLowerCase() : "";
+    const bName = b ? getEntityDisplayName(b).toLowerCase() : "";
+    const label = (l.label || "").toLowerCase();
+    return aName.includes(filter) || bName.includes(filter) || label.includes(filter);
+  });
+
+  container.innerHTML = `
+    <!-- Search / Filter Input Bar -->
+    <div class="flex items-center justify-between gap-3 bg-white p-3 border-2 border-black/15 rounded-xl shadow-2xs">
+      <div class="relative flex-1">
+        <i class="fi fi-rr-search absolute left-3 top-1/2 -translate-y-1/2 text-black/40 text-xs pointer-events-none"></i>
+        <input id="matrixLiveFilterInput" type="text" value="${esc(currentMatrixFilter)}" placeholder="Live search entities or links by name, type, MGRS, or relationship..."
+          class="w-full pl-8 pr-4 py-1.5 rounded-lg bg-neutral-50 border border-black/20 text-black text-xs placeholder:text-black/40 focus:outline-none focus:border-blue-600 focus:bg-white focus:ring-1 focus:ring-blue-600/30 transition">
+      </div>
+      <span class="text-[11px] font-mono font-bold text-black/60 shrink-0">
+        ${filteredEntities.length} Entities | ${filteredLinks.length} Links
+      </span>
+    </div>
+
+    <!-- Complete Entities Matrix Table -->
+    <div class="bg-white border-2 border-black/15 rounded-2xl p-5 shadow-sm space-y-3">
+      <div class="flex items-center justify-between border-b border-black/10 pb-2">
+        <div class="flex items-center gap-2">
+          <i class="fi fi-rr-apps text-blue-600 text-sm"></i>
+          <h4 class="text-xs font-bold text-black uppercase tracking-wider">All Workspace Entities (${filteredEntities.length})</h4>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto max-h-72 overflow-y-auto">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead class="sticky top-0 bg-white">
+            <tr class="border-b border-black/10 text-[10px] font-bold text-black/50 uppercase">
+              <th class="py-2 px-3">Entity Name</th>
+              <th class="py-2 px-3">Type</th>
+              <th class="py-2 px-3">Coordinates (Lat, Lng)</th>
+              <th class="py-2 px-3">MGRS Grid</th>
+              <th class="py-2 px-3">Links</th>
+              <th class="py-2 px-3">Notes</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-black/5">
+            ${filteredEntities.map(e => `
+              <tr class="hover:bg-neutral-50/80">
+                <td class="py-2 px-3 font-bold text-black">
+                  <div class="flex items-center gap-2">
+                    <img src="${getEntityIcon(e)}" alt="" class="w-4 h-4 object-contain shrink-0">
+                    <span class="truncate max-w-[140px]">${esc(getEntityDisplayName(e))}</span>
+                  </div>
+                </td>
+                <td class="py-2 px-3 text-black/60">${esc(e.type)}</td>
+                <td class="py-2 px-3 font-mono text-black/70">
+                  ${e.lat != null && e.lng != null ? `${parseFloat(e.lat).toFixed(4)}, ${parseFloat(e.lng).toFixed(4)}` : '<span class="text-black/30">N/A</span>'}
+                </td>
+                <td class="py-2 px-3 font-mono font-bold text-emerald-700">
+                  ${e.mgrs ? formatMgrsDisplay(e.mgrs) : (e.lat != null && e.lng != null && typeof toMgrs === 'function' ? formatMgrsDisplay(toMgrs(e.lat, e.lng)) : '<span class="text-black/30 font-normal">None</span>')}
+                </td>
+                <td class="py-2 px-3 font-mono text-black">
+                  ${assessment.totalDegree[e.id] || 0}
+                </td>
+                <td class="py-2 px-3 text-black/60 text-[11px] truncate max-w-[180px]" title="${esc(e.notes || '')}">
+                  ${esc(e.notes || '—')}
+                </td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Complete Links Matrix Table -->
+    <div class="bg-white border-2 border-black/15 rounded-2xl p-5 shadow-sm space-y-3">
+      <div class="flex items-center justify-between border-b border-black/10 pb-2">
+        <div class="flex items-center gap-2">
+          <i class="fi fi-rr-link-alt text-blue-600 text-sm"></i>
+          <h4 class="text-xs font-bold text-black uppercase tracking-wider">All Relationship Links (${filteredLinks.length})</h4>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto max-h-72 overflow-y-auto">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead class="sticky top-0 bg-white">
+            <tr class="border-b border-black/10 text-[10px] font-bold text-black/50 uppercase">
+              <th class="py-2 px-3">Source Target</th>
+              <th class="py-2 px-3">Relationship Label</th>
+              <th class="py-2 px-3">Destination Target</th>
+              <th class="py-2 px-3">Direction</th>
+              <th class="py-2 px-3">Status</th>
+              <th class="py-2 px-3">Ground Dist</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-black/5">
+            ${filteredLinks.map(l => {
+              const a = assessment.byId[l.from];
+              const b = assessment.byId[l.to];
+              const isConf = !(l.dashes || l.lineType === 'dashed' || l.lineType === 'unconfirmed');
+              const d = (a && b && a.lat != null && a.lng != null && b.lat != null && b.lng != null)
+                ? calculateHaversineDistance(a.lat, a.lng, b.lat, b.lng)
+                : null;
+              return `
+                <tr class="hover:bg-neutral-50/80">
+                  <td class="py-2 px-3 font-bold text-black">
+                    ${esc(getEntityDisplayName(a))}
+                  </td>
+                  <td class="py-2 px-3 text-black/80 font-medium">
+                    <span class="px-2 py-0.5 rounded bg-neutral-100 border border-black/10 text-[10px]">${esc(l.label || 'Link')}</span>
+                  </td>
+                  <td class="py-2 px-3 font-bold text-black">
+                    ${esc(getEntityDisplayName(b))}
+                  </td>
+                  <td class="py-2 px-3 font-mono text-[10px] text-black/60 uppercase">
+                    ${esc(l.arrows || l.direction || 'none')}
+                  </td>
+                  <td class="py-2 px-3">
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${isConf ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-amber-50 text-amber-800 border border-amber-200'}">
+                      ${isConf ? 'Confirmed' : 'Unconfirmed'}
+                    </span>
+                  </td>
+                  <td class="py-2 px-3 font-mono text-emerald-700 font-bold">
+                    ${formatHaversineDistance(d)}
+                  </td>
+                </tr>
+              `;
+            }).join("")}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+
+  // Attach live filter listener
+  const filterInput = $("matrixLiveFilterInput");
+  if (filterInput) {
+    filterInput.addEventListener("input", ev => {
+      currentMatrixFilter = ev.target.value;
+      renderTabFullMatrix(assessment);
+      const reInput = $("matrixLiveFilterInput");
+      if (reInput) {
+        reInput.focus();
+        reInput.setSelectionRange(reInput.value.length, reInput.value.length);
+      }
+    });
+  }
+}
+
+function generateAnalysisMarkdown(a) {
+  if (!a) return "";
+  const lines = [
+    `# BLULINK INTELLIGENCE ANALYSIS & ASSESSMENT DOSSIER`,
+    `**Project:** ${a.projectName}`,
+    `**Generated:** ${new Date().toLocaleString()}`,
+    `**Scope:** ${a.entities.length} Entities | ${a.links.length} Relationship Links | ${a.mappedEntities.length} Geolocated Targets`,
+    `**Operational Diameter:** ${formatHaversineDistance(a.maxSpanKm)}`,
+    `**Topology:** ${a.topologyType} (Density: ${a.densityPct}%)`,
+    ``,
+    `---`,
+    `## I. STRATEGIC CONTEXT & FOOTPRINT`,
+    a.narrative.overview,
+    ``,
+    `## II. STRUCTURAL TOPOLOGY & COMMAND DYNAMICS`,
+    a.narrative.topology,
+    ``,
+    `## III. GEOSPATIAL MOVEMENT & CO-LOCATION`,
+    a.narrative.geospatial,
+    ``,
+    `## IV. VULNERABILITIES & CHOKE POINTS`,
+    a.narrative.vulnerabilities,
+    ``,
+    `## V. ACTIONABLE OPERATIONAL RECOMMENDATIONS`,
+    ...a.narrative.recommendations.map((r, idx) => `${idx + 1}. ${r}`),
+    ``,
+    `---`,
+    `## VI. TOP HIGH-VALUE TARGETS (HVTs)`,
+    ...a.targetScores.slice(0, 8).map((t, idx) => `* **#${idx + 1} ${getEntityDisplayName(t.entity)}** (${t.entity.type}) - Criticality Score: ${t.score}/100 | ${t.degree} Links | Status: ${t.isMapped ? 'Geolocated' : 'Missing GPS'}`)
+  ];
+  return lines.join("\n");
+}
+
+function copyAnalysisToClipboard() {
+  if (!currentAssessmentData) return;
+  const md = generateAnalysisMarkdown(currentAssessmentData);
+  navigator.clipboard.writeText(md).then(() => {
+    const label = $("btnCopyAnalysisLabel");
+    if (label) {
+      const orig = label.textContent;
+      label.textContent = "Copied!";
+      setTimeout(() => { label.textContent = orig; }, 1800);
+    }
+    setStatus("Assessment briefing copied to clipboard");
+  }).catch(err => {
+    console.error("Clipboard error:", err);
+    alert("Could not copy to clipboard: " + err.message);
+  });
+}
+
+function printAnalysisModal() {
+  window.print();
+}
+
+// Hook up Analysis & Assessment UI Event Listeners
+if ($("btnHeaderAnalysis")) $("btnHeaderAnalysis").onclick = openAnalysisModal;
+if ($("btnMenuAnalysis")) {
+  $("btnMenuAnalysis").onclick = () => {
+    closeProjectSettingsMenu();
+    openAnalysisModal();
+  };
+}
+if ($("btnChartAnalysis")) $("btnChartAnalysis").onclick = openAnalysisModal;
+if ($("btnMapAnalysis")) $("btnMapAnalysis").onclick = openAnalysisModal;
+
+if ($("btnCloseAnalysisModal")) $("btnCloseAnalysisModal").onclick = closeAnalysisModal;
+if ($("btnDismissAnalysisModal")) $("btnDismissAnalysisModal").onclick = closeAnalysisModal;
+if ($("btnRefreshAnalysis")) {
+  $("btnRefreshAnalysis").onclick = () => {
+    if (currentProjectId) {
+      const assessment = generateAnalysisAndAssessment();
+      currentAssessmentData = assessment;
+      renderAnalysisModal(assessment);
+      setStatus("Analysis & Assessment refreshed");
+    }
+  };
+}
+if ($("btnCopyAnalysis")) $("btnCopyAnalysis").onclick = copyAnalysisToClipboard;
+if ($("btnPrintAnalysis")) $("btnPrintAnalysis").onclick = printAnalysisModal;
+
+if ($("analysisModal")) {
+  $("analysisModal").addEventListener("click", ev => {
+    if (ev.target === $("analysisModal")) {
+      closeAnalysisModal();
+    }
+  });
+}
+
+// Tab buttons navigation
+document.querySelectorAll(".analysis-tab-btn").forEach(btn => {
+  btn.onclick = () => {
+    const tabName = btn.dataset.tab;
+    if (tabName) switchAnalysisTab(tabName);
+  };
+});
+
 
 if ($("btnViewDropdown")) $("btnViewDropdown").onclick = toggleViewMenu;
 
