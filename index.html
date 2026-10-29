@@ -417,6 +417,75 @@
     cursor: crosshair !important;
   }
 
+  /* Tactical 10-Digit MGRS Grid Square & Pin Badges */
+  .custom-map-pin-wrapper {
+    position: relative;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: visible !important;
+  }
+  .custom-map-flag-wrapper {
+    position: relative;
+    width: 14px;
+    height: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: visible !important;
+  }
+  .custom-map-pin-mgrs-badge {
+    display: none;
+    position: absolute;
+    top: 36px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 9px;
+    font-weight: 800;
+    line-height: 1.2;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    color: #1e3a8a;
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid rgba(37, 99, 235, 0.45);
+    border-radius: 4px;
+    padding: 1px 4.5px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+    pointer-events: none;
+    user-select: none;
+    z-index: 500;
+  }
+  .custom-map-flag-wrapper .custom-map-pin-mgrs-badge {
+    top: 15px;
+  }
+  body.show-map-grid .custom-map-pin-mgrs-badge {
+    display: inline-block;
+  }
+
+  /* Tactical Grid Lines Label on Leaflet Map */
+  .tactical-grid-cell-label {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  .tactical-grid-cell-label span {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 10px;
+    font-weight: 700;
+    color: #1d4ed8;
+    background: rgba(255, 255, 255, 0.88);
+    padding: 1px 4px;
+    border-radius: 3px;
+    border: 1px solid rgba(37, 99, 235, 0.35);
+    white-space: nowrap;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+    pointer-events: none;
+    user-select: none;
+  }
+
   /* Modal stacking above all Leaflet map tiles, popups, and controls (Leaflet z-indexes go up to 1000) */
   #newProjectModal {
     z-index: 99999 !important;
@@ -2186,6 +2255,17 @@
 
     <!-- Map Floating Toolbar (Export dropdown and Fullscreen exit) -->
     <div id="mapToolbarContainer" class="absolute top-2.5 right-14 sm:right-16 z-[1000] pointer-events-auto flex items-center gap-1.5 sm:gap-2">
+      <!-- 0. Toggle 10-Digit Grid Square Button -->
+      <button id="btnToggleMapGrid" type="button" title="Show/Hide 10-Digit MGRS Grid Square on Map"
+        class="btn-secondary btn-chart-ctrl py-1.5 px-2.5 sm:px-3 text-xs flex items-center gap-1.5 sm:gap-2 font-bold transition shadow-sm cursor-pointer bg-white">
+        <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-none stroke-current text-blue-600 shrink-0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <path d="M3 9h18M3 15h18M9 3v18M15 3v18"/>
+        </svg>
+        <span>10-Digit Grid</span>
+        <span id="btnToggleMapGridStatus" class="w-2 h-2 rounded-full bg-neutral-300"></span>
+      </button>
+
       <!-- 1. Map Export / Save Dropdown -->
       <div class="relative" id="exportMapDropdownContainer">
         <button id="btnExportMapDropdown" type="button" title="Save / Export Geospatial Map (PDF, PNG, JPEG)"
@@ -2251,6 +2331,48 @@
         <span>Exit Full Screen</span>
         <kbd class="ml-1 text-[10px] bg-white/20 px-1 py-0.5 rounded font-mono">Esc</kbd>
       </button>
+    </div>
+
+    <!-- Tactical 10-Digit MGRS Grid Square HUD -->
+    <div id="mapGridSquareHud" class="hidden absolute bottom-4 left-3 z-[999] pointer-events-auto bg-white/95 backdrop-blur border-2 border-black rounded-xl shadow-xl p-2.5 max-w-xs sm:max-w-sm transition-all duration-200">
+      <div class="flex items-center justify-between gap-3 mb-1.5 pb-1 border-b border-black/10">
+        <div class="flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
+          <span class="text-[11px] font-black uppercase tracking-wider text-black">10-Digit Grid Square</span>
+          <span class="text-[9px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-1.5 py-0.2 rounded font-mono">1m² PRECISION</span>
+        </div>
+        <div class="flex items-center gap-1">
+          <button id="btnLockMapGrid" type="button" title="Click map or here to lock/unlock live coordinates"
+            class="text-[10px] font-bold text-black/70 hover:text-blue-600 px-1.5 py-0.5 rounded border border-black/20 hover:border-blue-500 bg-white cursor-pointer transition">
+            <span id="btnLockMapGridText">Live</span>
+          </button>
+          <button id="btnCloseMapGridHud" type="button" title="Hide 10-Digit Grid Display"
+            class="text-black/50 hover:text-black p-0.5 rounded cursor-pointer transition">
+            <i class="fi fi-rr-cross-small text-sm leading-none block"></i>
+          </button>
+        </div>
+      </div>
+      <div class="space-y-1">
+        <div class="flex items-center justify-between gap-2">
+          <span class="text-[10px] font-bold text-black/60 uppercase">MGRS (10 Digits)</span>
+          <button id="btnCopyMapGridMgrs" type="button" title="Copy 10-Digit MGRS"
+            class="text-[10px] text-blue-600 font-bold hover:underline cursor-pointer flex items-center gap-1">
+            <i class="fi fi-rr-copy text-[10px]"></i>
+            <span id="btnCopyMapGridMgrsText">Copy</span>
+          </button>
+        </div>
+        <div id="mapGridMgrsDisplay" class="font-mono text-sm font-extrabold text-blue-700 bg-neutral-50 px-2 py-1 rounded border border-black/10 tracking-widest select-all text-center">
+          --
+        </div>
+        <div class="flex items-center justify-between text-[10px] font-mono text-black/70 pt-0.5 px-0.5">
+          <span class="font-bold text-black/50">WGS-84:</span>
+          <span id="mapGridWgsDisplay" class="font-semibold select-all">--</span>
+        </div>
+      </div>
+      <div class="mt-1.5 pt-1 border-t border-black/10 flex items-center justify-between text-[9px] text-black/50">
+        <span id="mapGridStatusHint">Move cursor over map to inspect 1-meter square</span>
+        <span id="mapGridZoomLevel" class="font-mono font-bold">Zoom: --</span>
+      </div>
     </div>
 
     <!-- Map Leaflet Container -->
@@ -4640,6 +4762,329 @@ function formatMgrsDisplay(mgrsStr) {
   return clean;
 }
 
+/* ---------- Tactical 10-Digit MGRS Grid Square & HUD Controls ---------- */
+let isMapGridVisible = false;
+let isMapGridLocked = false;
+let mapGridLayerGroup = null;
+let hoverGridSquareRect = null;
+let hoverGridReticle = null;
+let pinnedGridSquareRect = null;
+let pinnedGridReticle = null;
+let mapGridUpdateDebounce = null;
+
+function updateMapGridLockState() {
+  const btn = $("btnLockMapGrid");
+  const btnText = $("btnLockMapGridText");
+  const hint = $("mapGridStatusHint");
+  if (!btn || !btnText) return;
+  if (isMapGridLocked) {
+    btnText.textContent = "Locked";
+    btn.className = "text-[10px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-400 cursor-pointer transition flex items-center gap-1 shadow-sm";
+    if (hint) hint.textContent = "1-meter grid square locked (click map or 'Locked' to follow cursor)";
+  } else {
+    btnText.textContent = "Live";
+    btn.className = "text-[10px] font-bold text-black/70 hover:text-blue-600 px-1.5 py-0.5 rounded border border-black/20 hover:border-blue-500 bg-white cursor-pointer transition";
+    if (hint) hint.textContent = "Move cursor over map to inspect 1-meter square";
+    if (pinnedGridSquareRect && mapGridLayerGroup && mapGridLayerGroup.hasLayer(pinnedGridSquareRect)) {
+      mapGridLayerGroup.removeLayer(pinnedGridSquareRect);
+    }
+    if (pinnedGridReticle && mapGridLayerGroup && mapGridLayerGroup.hasLayer(pinnedGridReticle)) {
+      mapGridLayerGroup.removeLayer(pinnedGridReticle);
+    }
+  }
+}
+
+function updateMapGridHud(lat, lng, isLocked = false) {
+  if (!isMapGridVisible || typeof mgrs === "undefined") return;
+  try {
+    const latNum = Number(lat);
+    const lngNum = Number(lng);
+    if (isNaN(latNum) || isNaN(lngNum)) return;
+    if (latNum < -80 || latNum > 84) return; // MGRS limits
+
+    // 10-digit MGRS (5 digits Easting + 5 digits Northing = 1 meter precision)
+    const rawMgrs10 = mgrs.forward([lngNum, latNum], 5);
+    const formattedMgrs10 = formatMgrsDisplay(rawMgrs10);
+
+    const latDir = latNum >= 0 ? "N" : "S";
+    const lngDir = lngNum >= 0 ? "E" : "W";
+    const wgsText = `${Math.abs(latNum).toFixed(6)}° ${latDir}, ${Math.abs(lngNum).toFixed(6)}° ${lngDir}`;
+
+    if ($("mapGridMgrsDisplay")) $("mapGridMgrsDisplay").textContent = formattedMgrs10;
+    if ($("mapGridWgsDisplay")) $("mapGridWgsDisplay").textContent = wgsText;
+    if ($("mapGridZoomLevel") && map) $("mapGridZoomLevel").textContent = `Zoom: ${map.getZoom()}`;
+
+    // Get exact 1-meter bounding box for this 10-digit square
+    const bbox = mgrs.inverse(rawMgrs10); // [minLng, minLat, maxLng, maxLat]
+    const squareBounds = [[bbox[1], bbox[0]], [bbox[3], bbox[2]]];
+
+    if (!mapGridLayerGroup) return;
+
+    if (isLocked) {
+      if (!pinnedGridSquareRect) {
+        pinnedGridSquareRect = L.rectangle(squareBounds, {
+          color: "#1d4ed8",
+          weight: 2,
+          fillColor: "#2563eb",
+          fillOpacity: 0.35,
+          interactive: false
+        }).addTo(mapGridLayerGroup);
+      } else {
+        pinnedGridSquareRect.setBounds(squareBounds);
+        if (!mapGridLayerGroup.hasLayer(pinnedGridSquareRect)) {
+          mapGridLayerGroup.addLayer(pinnedGridSquareRect);
+        }
+      }
+
+      if (!pinnedGridReticle) {
+        pinnedGridReticle = L.circleMarker([latNum, lngNum], {
+          radius: 7,
+          color: "#1d4ed8",
+          weight: 2,
+          fillColor: "#3b82f6",
+          fillOpacity: 0.5,
+          interactive: false
+        }).addTo(mapGridLayerGroup);
+      } else {
+        pinnedGridReticle.setLatLng([latNum, lngNum]);
+        if (!mapGridLayerGroup.hasLayer(pinnedGridReticle)) {
+          mapGridLayerGroup.addLayer(pinnedGridReticle);
+        }
+      }
+    } else {
+      if (!hoverGridSquareRect) {
+        hoverGridSquareRect = L.rectangle(squareBounds, {
+          color: "#2563eb",
+          weight: 1.5,
+          dashArray: "3, 3",
+          fillColor: "#3b82f6",
+          fillOpacity: 0.25,
+          interactive: false
+        }).addTo(mapGridLayerGroup);
+      } else {
+        hoverGridSquareRect.setBounds(squareBounds);
+        if (!mapGridLayerGroup.hasLayer(hoverGridSquareRect)) {
+          mapGridLayerGroup.addLayer(hoverGridSquareRect);
+        }
+      }
+
+      if (!hoverGridReticle) {
+        hoverGridReticle = L.circleMarker([latNum, lngNum], {
+          radius: 6,
+          color: "#2563eb",
+          weight: 1.5,
+          fillColor: "#60a5fa",
+          fillOpacity: 0.35,
+          interactive: false
+        }).addTo(mapGridLayerGroup);
+      } else {
+        hoverGridReticle.setLatLng([latNum, lngNum]);
+        if (!mapGridLayerGroup.hasLayer(hoverGridReticle)) {
+          mapGridLayerGroup.addLayer(hoverGridReticle);
+        }
+      }
+    }
+  } catch (err) {
+    // Out of valid MGRS bounds
+  }
+}
+
+function updateMapGridLines() {
+  if (!isMapGridVisible || !map || !mapGridLayerGroup || typeof mgrs === "undefined") return;
+
+  if (mapGridUpdateDebounce) {
+    cancelAnimationFrame(mapGridUpdateDebounce);
+  }
+
+  mapGridUpdateDebounce = requestAnimationFrame(() => {
+    try {
+      const zoom = map.getZoom();
+      const bounds = map.getBounds();
+      const south = Math.max(-80, bounds.getSouth());
+      const north = Math.min(84, bounds.getNorth());
+      const west = bounds.getWest();
+      const east = bounds.getEast();
+
+      // Clear existing grid lines and labels, preserving active hover & pinned rects
+      mapGridLayerGroup.eachLayer(layer => {
+        if (layer !== hoverGridSquareRect && layer !== hoverGridReticle &&
+            layer !== pinnedGridSquareRect && layer !== pinnedGridReticle) {
+          mapGridLayerGroup.removeLayer(layer);
+        }
+      });
+
+      // Adaptive precision based on zoom level:
+      // Zoom >= 16: 100m grid cells (accuracy 3, e.g. 51PTS828149)
+      // Zoom 12-15: 1km grid cells (accuracy 2, e.g. 51PTS8214)
+      // Zoom 8-11: 10km grid cells (accuracy 1, e.g. 51PTS81)
+      let accuracy = 1;
+      let approxDegStep = 0.09; // ~10km
+      if (zoom >= 16) {
+        accuracy = 3;
+        approxDegStep = 0.0009; // ~100m
+      } else if (zoom >= 12) {
+        accuracy = 2;
+        approxDegStep = 0.009; // ~1km
+      } else if (zoom >= 8) {
+        accuracy = 1;
+        approxDegStep = 0.09; // ~10km
+      }
+
+      const latRange = north - south;
+      const lngRange = east - west;
+      if (latRange <= 0 || lngRange <= 0) return;
+
+      const latSteps = Math.min(25, Math.ceil(latRange / approxDegStep));
+      const lngSteps = Math.min(25, Math.ceil(lngRange / approxDegStep));
+      const actualLatStep = latRange / Math.max(1, latSteps);
+      const actualLngStep = lngRange / Math.max(1, lngSteps);
+
+      const seenCodes = new Set();
+      const maxCells = 200;
+      let count = 0;
+
+      for (let i = 0; i <= latSteps && count < maxCells; i++) {
+        const cLat = south + i * actualLatStep;
+        for (let j = 0; j <= lngSteps && count < maxCells; j++) {
+          const cLng = west + j * actualLngStep;
+          try {
+            const code = mgrs.forward([cLng, cLat], accuracy);
+            if (!seenCodes.has(code)) {
+              seenCodes.add(code);
+              count++;
+              const bbox = mgrs.inverse(code);
+              const rect = L.rectangle([[bbox[1], bbox[0]], [bbox[3], bbox[2]]], {
+                color: "#2563eb",
+                weight: zoom >= 14 ? 1 : 0.8,
+                opacity: zoom >= 14 ? 0.35 : 0.22,
+                fill: false,
+                dashArray: zoom >= 16 ? "2, 2" : undefined,
+                interactive: false
+              });
+              mapGridLayerGroup.addLayer(rect);
+
+              if (zoom >= 11 && count <= 50) {
+                const labelIcon = L.divIcon({
+                  className: "tactical-grid-cell-label",
+                  html: `<span>${formatMgrsDisplay(code)}</span>`,
+                  iconAnchor: [0, 0]
+                });
+                const labelMarker = L.marker([bbox[3], bbox[0]], {
+                  icon: labelIcon,
+                  interactive: false
+                });
+                mapGridLayerGroup.addLayer(labelMarker);
+              }
+            }
+          } catch (e) {}
+        }
+      }
+    } catch (err) {
+      console.warn("Map grid update error:", err);
+    }
+  });
+}
+
+function toggleMapGridSquareDisplay(forceState) {
+  if (typeof forceState === "boolean") {
+    isMapGridVisible = forceState;
+  } else {
+    isMapGridVisible = !isMapGridVisible;
+  }
+
+  try {
+    localStorage.setItem("blulink_show_map_grid", isMapGridVisible ? "true" : "false");
+  } catch (e) {}
+
+  if (document.body) {
+    document.body.classList.toggle("show-map-grid", isMapGridVisible);
+  }
+
+  const btn = $("btnToggleMapGrid");
+  const statusDot = $("btnToggleMapGridStatus");
+  const hud = $("mapGridSquareHud");
+
+  if (btn) {
+    if (isMapGridVisible) {
+      btn.classList.add("bg-blue-50", "border-blue-500", "text-blue-700");
+      btn.title = "Hide 10-Digit MGRS Grid Square on Map";
+    } else {
+      btn.classList.remove("bg-blue-50", "border-blue-500", "text-blue-700");
+      btn.title = "Show 10-Digit MGRS Grid Square on Map";
+    }
+  }
+
+  if (statusDot) {
+    statusDot.className = isMapGridVisible ? "w-2 h-2 rounded-full bg-emerald-500 shadow-sm" : "w-2 h-2 rounded-full bg-neutral-300";
+  }
+
+  if (hud) {
+    if (isMapGridVisible) {
+      hud.classList.remove("hidden");
+    } else {
+      hud.classList.add("hidden");
+    }
+  }
+
+  if (map && mapGridLayerGroup) {
+    if (isMapGridVisible) {
+      if (!map.hasLayer(mapGridLayerGroup)) {
+        map.addLayer(mapGridLayerGroup);
+      }
+      updateMapGridLines();
+      const center = map.getCenter();
+      updateMapGridHud(center.lat, center.lng, false);
+    } else {
+      if (map.hasLayer(mapGridLayerGroup)) {
+        map.removeLayer(mapGridLayerGroup);
+      }
+      isMapGridLocked = false;
+      updateMapGridLockState();
+    }
+  }
+}
+
+function copyMapGridCoordinates() {
+  const display = $("mapGridMgrsDisplay");
+  const btnText = $("btnCopyMapGridMgrsText");
+  if (!display) return;
+  const text = display.textContent.trim();
+  if (!text || text === "--") return;
+
+  const onCopied = () => {
+    if (btnText) {
+      const orig = btnText.textContent;
+      btnText.textContent = "Copied!";
+      setTimeout(() => { btnText.textContent = orig; }, 1500);
+    }
+    if (typeof setStatus === "function") {
+      setStatus(`Copied 10-Digit MGRS: ${text}`);
+    }
+  };
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(onCopied).catch(() => {
+      fallbackCopyText(text, onCopied);
+    });
+  } else {
+    fallbackCopyText(text, onCopied);
+  }
+}
+
+function fallbackCopyText(text, cb) {
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.style.position = "fixed";
+  ta.style.opacity = "0";
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand("copy");
+    if (cb) cb();
+  } catch (e) {}
+  document.body.removeChild(ta);
+}
+
 /* ---------- Map Setup: Google Terrain, Satellite, Hybrid & Tactical, Esri Tactical ---------- */
 function initMap() {
   const terrain = L.tileLayer("https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}", {
@@ -4698,6 +5143,8 @@ function initMap() {
     zoomBar.appendChild(fsLink);
   }
 
+  mapGridLayerGroup = L.layerGroup();
+
   L.control.layers(
     {
       "Google Hybrid": hybrid,
@@ -4706,9 +5153,40 @@ function initMap() {
       "Google Tactical": tactical,
       "Esri Tactical": esriTactical
     },
-    null,
+    {
+      "10-Digit Grid Square (MGRS)": mapGridLayerGroup
+    },
     { position: "topright" }
   ).addTo(map);
+
+  map.on("overlayadd", e => {
+    if (e && e.name === "10-Digit Grid Square (MGRS)") {
+      toggleMapGridSquareDisplay(true);
+    }
+  });
+
+  map.on("overlayremove", e => {
+    if (e && e.name === "10-Digit Grid Square (MGRS)") {
+      toggleMapGridSquareDisplay(false);
+    }
+  });
+
+  map.on("mousemove", e => {
+    if (!isMapGridVisible) return;
+    if (!isMapGridLocked) {
+      updateMapGridHud(e.latlng.lat, e.latlng.lng, false);
+    }
+  });
+
+  map.on("moveend zoomend", () => {
+    if (isMapGridVisible) {
+      updateMapGridLines();
+      if (!isMapGridLocked) {
+        const center = map.getCenter();
+        updateMapGridHud(center.lat, center.lng, false);
+      }
+    }
+  });
 
   map.on("baselayerchange", e => {
     isTacticalBasemap = Boolean(e && (e.name === "Google Tactical" || e.name === "Esri Tactical"));
@@ -4748,6 +5226,12 @@ function initMap() {
       return;
     }
 
+    if (isMapGridVisible) {
+      isMapGridLocked = true;
+      updateMapGridLockState();
+      updateMapGridHud(e.latlng.lat, e.latlng.lng, true);
+    }
+
     // When clicking empty map space: Deselect all (entities, links, boxes, and multi-selections)
     if (selected || selectedBoxId || selectedLinkId || selectedCornerNodeId || (typeof multiSelectedEntityIds !== "undefined" && multiSelectedEntityIds && multiSelectedEntityIds.length)) {
       selected = null;
@@ -4759,6 +5243,14 @@ function initMap() {
       if (map) map.closePopup();
     }
   });
+
+  // Restore persisted 10-digit grid preference
+  try {
+    const savedGridPref = localStorage.getItem("blulink_show_map_grid");
+    if (savedGridPref === "true") {
+      toggleMapGridSquareDisplay(true);
+    }
+  } catch (e) {}
 }
 
 /* ---------- Link Edit Modal (Double Click to Edit) ---------- */
@@ -8544,10 +9036,17 @@ function render(fitAll = false) {
       let pinHtml = "";
       let icon = null;
 
+      const mgrsBadgeRaw = e.mgrs || toMgrs(e.lat, e.lng);
+      const mgrsBadgeText = formatMgrsDisplay(mgrsBadgeRaw);
+      const badgeHtml = mgrsBadgeText ? `<div class="custom-map-pin-mgrs-badge">${esc(mgrsBadgeText)}</div>` : "";
+
       if (isFlag) {
         pinHtml = `
-          <div class="custom-map-flag ${isSel ? 'is-selected' : ''}">
-            <img src="${iconUri}" alt="">
+          <div class="custom-map-flag-wrapper">
+            <div class="custom-map-flag ${isSel ? 'is-selected' : ''}">
+              <img src="${iconUri}" alt="">
+            </div>
+            ${badgeHtml}
           </div>
         `;
         icon = L.divIcon({
@@ -8559,8 +9058,11 @@ function render(fitAll = false) {
         });
       } else {
         pinHtml = `
-          <div class="custom-map-pin ${isSel ? 'is-selected' : ''}">
-            <img src="${iconUri}" class="w-5 h-5 object-contain" alt="">
+          <div class="custom-map-pin-wrapper">
+            <div class="custom-map-pin ${isSel ? 'is-selected' : ''}">
+              <img src="${iconUri}" class="w-5 h-5 object-contain" alt="">
+            </div>
+            ${badgeHtml}
           </div>
         `;
         icon = L.divIcon({
@@ -10621,6 +11123,14 @@ if ($("btnFullscreenMapMenu")) $("btnFullscreenMapMenu").onclick = () => {
   toggleFullscreenMap();
 };
 
+if ($("btnToggleMapGrid")) $("btnToggleMapGrid").onclick = () => toggleMapGridSquareDisplay();
+if ($("btnLockMapGrid")) $("btnLockMapGrid").onclick = () => {
+  isMapGridLocked = !isMapGridLocked;
+  updateMapGridLockState();
+};
+if ($("btnCloseMapGridHud")) $("btnCloseMapGridHud").onclick = () => toggleMapGridSquareDisplay(false);
+if ($("btnCopyMapGridMgrs")) $("btnCopyMapGridMgrs").onclick = copyMapGridCoordinates;
+
 if ($("btnExportMapDropdown")) $("btnExportMapDropdown").onclick = toggleExportMapMenu;
 if ($("btnExportMapPDF")) $("btnExportMapPDF").onclick = () => exportMap("pdf");
 if ($("btnExportMapCSV")) $("btnExportMapCSV").onclick = () => exportEntitiesCsv("Map_Coordinates");
@@ -11010,6 +11520,7 @@ function exportMap(format = "png") {
       return el.id === "mapPickBanner" ||
              el.id === "mapToolbarContainer" ||
              el.id === "btnExitFullscreenMap" ||
+             el.id === "mapGridSquareHud" ||
              el.id === "btnMapDeselect";
     }
   }).then(canvas => {
