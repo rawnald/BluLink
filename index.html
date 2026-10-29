@@ -29,6 +29,8 @@
 <!-- html2canvas & jsPDF for Workstation & Map Image/PDF Exports -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- JSZip for KMZ Geospatial Archive Export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
 <!-- Google Identity Services (GIS) for Google OAuth Sign-In -->
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -2314,6 +2316,14 @@
               <span>Export Project</span>
             </div>
             <span class="text-[9px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-1.5 py-0.5 rounded uppercase">JSON</span>
+          </button>
+          <button id="btnExportMapKMZ" type="button" title="Export entities with MGRS coordinates to Google Earth KMZ format (.kmz)"
+            class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold text-black hover:bg-sky-50 hover:text-sky-700 transition cursor-pointer text-left">
+            <div class="flex items-center gap-2">
+              <i class="fi fi-rr-globe text-xs text-sky-600 shrink-0"></i>
+              <span>Export KMZ</span>
+            </div>
+            <span class="text-[9px] font-bold text-sky-700 bg-sky-50 border border-sky-200 px-1.5 py-0.5 rounded uppercase">KMZ</span>
           </button>
         </div>
       </div>
@@ -11069,6 +11079,7 @@ if ($("btnExportMapProject")) $("btnExportMapProject").onclick = () => {
   closeExportMapMenu();
   exportCurrentProject();
 };
+if ($("btnExportMapKMZ")) $("btnExportMapKMZ").onclick = () => exportMapKmz();
 
 
 // Dropdown triggers & outside click listener
@@ -11192,6 +11203,251 @@ function exportEntitiesCsv(sourcePrefix = "Entities") {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 
   setStatus(`Exported ${entitiesList.length} entities to CSV (${filename})`);
+}
+
+/* ---------- Pure JS Uncompressed ZIP Archive Builder (Offline / Fallback) ---------- */
+function createSimpleZip(files) {
+  const fileEntries = [];
+  let offset = 0;
+  const parts = [];
+
+  const crcTable = new Uint32Array(256);
+  for (let i = 0; i < 256; i++) {
+    let c = i;
+    for (let k = 0; k < 8; k++) {
+      c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    }
+    crcTable[i] = c >>> 0;
+  }
+  function calcCrc32(buf) {
+    let crc = 0xFFFFFFFF;
+    for (let i = 0; i < buf.length; i++) {
+      crc = (crc >>> 8) ^ crcTable[(crc ^ buf[i]) & 0xFF];
+    }
+    return (crc ^ 0xFFFFFFFF) >>> 0;
+  }
+
+  const encoder = new TextEncoder();
+
+  for (const file of files) {
+    const dataBuf = typeof file.data === "string" ? encoder.encode(file.data) : file.data;
+    const nameBuf = encoder.encode(file.name);
+    const crc = calcCrc32(dataBuf);
+    const size = dataBuf.length;
+
+    const header = new Uint8Array(30 + nameBuf.length);
+    const view = new DataView(header.buffer);
+    view.setUint32(0, 0x04034b50, true);
+    view.setUint16(4, 20, true);
+    view.setUint16(6, 0x0800, true); // UTF-8
+    view.setUint16(8, 0, true); // Stored (no compression)
+    view.setUint16(10, 0, true);
+    view.setUint16(12, 0, true);
+    view.setUint32(14, crc, true);
+    view.setUint32(18, size, true);
+    view.setUint32(22, size, true);
+    view.setUint16(26, nameBuf.length, true);
+    view.setUint16(28, 0, true);
+    header.set(nameBuf, 30);
+
+    parts.push(header);
+    parts.push(dataBuf);
+
+    fileEntries.push({ nameBuf, crc, size, offset });
+    offset += header.length + dataBuf.length;
+  }
+
+  const centralDirStart = offset;
+  let centralDirSize = 0;
+
+  for (const entry of fileEntries) {
+    const cdHeader = new Uint8Array(46 + entry.nameBuf.length);
+    const view = new DataView(cdHeader.buffer);
+    view.setUint32(0, 0x02014b50, true);
+    view.setUint16(4, 20, true);
+    view.setUint16(6, 20, true);
+    view.setUint16(8, 0x0800, true);
+    view.setUint16(10, 0, true);
+    view.setUint16(12, 0, true);
+    view.setUint16(14, 0, true);
+    view.setUint32(16, entry.crc, true);
+    view.setUint32(20, entry.size, true);
+    view.setUint32(24, entry.size, true);
+    view.setUint16(28, entry.nameBuf.length, true);
+    view.setUint16(30, 0, true);
+    view.setUint16(32, 0, true);
+    view.setUint16(34, 0, true);
+    view.setUint16(36, 0, true);
+    view.setUint32(38, 0, true);
+    view.setUint32(42, entry.offset, true);
+    cdHeader.set(entry.nameBuf, 46);
+
+    parts.push(cdHeader);
+    centralDirSize += cdHeader.length;
+    offset += cdHeader.length;
+  }
+
+  const eocd = new Uint8Array(22);
+  const eocdView = new DataView(eocd.buffer);
+  eocdView.setUint32(0, 0x06054b50, true);
+  eocdView.setUint16(4, 0, true);
+  eocdView.setUint16(6, 0, true);
+  eocdView.setUint16(8, fileEntries.length, true);
+  eocdView.setUint16(10, fileEntries.length, true);
+  eocdView.setUint32(12, centralDirSize, true);
+  eocdView.setUint32(16, centralDirStart, true);
+  eocdView.setUint16(20, 0, true);
+  parts.push(eocd);
+
+  let totalLength = 0;
+  for (const p of parts) totalLength += p.length;
+  const out = new Uint8Array(totalLength);
+  let pos = 0;
+  for (const p of parts) {
+    out.set(p, pos);
+    pos += p.length;
+  }
+  return out;
+}
+
+function createKmzArchive(files) {
+  if (typeof JSZip !== "undefined") {
+    try {
+      const zip = new JSZip();
+      for (const f of files) {
+        zip.file(f.name, f.data);
+      }
+      return zip.generateAsync({ type: "uint8array", compression: "DEFLATE" });
+    } catch (e) {
+      console.warn("JSZip compression error, falling back to simple zip:", e);
+    }
+  }
+  return Promise.resolve(createSimpleZip(files));
+}
+
+/* ---------- Export Map Entities with MGRS to KMZ (Google Earth / GIS Compatible) ---------- */
+async function exportMapKmz() {
+  if (typeof closeExportMapMenu === "function") closeExportMapMenu();
+
+  const entitiesList = (data && Array.isArray(data.entities)) ? data.entities : [];
+  // Filter all entities on the map who have MGRS coordinates
+  const mgrsEntities = entitiesList.filter(e => {
+    const hasCoords = e.lat != null && e.lng != null && !isNaN(e.lat) && !isNaN(e.lng);
+    const mgrsStr = e.mgrs || (hasCoords ? toMgrs(e.lat, e.lng) : "");
+    return hasCoords && Boolean(mgrsStr && mgrsStr.trim());
+  });
+
+  if (mgrsEntities.length === 0) {
+    alert("No entities with valid MGRS coordinates found on the map to export.");
+    return;
+  }
+
+  const current = (typeof projects !== "undefined" && typeof currentProjectId !== "undefined" && projects)
+    ? projects.find(p => p.id === currentProjectId) : null;
+  const projectName = current && current.name ? current.name : "BluLink_Map";
+
+  const escXml = (str) => {
+    if (str == null) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&apos;");
+  };
+
+  const placemarksXml = mgrsEntities.map(e => {
+    const name = (typeof getEntityDisplayName === "function") ? getEntityDisplayName(e) : (e.name || e.type || "Entity");
+    const mgrsFormatted = formatMgrsDisplay(e.mgrs || toMgrs(e.lat, e.lng));
+    const sub = e.subName && e.subName.trim() ? ` (${escXml(e.subName.trim())})` : "";
+    const notesRow = e.note && e.note.trim() ? `<tr><td style="padding:3px 4px;font-weight:bold;color:#475569;vertical-align:top;">Notes:</td><td style="padding:3px 4px;color:#0f172a;">${escXml(e.note.trim())}</td></tr>` : "";
+
+    return `
+    <Placemark id="entity_${escXml(e.id)}">
+      <name>${escXml(name)}${sub}</name>
+      <styleUrl>#blulinkMarker</styleUrl>
+      <description><![CDATA[
+        <div style="font-family:sans-serif;font-size:12px;min-width:200px;line-height:1.45;">
+          <h3 style="margin:0 0 6px 0;color:#1e40af;font-size:14px;border-bottom:1.5px solid #2563eb;padding-bottom:3px;">${escXml(name)}${sub}</h3>
+          <table style="border-collapse:collapse;width:100%;font-size:11px;">
+            <tr style="background:#f8fafc;"><td style="padding:3px 4px;font-weight:bold;color:#475569;width:75px;">Type:</td><td style="padding:3px 4px;color:#0f172a;">${escXml(e.type || 'Entity')}</td></tr>
+            <tr><td style="padding:3px 4px;font-weight:bold;color:#475569;">MGRS:</td><td style="padding:3px 4px;font-family:monospace;font-weight:bold;color:#2563eb;letter-spacing:0.5px;">${escXml(mgrsFormatted)}</td></tr>
+            <tr style="background:#f8fafc;"><td style="padding:3px 4px;font-weight:bold;color:#475569;">Latitude:</td><td style="padding:3px 4px;font-family:monospace;color:#0f172a;">${e.lat}</td></tr>
+            <tr><td style="padding:3px 4px;font-weight:bold;color:#475569;">Longitude:</td><td style="padding:3px 4px;font-family:monospace;color:#0f172a;">${e.lng}</td></tr>
+            ${notesRow}
+          </table>
+          <div style="margin-top:6px;padding-top:4px;border-top:1px solid #e2e8f0;font-size:10px;color:#64748b;text-align:right;">BluLink Intelligence</div>
+        </div>
+      ]]></description>
+      <ExtendedData>
+        <Data name="Name">
+          <value>${escXml(name)}</value>
+        </Data>
+        <Data name="Type">
+          <value>${escXml(e.type || 'Entity')}</value>
+        </Data>
+        <Data name="SubName">
+          <value>${escXml(e.subName || '')}</value>
+        </Data>
+        <Data name="MGRS">
+          <value>${escXml(mgrsFormatted)}</value>
+        </Data>
+        <Data name="Latitude">
+          <value>${e.lat}</value>
+        </Data>
+        <Data name="Longitude">
+          <value>${e.lng}</value>
+        </Data>
+        <Data name="Notes">
+          <value>${escXml(e.note || '')}</value>
+        </Data>
+      </ExtendedData>
+      <Point>
+        <coordinates>${e.lng},${e.lat},0</coordinates>
+      </Point>
+    </Placemark>`;
+  }).join("\n");
+
+  const docKml = `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>${escXml(projectName)} - MGRS Entities</name>
+    <description>Exported from BluLink Link Analysis &amp; Geospatial Intelligence (${mgrsEntities.length} entities with MGRS)</description>
+    <Style id="blulinkMarker">
+      <IconStyle>
+        <scale>1.1</scale>
+        <Icon>
+          <href>http://maps.google.com/mapfiles/kml/paddle/blu-circle.png</href>
+        </Icon>
+        <hotSpot x="32" y="1" xunits="pixels" yunits="pixels"/>
+      </IconStyle>
+      <LabelStyle>
+        <scale>0.9</scale>
+      </LabelStyle>
+    </Style>
+    <Folder>
+      <name>Entities with MGRS (${mgrsEntities.length})</name>
+      <open>1</open>
+      ${placemarksXml}
+    </Folder>
+  </Document>
+</kml>`;
+
+  try {
+    const filename = getExportFilename("MGRS_Entities", "kmz");
+    const zipBytes = await createKmzArchive([{ name: "doc.kml", data: docKml }]);
+    const blob = new Blob([zipBytes], { type: "application/vnd.google-earth.kmz" });
+    const url = URL.createObjectURL(blob);
+    triggerFileDownload(url, filename);
+    setTimeout(() => URL.revokeObjectURL(url), 2500);
+
+    if (typeof setStatus === "function") {
+      setStatus(`Exported ${mgrsEntities.length} MGRS entities to KMZ (${filename})`);
+    }
+  } catch (err) {
+    console.error("KMZ generation failed:", err);
+    alert("Failed to export KMZ file: " + (err && err.message ? err.message : err));
+  }
 }
 
 function toggleExportNetMenu() {
