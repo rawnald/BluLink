@@ -2266,6 +2266,11 @@
         <span id="btnToggleMapGridStatus" class="w-2 h-2 rounded-full bg-neutral-300"></span>
       </button>
 
+      <!-- 10-Digit Grid Text Display (Only on the top beside the button) -->
+      <div id="mapGridTopDisplay" class="hidden font-mono text-xs font-bold text-black bg-white py-1.5 px-2.5 rounded border border-black/30 shadow-sm flex items-center select-all cursor-pointer hover:bg-neutral-50 transition" title="10-Digit MGRS Grid Square (Click to copy)">
+        <span id="mapGridTopText" class="tracking-wide">--</span>
+      </div>
+
       <!-- 1. Map Export / Save Dropdown -->
       <div class="relative" id="exportMapDropdownContainer">
         <button id="btnExportMapDropdown" type="button" title="Save / Export Geospatial Map (PDF, PNG, JPEG)"
@@ -2331,48 +2336,6 @@
         <span>Exit Full Screen</span>
         <kbd class="ml-1 text-[10px] bg-white/20 px-1 py-0.5 rounded font-mono">Esc</kbd>
       </button>
-    </div>
-
-    <!-- Tactical 10-Digit MGRS Grid Square HUD -->
-    <div id="mapGridSquareHud" class="hidden absolute bottom-4 left-3 z-[999] pointer-events-auto bg-white/95 backdrop-blur border-2 border-black rounded-xl shadow-xl p-2.5 max-w-xs sm:max-w-sm transition-all duration-200">
-      <div class="flex items-center justify-between gap-3 mb-1.5 pb-1 border-b border-black/10">
-        <div class="flex items-center gap-1.5">
-          <span class="w-2 h-2 rounded-full bg-black animate-pulse"></span>
-          <span class="text-[11px] font-black uppercase tracking-wider text-black">10-Digit Grid Square</span>
-          <span class="text-[9px] font-bold text-black bg-neutral-100 border border-black/20 px-1.5 py-0.2 rounded font-mono">1m² PRECISION</span>
-        </div>
-        <div class="flex items-center gap-1">
-          <button id="btnLockMapGrid" type="button" title="Click map or here to lock/unlock live coordinates"
-            class="text-[10px] font-bold text-black/60 hover:text-black cursor-pointer transition">
-            <span id="btnLockMapGridText">Live</span>
-          </button>
-          <button id="btnCloseMapGridHud" type="button" title="Hide 10-Digit Grid Display"
-            class="text-black/50 hover:text-black p-0.5 rounded cursor-pointer transition">
-            <i class="fi fi-rr-cross-small text-sm leading-none block"></i>
-          </button>
-        </div>
-      </div>
-      <div class="space-y-1">
-        <div class="flex items-center justify-between gap-2">
-          <span class="text-[10px] font-bold text-black/60 uppercase">MGRS (10 Digits)</span>
-          <button id="btnCopyMapGridMgrs" type="button" title="Copy 10-Digit MGRS"
-            class="text-[10px] text-black font-bold hover:underline cursor-pointer flex items-center gap-1">
-            <i class="fi fi-rr-copy text-[10px]"></i>
-            <span id="btnCopyMapGridMgrsText">Copy</span>
-          </button>
-        </div>
-        <div id="mapGridMgrsDisplay" class="font-mono text-base font-black text-black tracking-widest select-all text-center py-1">
-          --
-        </div>
-        <div class="flex items-center justify-between text-[10px] font-mono text-black/70 pt-0.5 px-0.5">
-          <span class="font-bold text-black/50">WGS-84:</span>
-          <span id="mapGridWgsDisplay" class="font-semibold select-all">--</span>
-        </div>
-      </div>
-      <div class="mt-1.5 pt-1 border-t border-black/10 flex items-center justify-between text-[9px] text-black/50">
-        <span id="mapGridStatusHint">Move cursor over map to inspect 1-meter square</span>
-        <span id="mapGridZoomLevel" class="font-mono font-bold">Zoom: --</span>
-      </div>
     </div>
 
     <!-- Map Leaflet Container -->
@@ -4810,9 +4773,7 @@ function updateMapGridHud(lat, lng, isLocked = false) {
     const lngDir = lngNum >= 0 ? "E" : "W";
     const wgsText = `${Math.abs(latNum).toFixed(6)}° ${latDir}, ${Math.abs(lngNum).toFixed(6)}° ${lngDir}`;
 
-    if ($("mapGridMgrsDisplay")) $("mapGridMgrsDisplay").textContent = formattedMgrs10;
-    if ($("mapGridWgsDisplay")) $("mapGridWgsDisplay").textContent = wgsText;
-    if ($("mapGridZoomLevel") && map) $("mapGridZoomLevel").textContent = `Zoom: ${map.getZoom()}`;
+    if ($("mapGridTopText")) $("mapGridTopText").textContent = formattedMgrs10;
 
     // Get exact 1-meter bounding box for this 10-digit square
     const bbox = mgrs.inverse(rawMgrs10); // [minLng, minLat, maxLng, maxLat]
@@ -5002,7 +4963,7 @@ function toggleMapGridSquareDisplay(forceState) {
 
   const btn = $("btnToggleMapGrid");
   const statusDot = $("btnToggleMapGridStatus");
-  const hud = $("mapGridSquareHud");
+  const topDisplay = $("mapGridTopDisplay");
 
   if (btn) {
     if (isMapGridVisible) {
@@ -5018,11 +4979,11 @@ function toggleMapGridSquareDisplay(forceState) {
     statusDot.className = isMapGridVisible ? "w-2 h-2 rounded-full bg-black shadow-sm" : "w-2 h-2 rounded-full bg-neutral-300";
   }
 
-  if (hud) {
+  if (topDisplay) {
     if (isMapGridVisible) {
-      hud.classList.remove("hidden");
+      topDisplay.classList.remove("hidden");
     } else {
-      hud.classList.add("hidden");
+      topDisplay.classList.add("hidden");
     }
   }
 
@@ -5045,18 +5006,19 @@ function toggleMapGridSquareDisplay(forceState) {
 }
 
 function copyMapGridCoordinates() {
-  const display = $("mapGridMgrsDisplay");
-  const btnText = $("btnCopyMapGridMgrsText");
-  if (!display) return;
-  const text = display.textContent.trim();
-  if (!text || text === "--") return;
+  const topText = $("mapGridTopText");
+  if (!topText) return;
+  const text = topText.textContent.trim();
+  if (!text || text === "--" || text === "COPIED!") return;
 
   const onCopied = () => {
-    if (btnText) {
-      const orig = btnText.textContent;
-      btnText.textContent = "Copied!";
-      setTimeout(() => { btnText.textContent = orig; }, 1500);
-    }
+    const orig = text;
+    topText.textContent = "COPIED!";
+    setTimeout(() => {
+      if (topText.textContent === "COPIED!") {
+        topText.textContent = orig;
+      }
+    }, 1200);
     if (typeof setStatus === "function") {
       setStatus(`Copied 10-Digit MGRS: ${text}`);
     }
@@ -11124,12 +11086,7 @@ if ($("btnFullscreenMapMenu")) $("btnFullscreenMapMenu").onclick = () => {
 };
 
 if ($("btnToggleMapGrid")) $("btnToggleMapGrid").onclick = () => toggleMapGridSquareDisplay();
-if ($("btnLockMapGrid")) $("btnLockMapGrid").onclick = () => {
-  isMapGridLocked = !isMapGridLocked;
-  updateMapGridLockState();
-};
-if ($("btnCloseMapGridHud")) $("btnCloseMapGridHud").onclick = () => toggleMapGridSquareDisplay(false);
-if ($("btnCopyMapGridMgrs")) $("btnCopyMapGridMgrs").onclick = copyMapGridCoordinates;
+if ($("mapGridTopDisplay")) $("mapGridTopDisplay").onclick = copyMapGridCoordinates;
 
 if ($("btnExportMapDropdown")) $("btnExportMapDropdown").onclick = toggleExportMapMenu;
 if ($("btnExportMapPDF")) $("btnExportMapPDF").onclick = () => exportMap("pdf");
@@ -11520,7 +11477,7 @@ function exportMap(format = "png") {
       return el.id === "mapPickBanner" ||
              el.id === "mapToolbarContainer" ||
              el.id === "btnExitFullscreenMap" ||
-             el.id === "mapGridSquareHud" ||
+             el.id === "mapGridTopDisplay" ||
              el.id === "btnMapDeselect";
     }
   }).then(canvas => {
